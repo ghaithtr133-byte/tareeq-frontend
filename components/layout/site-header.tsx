@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,14 +11,17 @@ import { cn } from "@/lib/utils";
 import { Container } from "./container";
 
 const navigation = [
-  { href: "#intro", label: "عن طريق" },
-  { href: "#foundation", label: "منهجنا" },
-  { href: "#contact", label: "تواصل معنا" },
+  { href: "/study-abroad", label: "الدراسة في الخارج" },
+  { href: "/universities", label: "الجامعات" },
+  { href: "/scholarships", label: "المنح" },
+  { href: "/services", label: "الخدمات" },
+  { href: "/articles", label: "المقالات" },
 ];
 
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const pathname = usePathname();
 
   function closeMenu() {
     setIsOpen(false);
@@ -56,7 +60,7 @@ export function SiteHeader() {
   return (
     <header ref={headerRef} className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-xl">
       <Container className="flex min-h-[5.5rem] items-center justify-between gap-4">
-        <Link href="#top" className="group inline-flex rounded-sm py-2" onClick={closeMenu}>
+        <Link href="/" className="group inline-flex rounded-sm py-2" onClick={closeMenu}>
           <span className="text-right leading-none">
             <span className="block text-lg font-bold tracking-tight text-primary">طريق الأكاديمية</span>
             <span className="mt-1 block text-[9px] font-bold tracking-[0.2em] text-accent" dir="ltr">TAREEQ ACADEMY</span>
@@ -64,9 +68,9 @@ export function SiteHeader() {
           <span className="sr-only">شعار نصي مؤقت لطريق الأكاديمية والعودة إلى بداية الصفحة</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex" aria-label="التنقل الرئيسي">
+        <nav className="hidden items-center gap-1 lg:flex xl:gap-2" aria-label="التنقل الرئيسي">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-sm px-3 py-2 text-[0.8125rem] font-bold text-foreground/75 transition-colors duration-150 hover:bg-secondary/80 hover:text-primary focus-visible:bg-secondary active:bg-muted">
+            <Link key={item.href} href={item.href} aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined} className="rounded-sm px-2 py-2 text-[0.75rem] font-bold text-foreground/75 transition-colors duration-150 hover:bg-secondary/80 hover:text-primary focus-visible:bg-secondary active:bg-muted xl:px-3 xl:text-[0.8125rem]">
               {item.label}
             </Link>
           ))}
@@ -99,9 +103,6 @@ export function SiteHeader() {
             </Link>
           ))}
           </nav>
-          <Button asChild className="mt-1.5 w-full">
-            <a href="https://wa.me/963992277142" target="_blank" rel="noreferrer" onClick={closeMenu}>تواصل عبر واتساب</a>
-          </Button>
       </div>
     </header>
   );

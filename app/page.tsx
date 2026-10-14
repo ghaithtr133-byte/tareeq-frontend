@@ -1,19 +1,14 @@
+import Link from "next/link";
+
 import { Container } from "@/components/layout/container";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
+import { ContentSection, ContentUnavailable, EditorialLink, SectionTitle } from "@/components/public/page-components";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, ArrowUpLeftIcon } from "@/components/ui/icons";
-
-const guidance = [
-  { number: "01", title: "استشارة تعليمية" },
-  { number: "02", title: "مساعدة في القبول الجامعي" },
-  { number: "03", title: "توجيه للدراسة في الخارج" },
-];
+import { approvedDestinations } from "@/lib/public-destinations";
 
 export default function Home() {
   return (
     <main id="top" className="overflow-x-clip">
-      <SiteHeader />
 
       <section id="intro" className="relative isolate overflow-hidden border-b border-border/80 bg-background" aria-labelledby="hero-title">
         <div className="pointer-events-none absolute inset-y-0 start-0 -z-10 hidden w-[42%] border-e border-border/60 bg-secondary/35 lg:block" />
@@ -31,7 +26,7 @@ export default function Home() {
             </p>
             <div className="mt-7 flex flex-col gap-2 sm:mt-10 sm:flex-row sm:items-center sm:gap-3">
               <Button asChild size="lg" className="w-full min-w-52 sm:w-auto"><a href="https://wa.me/963992277142" target="_blank" rel="noreferrer">تواصل عبر واتساب</a></Button>
-              <Button asChild size="lg" variant="ghost" className="w-full justify-start px-4 text-primary sm:w-auto sm:justify-center"><a href="#foundation"><span>تعرّف إلى طريق الأكاديمية</span><ArrowLeftIcon className="size-4" /></a></Button>
+              <Button asChild size="lg" variant="ghost" className="w-full justify-start px-4 text-primary sm:w-auto sm:justify-center"><Link href="/services"><span>تعرّف إلى خدماتنا</span><ArrowLeftIcon className="size-4" /></Link></Button>
             </div>
           </div>
 
@@ -55,24 +50,53 @@ export default function Home() {
         </Container>
       </section>
 
-      <section id="foundation" className="bg-muted/70 py-[var(--space-section)]" aria-labelledby="foundation-title">
-        <Container className="grid gap-8 sm:gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <div className="max-w-md">
-            <p className="text-[0.6875rem] font-bold tracking-[0.17em] text-accent">طريق الأكاديمية</p>
-            <h2 id="foundation-title" className="mt-4 text-3xl font-bold leading-[1.45] tracking-tight text-primary sm:mt-5 sm:text-4xl">كل مرحلة تبدأ بفهمٍ أفضل للخطوة التالية.</h2>
+      <ContentSection className="bg-muted/70" >
+        <Container>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionTitle eyebrow="وجهات الدراسة" title="ابدأ باستكشاف الوجهة الأقرب إلى خطتك." intro="الأسماء أدناه هي الوجهات الأولية المعتمدة، بينما ستُنشر تفاصيل كل وجهة من المحتوى الذي يديره فريق الأكاديمية." />
+            <EditorialLink href="/study-abroad">كل وجهات الدراسة</EditorialLink>
           </div>
-          <ol className="border-t border-primary/15">
-            {guidance.map((item) => (
-              <li key={item.number} className="grid grid-cols-[2rem_1fr] items-center gap-4 border-b border-primary/15 py-5 sm:grid-cols-[auto_1fr] sm:gap-10 sm:py-7">
-                <span className="text-xs font-bold tracking-[0.12em] text-accent" dir="ltr">{item.number}</span>
-                <p className="text-lg font-bold text-primary sm:text-xl">{item.title}</p>
-              </li>
+          <div className="mt-10 grid border-t border-primary/15 sm:grid-cols-3">
+            {approvedDestinations.map((destination) => (
+              <EditorialLink key={destination.slug} href={`/study-abroad/${destination.slug}`}><span className="block border-b border-primary/15 py-6 text-xl">{destination.name}</span></EditorialLink>
             ))}
-          </ol>
+          </div>
+        </Container>
+      </ContentSection>
+
+      <ContentSection className="bg-background">
+        <Container className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <SectionTitle eyebrow="الخدمات" title="خدمات تعليمية تُعرض بتفاصيلها المعتمدة." intro="ستظهر الخدمات المتاحة ووصفها بعد نشر المحتوى الرسمي." />
+          <ContentUnavailable title="الخدمات قيد النشر" description="نحافظ على دقة المعلومات؛ لذلك لن نعرض تفاصيل خدمة قبل اعتمادها." contact />
+        </Container>
+      </ContentSection>
+
+      <ContentSection>
+        <Container className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <SectionTitle eyebrow="رحلة الطالب" title="خطوات واضحة تبدأ بمعلومة معتمدة." intro="سيُنشر تسلسل رحلة الطالب ومراحل الدعم عند اعتماد محتوى الرحلة." />
+          <ContentUnavailable title="تفاصيل الرحلة غير متاحة بعد" description="لا نعرض مراحل أو متطلبات غير معتمدة." />
+        </Container>
+      </ContentSection>
+
+      <ContentSection className="bg-background">
+        <Container className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          <ContentUnavailable title="الجامعات المميزة" description="ستظهر الجامعات عندما تتوفر البيانات الموثقة من المصدر." />
+          <ContentUnavailable title="المنح الدراسية" description="ستعرض المنح وحالتها عند نشر البيانات المعتمدة." />
+          <ContentUnavailable title="المقالات التعليمية" description="ستظهر المقالات المنشورة عند توفر محتواها التحريري." />
+          <ContentUnavailable title="الفيديوهات المختارة" description="ستظهر الفيديوهات عند اعتماد مصادرها ومحتواها للنشر." />
+        </Container>
+      </ContentSection>
+
+      <section className="bg-primary py-14 text-primary-foreground sm:py-20">
+        <Container className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="max-w-2xl">
+            <p className="text-[0.6875rem] font-bold tracking-[0.17em] text-accent">تواصل</p>
+            <h2 className="mt-4 text-3xl font-bold leading-[1.4] sm:text-4xl">هل ترغب في بدء محادثة تعليمية؟</h2>
+            <p className="mt-4 text-sm leading-7 text-primary-foreground/80 sm:text-base">تواصل مع طريق الأكاديمية عبر واتساب للحصول على معلومات التواصل المعتمدة.</p>
+          </div>
+          <Button asChild size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"><a href="https://wa.me/963992277142" target="_blank" rel="noreferrer">تواصل عبر واتساب</a></Button>
         </Container>
       </section>
-
-      <SiteFooter />
     </main>
   );
 }
