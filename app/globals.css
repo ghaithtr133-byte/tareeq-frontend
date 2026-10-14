@@ -19,37 +19,40 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: Tahoma, Arial, sans-serif;
+  --font-sans: Tahoma, "Segoe UI", Arial, sans-serif;
 }
 
 :root {
   /* Provisional Tareeq Academy brand tokens — replace only when official values are supplied. */
-  --background: #fffdf8;
-  --foreground: #162b49;
+  --background: #fbf8f1;
+  --foreground: #102943;
   --card: #ffffff;
-  --card-foreground: #162b49;
-  --primary: #173b66;
+  --card-foreground: #102943;
+  --primary: #102f50;
   --primary-foreground: #ffffff;
-  --secondary: #edf3f8;
-  --secondary-foreground: #173b66;
-  --muted: #f4f0e8;
-  --muted-foreground: #617087;
-  --accent: #b18a3b;
-  --accent-foreground: #1d2735;
-  --border: #dbe3e9;
-  --ring: #b18a3b;
-  --radius: 0.75rem;
-  --space-section: clamp(4rem, 8vw, 7rem);
+  --secondary: #eaf0f2;
+  --secondary-foreground: #102f50;
+  --muted: #f0ece3;
+  --muted-foreground: #4d6273;
+  --accent: #89672f;
+  --accent-foreground: #172c42;
+  --border: #d7ddd9;
+  --ring: #ad8850;
+  --radius: 1rem;
+  --space-section: clamp(4.5rem, 9vw, 8.5rem);
 }
 
 * { border-color: var(--border); }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
 
 body {
-  min-inline-size: 350px;
   background: var(--background);
   color: var(--foreground);
+  font-feature-settings: "kern" 1;
 }
 
 :focus-visible {
@@ -57,4 +60,4 @@ body {
   outline-offset: 3px;
 }
 
-::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); }

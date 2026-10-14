@@ -4,24 +4,22 @@ import { Container } from "./container";
 
 export function SiteFooter() {
   return (
-    <footer id="contact" className="border-t bg-primary text-primary-foreground">
-      <Container className="flex flex-col gap-8 py-10 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-lg font-bold">طريق الأكاديمية</p>
-          <p className="mt-2 max-w-md text-sm leading-7 text-primary-foreground/75">
-            أساس موثوق لرحلتك التعليمية نحو الدراسة في الخارج.
-          </p>
+    <footer id="contact" className="bg-primary text-primary-foreground">
+      <Container className="grid gap-6 py-9 sm:grid-cols-[1fr_auto] sm:items-end sm:gap-10 sm:py-14">
+        <div className="max-w-lg">
+          <p className="text-xl font-bold tracking-tight">طريق الأكاديمية</p>
+          <p className="mt-3 text-sm leading-7 text-primary-foreground/80">استشارات تعليمية ومساعدة في القبول الجامعي وتوجيه للدراسة في الخارج.</p>
         </div>
-        <div className="text-right sm:text-left">
-          <p className="text-xs font-semibold tracking-wide text-primary-foreground/65">تواصل معنا</p>
-          <a className="mt-2 inline-block rounded-sm text-base font-bold underline decoration-accent decoration-2 underline-offset-4" href="https://wa.me/963992277142" target="_blank" rel="noreferrer">
+        <div className="border-t border-primary-foreground/15 pt-6 sm:border-0 sm:pt-0 sm:text-left">
+          <p className="text-[0.6875rem] font-bold tracking-[0.16em] text-primary-foreground/75">للتواصل</p>
+          <a className="mt-3 inline-block border-b border-accent pb-1 text-base font-bold tracking-wide transition-colors hover:text-accent" href="https://wa.me/963992277142" target="_blank" rel="noreferrer" dir="ltr">
             +963 992 277 142
           </a>
-          <p className="mt-4 text-xs text-primary-foreground/60">© {new Date().getFullYear()} طريق الأكاديمية</p>
         </div>
       </Container>
-      <Container className="border-t border-primary-foreground/15 py-4 text-xs text-primary-foreground/60">
-        <Link href="#top" className="rounded-sm hover:text-primary-foreground">العودة للأعلى</Link>
+      <Container className="flex items-center justify-between gap-4 border-t border-primary-foreground/15 py-4 text-[0.6875rem] text-primary-foreground/65 sm:py-5">
+        <Link href="#top" className="rounded-sm font-bold transition-colors hover:text-primary-foreground">العودة للأعلى</Link>
+        <p dir="ltr">© {new Date().getFullYear()} TAREEQ ACADEMY</p>
       </Container>
     </footer>
   );

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon, CloseIcon, MenuIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 import { Container } from "./container";
@@ -16,34 +17,62 @@ const navigation = [
 
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
 
   function closeMenu() {
     setIsOpen(false);
   }
 
+  useEffect(() => {
+    // This matches Tailwind's `lg` breakpoint, where the desktop navigation becomes visible.
+    const desktopNavigation = window.matchMedia("(min-width: 64rem)");
+    const closeOnDesktopNavigation = (event: MediaQueryListEvent) => {
+      if (event.matches) setIsOpen(false);
+    };
+
+    desktopNavigation.addEventListener("change", closeOnDesktopNavigation);
+    return () => desktopNavigation.removeEventListener("change", closeOnDesktopNavigation);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!headerRef.current?.contains(event.target as Node)) setIsOpen(false);
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isOpen]);
+
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-      <Container className="flex min-h-20 items-center justify-between gap-4">
-        <Link href="#top" className="group inline-flex items-center gap-3 rounded-sm" onClick={closeMenu}>
-          <span className="flex size-10 items-center justify-center rounded-md bg-primary text-base font-bold text-primary-foreground" aria-hidden="true">
-            ط
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-xl">
+      <Container className="flex min-h-[5.5rem] items-center justify-between gap-4">
+        <Link href="#top" className="group inline-flex rounded-sm py-2" onClick={closeMenu}>
+          <span className="text-right leading-none">
+            <span className="block text-lg font-bold tracking-tight text-primary">طريق الأكاديمية</span>
+            <span className="mt-1 block text-[9px] font-bold tracking-[0.2em] text-accent" dir="ltr">TAREEQ ACADEMY</span>
           </span>
-          <span className="text-right leading-tight">
-            <span className="block text-base font-bold text-primary">طريق الأكاديمية</span>
-            <span className="block text-[10px] font-medium tracking-wide text-muted-foreground">TAREEQ ACADEMY</span>
-          </span>
-          <span className="sr-only">العودة إلى بداية الصفحة</span>
+          <span className="sr-only">شعار نصي مؤقت لطريق الأكاديمية والعودة إلى بداية الصفحة</span>
         </Link>
 
-        <nav className="hidden items-center gap-7 md:flex" aria-label="التنقل الرئيسي">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label="التنقل الرئيسي">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-sm text-sm font-semibold text-foreground/80 transition-colors hover:text-primary">
+            <Link key={item.href} href={item.href} className="rounded-sm px-3 py-2 text-[0.8125rem] font-bold text-foreground/75 transition-colors duration-150 hover:bg-secondary/80 hover:text-primary focus-visible:bg-secondary active:bg-muted">
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <Button asChild className="hidden md:inline-flex">
+        <Button asChild size="sm" variant="outline" className="hidden border-accent/70 px-5 text-primary hover:border-accent hover:bg-accent/10 lg:inline-flex">
           <a href="https://wa.me/963992277142" target="_blank" rel="noreferrer">تواصل عبر واتساب</a>
         </Button>
 
@@ -51,27 +80,28 @@ export function SiteHeader() {
           type="button"
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="border border-border/80 bg-card active:scale-[0.97] lg:hidden"
           aria-label={isOpen ? "إغلاق القائمة" : "فتح القائمة"}
           aria-controls="mobile-navigation"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((current) => !current)}
         >
-          <span className="text-xl leading-none" aria-hidden="true">{isOpen ? "×" : "☰"}</span>
+          {isOpen ? <CloseIcon className="size-5" /> : <MenuIcon className="size-5" />}
         </Button>
       </Container>
 
-      <div id="mobile-navigation" className={cn("border-t bg-background md:hidden", isOpen ? "block" : "hidden")}>
-        <Container className="flex flex-col gap-1 py-4">
+      <div id="mobile-navigation" aria-hidden={!isOpen} className={cn("absolute end-5 top-full z-50 mt-3 w-[min(20rem,calc(100vw-2.5rem))] rounded-md border border-border/80 bg-card p-1.5 shadow-[0_18px_36px_-18px_color-mix(in_srgb,var(--primary)_45%,transparent)] transition-[opacity,transform,visibility] duration-150 sm:end-8 lg:hidden", isOpen ? "visible translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0")}>
+          <nav aria-label="التنقل على الجوال">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} onClick={closeMenu} className="rounded-md px-3 py-3 text-sm font-semibold hover:bg-secondary">
-              {item.label}
+            <Link key={item.href} href={item.href} onClick={closeMenu} className="group flex min-h-12 items-center gap-3 rounded-sm px-4 py-3 text-sm font-bold text-foreground/85 transition-colors duration-150 hover:bg-secondary hover:text-primary focus-visible:bg-secondary active:bg-muted">
+              <span>{item.label}</span>
+              <ArrowLeftIcon className="size-4 shrink-0 text-accent transition-transform duration-150 group-hover:-translate-x-0.5" />
             </Link>
           ))}
-          <Button asChild className="mt-3 w-full">
+          </nav>
+          <Button asChild className="mt-1.5 w-full">
             <a href="https://wa.me/963992277142" target="_blank" rel="noreferrer" onClick={closeMenu}>تواصل عبر واتساب</a>
           </Button>
-        </Container>
       </div>
     </header>
   );
