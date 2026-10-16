@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ContentSection, PageIntro } from "@/components/public/page-components";
 import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = createPageMetadata("تواصل معنا", "تواصل مع طريق الأكاديمية عبر واتساب.", true);
+export const metadata = createPageMetadata("تواصل معنا", "تواصل مع طريق الأكاديمية عبر واتساب.", { index: true, pathname: "/contact" });
 
 export default function ContactPage() {
   return (

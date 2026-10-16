@@ -20,6 +20,23 @@ export function PageIntro({ eyebrow, title, intro }: { eyebrow: string; title: s
   );
 }
 
+export function Breadcrumbs({ items }: { items: ReadonlyArray<{ href?: string; label: string }> }) {
+  return (
+    <nav aria-label="مسار التنقل" className="border-b border-border/80 bg-background py-4">
+      <Container className="max-w-4xl">
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          {items.map((item, index) => (
+            <li key={`${item.label}-${index}`} className="flex items-center gap-x-2">
+              {item.href ? <Link href={item.href} className="rounded-sm transition-colors hover:text-primary focus-visible:text-primary">{item.label}</Link> : <span aria-current="page" className="font-bold text-primary">{item.label}</span>}
+              {index < items.length - 1 ? <span aria-hidden="true" className="text-accent">/</span> : null}
+            </li>
+          ))}
+        </ol>
+      </Container>
+    </nav>
+  );
+}
+
 export function ContentSection({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <section className={`bg-muted/60 py-12 sm:py-16 lg:py-20 ${className}`}>{children}</section>;
 }

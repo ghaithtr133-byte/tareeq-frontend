@@ -37,6 +37,8 @@ npm run start      # Serve a production build
 
 `NEXT_PUBLIC_API_BASE_URL` is the public browser origin of the separately deployed Backend REST API, for example `https://api.example.com`. `API_BASE_URL` is the server-side origin. Do **not** add `/api/v1` to either value: the Axios clients append that namespace.
 
+`NEXT_PUBLIC_SITE_URL` is the approved public website origin used to generate canonical and Open Graph URLs, for example `https://www.example.com`. Leave it empty until the production domain is approved; the frontend deliberately emits no canonical URL when it is unset or invalid.
+
 Browser requests fail clearly when `NEXT_PUBLIC_API_BASE_URL` is missing. Server requests prefer `API_BASE_URL` and temporarily fall back to `NEXT_PUBLIC_API_BASE_URL` until a private backend origin is available. No deployed backend URL is configured yet.
 
 The frontend uses Backend-managed HttpOnly cookie sessions. Browser Axios requests opt into credentials; cross-origin cookie transmission still depends on backend CORS, cookie attributes, deployment domains, and browser cookie policies. The frontend neither stores nor reads tokens, and does not implement authentication flows or a BFF.

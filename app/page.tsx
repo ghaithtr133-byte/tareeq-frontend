@@ -94,7 +94,10 @@ export default function Home() {
             <h2 className="mt-4 text-3xl font-bold leading-[1.4] sm:text-4xl">هل ترغب في بدء محادثة تعليمية؟</h2>
             <p className="mt-4 text-sm leading-7 text-primary-foreground/80 sm:text-base">تواصل مع طريق الأكاديمية عبر واتساب للحصول على معلومات التواصل المعتمدة.</p>
           </div>
-          <Button asChild size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"><a href="https://wa.me/963992277142" target="_blank" rel="noreferrer">تواصل عبر واتساب</a></Button>
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+            <Button asChild size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"><a href="https://wa.me/963992277142" target="_blank" rel="noreferrer">تواصل عبر واتساب</a></Button>
+            <Button asChild size="lg" variant="outline" className="border-primary-foreground/45 text-primary-foreground hover:bg-primary-foreground/10"><Link href="/apply">معلومات طلب المساعدة</Link></Button>
+          </div>
         </Container>
       </section>
     </main>

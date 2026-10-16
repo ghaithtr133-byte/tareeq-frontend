@@ -15,6 +15,7 @@ export function SiteFooter() {
             <Link href="/scholarships" className="rounded-sm transition-colors hover:text-accent">المنح</Link>
             <Link href="/services" className="rounded-sm transition-colors hover:text-accent">الخدمات</Link>
             <Link href="/articles" className="rounded-sm transition-colors hover:text-accent">المقالات</Link>
+            <Link href="/apply" className="rounded-sm transition-colors hover:text-accent">طلب مساعدة</Link>
             <Link href="/about" className="rounded-sm transition-colors hover:text-accent">عن طريق</Link>
             <Link href="/faq" className="rounded-sm transition-colors hover:text-accent">الأسئلة الشائعة</Link>
           </nav>

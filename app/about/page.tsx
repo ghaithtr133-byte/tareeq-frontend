@@ -2,7 +2,7 @@ import { Container } from "@/components/layout/container";
 import { ContentSection, PageIntro } from "@/components/public/page-components";
 import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = createPageMetadata("عن طريق الأكاديمية", "تعرف إلى طريق الأكاديمية وخدماتها التعليمية.", true);
+export const metadata = createPageMetadata("عن طريق الأكاديمية", "تعرف إلى طريق الأكاديمية وخدماتها التعليمية.", { index: true, pathname: "/about" });
 
 export default function AboutPage() {
   return (

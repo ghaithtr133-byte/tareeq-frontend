@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Container } from "@/components/layout/container";
-import { ContentSection, ContentUnavailable, PageIntro } from "@/components/public/page-components";
+import { Breadcrumbs, ContentSection, ContentUnavailable, PageIntro } from "@/components/public/page-components";
 import { getApprovedDestination } from "@/lib/public-destinations";
 import { createPageMetadata } from "@/lib/seo";
 
@@ -12,8 +12,8 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
   const { slug } = await params;
   const destination = getApprovedDestination(slug);
   return destination
-    ? createPageMetadata(`الدراسة في ${destination.name}`, `محتوى الدراسة في ${destination.name} لدى طريق الأكاديمية.`, false)
-    : createPageMetadata("الوجهة غير متاحة", "لم نعثر على وجهة الدراسة المطلوبة.", false);
+    ? createPageMetadata(`الدراسة في ${destination.name}`, `محتوى الدراسة في ${destination.name} لدى طريق الأكاديمية.`, { pathname: `/study-abroad/${destination.slug}` })
+    : createPageMetadata("الوجهة غير متاحة", "لم نعثر على وجهة الدراسة المطلوبة.");
 }
 
 export default async function DestinationPage({ params }: DestinationPageProps) {
@@ -23,6 +23,7 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
 
   return (
     <main>
+      <Breadcrumbs items={[{ href: "/", label: "الرئيسية" }, { href: "/study-abroad", label: "الدراسة في الخارج" }, { label: destination.name }]} />
       <PageIntro eyebrow="وجهات الدراسة" title={`الدراسة في ${destination.name}`} intro="ستتاح معلومات هذه الوجهة عند نشر المحتوى المعتمد من فريق الأكاديمية." />
       <ContentSection>
         <Container className="max-w-5xl">

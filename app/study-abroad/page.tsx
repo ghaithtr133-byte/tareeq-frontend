@@ -5,7 +5,7 @@ import { ContentSection, EditorialLink, PageIntro } from "@/components/public/pa
 import { approvedDestinations } from "@/lib/public-destinations";
 import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = createPageMetadata("الدراسة في الخارج", "استكشف وجهات الدراسة الأولية المعتمدة لدى طريق الأكاديمية.", true);
+export const metadata = createPageMetadata("الدراسة في الخارج", "استكشف وجهات الدراسة الأولية المعتمدة لدى طريق الأكاديمية.", { index: true, pathname: "/study-abroad" });
 
 export default function StudyAbroadPage() {
   return (
