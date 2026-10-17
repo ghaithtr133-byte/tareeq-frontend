@@ -39,6 +39,12 @@ npm run start      # Serve a production build
 
 `NEXT_PUBLIC_SITE_URL` is the approved public website origin used to generate canonical and Open Graph URLs, for example `https://www.example.com`. Leave it empty until the production domain is approved; the frontend deliberately emits no canonical URL when it is unset or invalid.
 
+### Homepage design-review fixtures
+
+Set `NEXT_PUBLIC_ENABLE_DESIGN_REVIEW_MOCKS=true` only for local visual review or a Vercel Preview deployment. `lib/mocks/design-review-mode.ts` resolves the mode on the server: the flag works only in local development or `VERCEL_ENV=preview`, and is forcibly disabled in Vercel Production and unclassified production contexts. Mock-enabled pages emit `noindex, nofollow`; the fixture records do not create public detail routes, sitemap entries, or Backend requests.
+
+For a Vercel Preview, confirm Vercel Deployment Protection outside this repository before setting the server-only `TAREEQ_PREVIEW_ACCESS_PROTECTED=true`. Until protection is confirmed, Preview renders one clear disclosure. `noindex` is not access protection. This is a build-time setting: set the variables before `npm run build`, then start that newly built output. Set the flag to `false` or remove it and perform a fresh build to restore the normal public-content state. Educational image provenance and the two verified video references are recorded beside the fixture data.
+
 Browser requests fail clearly when `NEXT_PUBLIC_API_BASE_URL` is missing. Server requests prefer `API_BASE_URL` and temporarily fall back to `NEXT_PUBLIC_API_BASE_URL` until a private backend origin is available. No deployed backend URL is configured yet.
 
 The frontend uses Backend-managed HttpOnly cookie sessions. Browser Axios requests opt into credentials; cross-origin cookie transmission still depends on backend CORS, cookie attributes, deployment domains, and browser cookie policies. The frontend neither stores nor reads tokens, and does not implement authentication flows or a BFF.

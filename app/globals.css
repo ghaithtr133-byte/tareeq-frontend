@@ -24,22 +24,22 @@
 
 :root {
   /* Provisional Tareeq Academy brand tokens — replace only when official values are supplied. */
-  --background: #fbf8f1;
-  --foreground: #102943;
+  --background: #f8f7f3;
+  --foreground: #1d2b3d;
   --card: #ffffff;
   --card-foreground: #102943;
-  --primary: #102f50;
+  --primary: #162d50;
   --primary-foreground: #ffffff;
-  --secondary: #eaf0f2;
-  --secondary-foreground: #102f50;
-  --muted: #f0ece3;
-  --muted-foreground: #4d6273;
-  --accent: #89672f;
+  --secondary: #eaf0f6;
+  --secondary-foreground: #162d50;
+  --muted: #efeee8;
+  --muted-foreground: #53657a;
+  --accent: #c3a36b;
   --accent-foreground: #172c42;
   --border: #d7ddd9;
-  --ring: #ad8850;
-  --radius: 1rem;
-  --space-section: clamp(4.5rem, 9vw, 8.5rem);
+  --ring: #a9874f;
+  --radius: 0.5rem;
+  --space-section: clamp(4rem, 7vw, 7rem);
 }
 
 * { border-color: var(--border); }

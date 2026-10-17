@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, CloseIcon, MenuIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 import { Container } from "./container";
@@ -21,10 +21,25 @@ const navigation = [
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const firstNavigationLinkRef = useRef<HTMLAnchorElement>(null);
   const pathname = usePathname();
 
-  function closeMenu() {
+  function closeMenu(restoreFocus = false) {
     setIsOpen(false);
+    if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
+  }
+
+  function toggleMenu() {
+    if (isOpen) {
+      closeMenu();
+      return;
+    }
+
+    setIsOpen(true);
+    window.setTimeout(() => {
+      (firstNavigationLinkRef.current ?? document.getElementById("mobile-navigation-first-link"))?.focus();
+    }, 50);
   }
 
   useEffect(() => {
@@ -42,11 +57,11 @@ export function SiteHeader() {
     if (!isOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") closeMenu(true);
     }
 
     function handlePointerDown(event: PointerEvent) {
-      if (!headerRef.current?.contains(event.target as Node)) setIsOpen(false);
+      if (!headerRef.current?.contains(event.target as Node)) closeMenu(true);
     }
 
     document.addEventListener("keydown", handleKeyDown);
@@ -60,7 +75,7 @@ export function SiteHeader() {
   return (
     <header ref={headerRef} className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-xl">
       <Container className="flex min-h-[5.5rem] items-center justify-between gap-4">
-        <Link href="/" className="group inline-flex rounded-sm py-2" onClick={closeMenu}>
+        <Link href="/" className="group inline-flex rounded-sm py-2" onClick={() => closeMenu()}>
           <span className="text-right leading-none">
             <span className="block text-lg font-bold tracking-tight text-primary">طريق الأكاديمية</span>
             <span className="mt-1 block text-[9px] font-bold tracking-[0.2em] text-accent" dir="ltr">TAREEQ ACADEMY</span>
@@ -81,25 +96,28 @@ export function SiteHeader() {
         </Button>
 
         <Button
+          ref={triggerRef}
           type="button"
           variant="ghost"
           size="icon"
-          className="border border-border/80 bg-card active:scale-[0.97] lg:hidden"
+          className="size-11 rounded-md border border-primary/15 bg-card text-primary shadow-sm transition-[background-color,border-color,transform] duration-200 hover:border-accent/70 hover:bg-secondary active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 motion-reduce:transition-none lg:hidden"
           aria-label={isOpen ? "إغلاق القائمة" : "فتح القائمة"}
           aria-controls="mobile-navigation"
           aria-expanded={isOpen}
-          onClick={() => setIsOpen((current) => !current)}
+          onClick={toggleMenu}
         >
-          {isOpen ? <CloseIcon className="size-5" /> : <MenuIcon className="size-5" />}
+          {isOpen ? <X className="size-5 stroke-[2]" aria-hidden="true" /> : <Menu className="size-5 stroke-[2]" aria-hidden="true" />}
         </Button>
       </Container>
 
-      <div id="mobile-navigation" aria-hidden={!isOpen} className={cn("absolute end-5 top-full z-50 mt-3 w-[min(20rem,calc(100vw-2.5rem))] rounded-md border border-border/80 bg-card p-1.5 shadow-[0_18px_36px_-18px_color-mix(in_srgb,var(--primary)_45%,transparent)] transition-[opacity,transform,visibility] duration-150 sm:end-8 lg:hidden", isOpen ? "visible translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0")}>
-          <nav aria-label="التنقل على الجوال">
-          {navigation.map((item) => (
-            <Link key={item.href} href={item.href} onClick={closeMenu} className="group flex min-h-12 items-center gap-3 rounded-sm px-4 py-3 text-sm font-bold text-foreground/85 transition-colors duration-150 hover:bg-secondary hover:text-primary focus-visible:bg-secondary active:bg-muted">
+      {isOpen ? <div aria-hidden="true" className="fixed inset-x-0 bottom-0 top-[5.5rem] z-40 bg-primary/25 backdrop-blur-[1px] lg:hidden" onPointerDown={() => closeMenu(true)} /> : null}
+      <div id="mobile-navigation" aria-hidden={!isOpen} className={cn("absolute end-4 top-full z-[60] mt-3 w-[min(21rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-primary-foreground/15 bg-primary p-2 shadow-[0_24px_48px_-22px_color-mix(in_srgb,var(--primary)_70%,transparent)] transition-[opacity,transform,visibility] duration-200 ease-out motion-reduce:transition-none sm:end-8 lg:hidden", isOpen ? "visible translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-2 opacity-0")}>
+        <p className="px-3 pb-2 pt-1 text-[0.625rem] font-bold tracking-[0.16em] text-accent">استكشف طريقك التعليمي</p>
+        <nav aria-label="التنقل على الجوال">
+          {navigation.map((item, index) => (
+            <Link ref={index === 0 ? firstNavigationLinkRef : undefined} id={index === 0 ? "mobile-navigation-first-link" : undefined} key={item.href} href={item.href} onClick={() => closeMenu()} className="group flex min-h-12 items-center justify-between gap-3 rounded-lg px-3 py-3 text-sm font-bold text-primary-foreground transition-colors duration-200 hover:bg-primary-foreground/10 focus-visible:bg-primary-foreground/15 active:bg-primary-foreground/15 motion-reduce:transition-none">
               <span>{item.label}</span>
-              <ArrowLeftIcon className="size-4 shrink-0 text-accent transition-transform duration-150 group-hover:-translate-x-0.5" />
+              <ChevronLeft className="size-4 shrink-0 text-accent transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
             </Link>
           ))}
           </nav>
