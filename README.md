@@ -69,3 +69,4 @@ The browser flow is: component → approved query/mutation hook → API resource
 ## Brand note
 
 The current navy, muted gold, and warm off-white values are explicitly provisional centralized tokens in `app/globals.css`. Replace them after receiving the official brand palette and logo.
+## Commit
