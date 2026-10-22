@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 type PageMetadataOptions = {
   index?: boolean;
   pathname?: string;
+  imageUrl?: string | null;
+  publishedAt?: string | null;
+  article?: boolean;
 };
 
 /** Returns the approved public origin only when it is a complete HTTP(S) URL. */
@@ -22,7 +25,7 @@ export function getSiteOrigin() {
 export function createPageMetadata(
   title: string,
   description: string,
-  { index = false, pathname }: PageMetadataOptions = {},
+  { index = false, pathname, imageUrl, publishedAt, article = false }: PageMetadataOptions = {},
 ): Metadata {
   const origin = getSiteOrigin();
   const canonical = origin && pathname ? new URL(pathname, origin).toString() : undefined;
@@ -32,6 +35,14 @@ export function createPageMetadata(
     description,
     robots: index ? undefined : { index: false, follow: false },
     ...(canonical ? { alternates: { canonical } } : {}),
-    openGraph: { title, description, locale: "ar", type: "website", ...(canonical ? { url: canonical } : {}) },
+    openGraph: {
+      title,
+      description,
+      locale: "ar",
+      type: article ? "article" : "website",
+      ...(canonical ? { url: canonical } : {}),
+      ...(imageUrl ? { images: [{ url: imageUrl }] } : {}),
+      ...(article && publishedAt ? { publishedTime: publishedAt } : {}),
+    },
   };
 }

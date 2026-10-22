@@ -45,7 +45,7 @@ Set `NEXT_PUBLIC_ENABLE_DESIGN_REVIEW_MOCKS=true` only for local visual review o
 
 For a Vercel Preview, confirm Vercel Deployment Protection outside this repository before setting the server-only `TAREEQ_PREVIEW_ACCESS_PROTECTED=true`. Until protection is confirmed, Preview renders one clear disclosure. `noindex` is not access protection. This is a build-time setting: set the variables before `npm run build`, then start that newly built output. Set the flag to `false` or remove it and perform a fresh build to restore the normal public-content state. Educational image provenance and the two verified video references are recorded beside the fixture data.
 
-Browser requests fail clearly when `NEXT_PUBLIC_API_BASE_URL` is missing. Server requests prefer `API_BASE_URL` and temporarily fall back to `NEXT_PUBLIC_API_BASE_URL` until a private backend origin is available. No deployed backend URL is configured yet.
+Browser requests fail clearly when `NEXT_PUBLIC_API_BASE_URL` is missing. Server requests prefer `API_BASE_URL` and temporarily fall back to `NEXT_PUBLIC_API_BASE_URL` until a private backend origin is available. No deployed backend URL is committed to the repository; configure it locally or in the deployment environment.
 
 The frontend uses Backend-managed HttpOnly cookie sessions. Browser Axios requests opt into credentials; cross-origin cookie transmission still depends on backend CORS, cookie attributes, deployment domains, and browser cookie policies. The frontend neither stores nor reads tokens, and does not implement authentication flows or a BFF.
 

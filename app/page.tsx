@@ -1,12 +1,14 @@
-/* eslint-disable @next/next/no-img-element -- Review media is externally hosted with provenance recorded in the isolated fixture. */
+/* eslint-disable @next/next/no-img-element -- The established editorial hero image is externally hosted. */
 import Link from "next/link";
 
+import { getArticles, getCountries, getScholarships, getServices, getUniversities } from "@/api/public-content";
 import { Container } from "@/components/layout/container";
 import {
   ContentSection,
   EditorialLink,
   SectionTitle,
 } from "@/components/public/page-components";
+import { ApiUnavailable, ArticleCards, CountryCards, ScholarshipCards, ServiceCards, UniversityCards } from "@/components/public/public-content";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, ArrowUpLeftIcon } from "@/components/ui/icons";
 import { shouldShowDesignReviewDisclosure } from "@/lib/mocks/design-review-mode";
@@ -14,7 +16,6 @@ import {
   designReviewMock,
   isDesignReviewMockEnabled,
 } from "@/lib/mocks/public-design-review";
-import { approvedDestinations } from "@/lib/public-destinations";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata(
@@ -89,10 +90,37 @@ function DestinationFlag({
   );
 }
 
-export default function Home() {
+const studentJourney = [
+  { number: "01", title: "أخبرنا عن خطتك الدراسية", description: "شاركنا ما تبحث عنه لنفهم أولوياتك التعليمية." },
+  { number: "02", title: "نساعدك في اختيار وجهتك وجامعتك", description: "نرتّب معك أسئلة المقارنة بين الخيارات المتاحة." },
+  { number: "03", title: "نرافقك خلال خطوات التقديم", description: "نقدّم توجيهًا واضحًا لفهم إجراءات القبول الجامعي." },
+] as const;
+
+const heroImage = {
+  src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=85",
+  alt: "طلاب يتعاونون حول طاولة في بيئة تعليمية",
+} as const;
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
   const review = isDesignReviewMockEnabled;
-  const scholarships = designReviewMock.scholarships.slice(0, 3);
-  const articles = designReviewMock.articles.slice(0, 3);
+  const scholarships = review ? designReviewMock.scholarships.slice(0, 3) : [];
+  const articles = review ? designReviewMock.articles.slice(0, 3) : [];
+  const live = review
+    ? null
+    : await Promise.allSettled([
+        getCountries({ featured: "true", limit: 3, sort: "manual" }),
+        getUniversities({ featured: "true", limit: 3, sort: "newest" }),
+        getScholarships({ featured: "true", limit: 3, sort: "newest" }),
+        getServices({ featured: "true", limit: 3, sort: "manual" }),
+        getArticles({ featured: "true", limit: 3, sort: "newest" }),
+      ]);
+  const countriesResult = live?.[0];
+  const universitiesResult = live?.[1];
+  const scholarshipsResult = live?.[2];
+  const servicesResult = live?.[3];
+  const articlesResult = live?.[4];
 
   return (
     <main className="overflow-x-clip">
@@ -154,7 +182,7 @@ export default function Home() {
           </div>
           <div className="relative min-h-[17rem] overflow-hidden border border-primary-foreground/15 sm:min-h-[23rem] lg:-ms-4 lg:min-h-full lg:border-y-0">
             <EditorialImage
-              {...designReviewMock.heroImage}
+              {...heroImage}
               priority
               className="object-[52%_center] opacity-90"
             />
@@ -217,27 +245,7 @@ export default function Home() {
                 </Link>
               ))}
             </div>
-          ) : (
-            <div className="mt-10 grid gap-px bg-primary/15 md:grid-cols-3">
-              {approvedDestinations.map((destination) => (
-                <Link
-                  key={destination.slug}
-                  href={`/study-abroad/${destination.slug}`}
-                  className="bg-card p-6 transition-colors hover:bg-secondary focus-visible:bg-secondary"
-                >
-                  <p className="text-xs font-bold tracking-[0.14em] text-accent">
-                    وجهة معتمدة
-                  </p>
-                  <h3 className="mt-6 text-2xl font-bold text-primary">
-                    {destination.name}
-                  </h3>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary">
-                    استكشف الوجهة <ArrowLeftIcon className="size-4" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
+          ) : countriesResult?.status === "fulfilled" && countriesResult.value.items.length ? <CountryCards countries={countriesResult.value.items} /> : countriesResult?.status === "rejected" ? <div className="mt-10"><ApiUnavailable /></div> : null}
         </Container>
       </ContentSection>
 
@@ -306,7 +314,7 @@ export default function Home() {
                 </p>
               </div>
               <ol className="mx-auto mt-10 grid max-w-[800px] gap-0 border-y border-[#C7D4E3] lg:max-w-none lg:grid-cols-3">
-                {designReviewMock.journey.map((step) => (
+                {studentJourney.map((step) => (
                   <li
                     key={step.number}
                     className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 border-b border-[#C7D4E3] py-7 last:border-0 lg:block lg:border-b-0 lg:px-8 lg:first:pe-0 lg:last:ps-8 lg:not(:last-child):border-s"
@@ -505,6 +513,16 @@ export default function Home() {
               </div>
             </Container>
           </ContentSection>
+        </>
+      ) : null}
+
+      {!review ? (
+        <>
+          {servicesResult?.status === "fulfilled" && servicesResult.value.items.length ? <ContentSection className="bg-secondary/65"><Container><SectionTitle eyebrow="كيف نساعدك" title="كيف نساعدك في رحلتك الدراسية؟" intro="خدمات تعليمية منشورة تساعدك على فهم الخطوة التالية." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><ServiceCards services={servicesResult.value.items} /></Container></ContentSection> : servicesResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
+          <section className="bg-[#EDF3F8] py-14 text-[#162D50] sm:py-20 lg:py-24" aria-labelledby="live-journey-title"><Container><div className="max-w-2xl"><p className="text-sm font-semibold tracking-[0.14em] text-[#8A6428]">رحلتك الدراسية</p><h2 id="live-journey-title" className="mt-4 text-3xl font-bold leading-[1.35] tracking-tight sm:text-4xl">رحلتك تبدأ بخطوة واضحة</h2><p className="mt-4 text-sm leading-7 text-[#51667D] sm:text-base">من استكشاف الخيارات إلى الحصول على الإرشاد المناسب لخطوتك القادمة.</p></div><ol className="mx-auto mt-10 grid max-w-[800px] gap-0 border-y border-[#C7D4E3] lg:max-w-none lg:grid-cols-3">{studentJourney.map((step) => <li key={step.number} className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 border-b border-[#C7D4E3] py-7 last:border-0 lg:block lg:border-b-0 lg:px-8 lg:first:pe-0 lg:last:ps-8 lg:not(:last-child):border-s"><span className="text-sm font-semibold tracking-[0.14em] text-[#162D50]" dir="ltr">{step.number}</span><h3 className="text-xl font-bold text-[#162D50] lg:mt-5">{step.title}</h3><p className="col-start-2 mt-2 max-w-sm text-sm leading-7 text-[#51667D] lg:mt-3">{step.description}</p></li>)}</ol></Container></section>
+          {universitiesResult?.status === "fulfilled" && universitiesResult.value.items.length ? <ContentSection className="bg-background"><Container><SectionTitle eyebrow="الجامعات" title="استكشف الجامعات" intro="مؤسسات تعليمية منشورة في وجهات دراسية مختلفة." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><UniversityCards universities={universitiesResult.value.items} /></Container></ContentSection> : universitiesResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
+          {scholarshipsResult?.status === "fulfilled" && scholarshipsResult.value.items.length ? <ContentSection className="bg-[#edf1f5]"><Container><SectionTitle eyebrow="المنح الدراسية" title="اكتشف المنح الدراسية" intro="فرص تمويل منشورة بمعلومات معتمدة." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><ScholarshipCards scholarships={scholarshipsResult.value.items} /></Container></ContentSection> : scholarshipsResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
+          {articlesResult?.status === "fulfilled" && articlesResult.value.items.length ? <ContentSection className="bg-background"><Container><SectionTitle eyebrow="مقالات تعليمية" title="دليلك إلى الدراسة بالخارج" intro="مقالات منشورة تساعدك على فهم الخيارات والاستعداد." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><ArticleCards articles={articlesResult.value.items} /></Container></ContentSection> : articlesResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
         </>
       ) : null}
 

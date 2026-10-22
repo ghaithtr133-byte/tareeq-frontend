@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default function ScholarshipDetailPage() {
-  notFound();
-}
+import { getScholarship } from "@/api/public-content";
+import { ApiError } from "@/api/error";
+import { Container } from "@/components/layout/container";
+import { Breadcrumbs, ContentSection, PageIntro } from "@/components/public/page-components";
+import { ApiUnavailable } from "@/components/public/public-content";
+import { createPageMetadata } from "@/lib/seo";
+
+export const dynamic = "force-dynamic";
+type Props = { params: Promise<{ slug: string }> };
+export async function generateMetadata({ params }: Props): Promise<Metadata> { const { slug } = await params; try { const scholarship = await getScholarship(slug); return createPageMetadata(scholarship.seoTitleAr ?? scholarship.titleAr, scholarship.seoDescriptionAr ?? scholarship.descriptionAr, { index: true, pathname: `/scholarships/${scholarship.slug}`, publishedAt: scholarship.publishedAt }); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); return createPageMetadata("المنحة الدراسية", "معلومات المنحة المنشورة لدى طريق الأكاديمية."); } }
+export default async function ScholarshipDetailPage({ params }: Props) { const { slug } = await params; let scholarship; let unavailable = false; try { scholarship = await getScholarship(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); unavailable = true; } if (unavailable || !scholarship) return <main><ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection></main>; const effectiveStatus = scholarship.effectiveApplicationStatus ?? scholarship.applicationStatus; return <main><Breadcrumbs items={[{ href: "/", label: "الرئيسية" }, { href: "/scholarships", label: "المنح الدراسية" }, { label: scholarship.titleAr }]} /><PageIntro eyebrow={effectiveStatus === "CLOSED" ? "منحة مغلقة" : "منحة مفتوحة"} title={scholarship.titleAr} intro={scholarship.descriptionAr} /><ContentSection><Container className="max-w-5xl"><dl className="grid gap-5 border-y border-primary/15 py-7 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">المستوى الدراسي</dt><dd className="mt-1 font-bold text-primary">{scholarship.studyLevel}</dd></div><div><dt className="text-muted-foreground">نوع التمويل</dt><dd className="mt-1 font-bold text-primary">{scholarship.fundingType}</dd></div><div><dt className="text-muted-foreground">حالة التقديم</dt><dd className="mt-1 font-bold text-primary">{effectiveStatus === "CLOSED" ? "مغلق" : "مفتوح"}</dd></div>{scholarship.verifiedDeadline ? <div><dt className="text-muted-foreground">الموعد النهائي الموثق</dt><dd className="mt-1 font-bold text-primary">{new Intl.DateTimeFormat("ar", { dateStyle: "long" }).format(new Date(scholarship.verifiedDeadline))}</dd></div> : null}</dl><h2 className="mt-10 text-2xl font-bold text-primary">المتطلبات</h2><p className="mt-4 whitespace-pre-line leading-8 text-muted-foreground">{scholarship.requirementsAr}</p>{scholarship.officialSourceUrl ? <a href={scholarship.officialSourceUrl} target="_blank" rel="noreferrer" className="mt-8 inline-flex min-h-11 items-center bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90">المصدر الرسمي</a> : null}<div className="mt-10 flex flex-wrap gap-4 text-sm font-bold text-primary">{scholarship.country ? <Link href={`/study-abroad/${scholarship.country.slug}`}>وجهة: {scholarship.country.nameAr}</Link> : null}{scholarship.university ? <Link href={`/universities/${scholarship.university.slug}`}>جامعة: {scholarship.university.nameAr}</Link> : null}</div></Container></ContentSection></main>; }
