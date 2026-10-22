@@ -20,7 +20,7 @@ Arabic-first frontend foundation for Tareeq Academy, an educational consulting p
 npm install
 npm run dev
 ```
-.
+
 Open `http://localhost:3000`.
 
 ## Commands

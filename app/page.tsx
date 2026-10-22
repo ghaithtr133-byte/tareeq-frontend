@@ -141,7 +141,7 @@ export default async function Home() {
           <div className="flex max-w-2xl flex-col justify-center py-2 lg:py-[clamp(5rem,9vw,8.5rem)]">
             <p className="flex items-center gap-3 text-sm font-semibold tracking-[0.14em] text-[#D4B57A]">
               <span className="h-px w-10 bg-accent" aria-hidden="true" />
-              استشارات تعليمية
+              استشارات 
             </p>
             <h1
               id="hero-title"
