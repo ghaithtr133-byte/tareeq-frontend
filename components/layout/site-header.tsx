@@ -84,14 +84,17 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex xl:gap-2" aria-label="التنقل الرئيسي">
-          {navigation.map((item) => (
-            <Link key={item.href} href={item.href} aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined} className="rounded-sm px-2 py-2 text-[0.75rem] font-bold text-foreground/75 transition-colors duration-150 hover:bg-secondary/80 hover:text-primary focus-visible:bg-secondary active:bg-muted xl:px-3 xl:text-[0.8125rem]">
-              {item.label}
-            </Link>
-          ))}
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined} className={cn("border-b-2 px-2 py-2 text-[0.75rem] font-bold transition-colors duration-150 focus-visible:bg-secondary xl:px-3 xl:text-[0.8125rem]", isActive ? "border-accent text-primary" : "border-transparent text-foreground/75 hover:border-accent/45 hover:text-primary")}>
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <Button asChild size="sm" variant="outline" className="hidden border-accent/70 px-5 text-primary hover:border-accent hover:bg-accent/10 lg:inline-flex">
+        <Button asChild size="sm" variant="outline" className="hidden border-accent/70 bg-[#F7F1E5] px-5 text-primary hover:border-accent hover:bg-accent/15 lg:inline-flex">
           <a href="https://wa.me/963992277142" target="_blank" rel="noreferrer">تواصل عبر واتساب</a>
         </Button>
 
@@ -115,7 +118,7 @@ export function SiteHeader() {
         <p className="px-3 pb-2 pt-1 text-[0.625rem] font-bold tracking-[0.16em] text-accent">استكشف طريقك التعليمي</p>
         <nav aria-label="التنقل على الجوال">
           {navigation.map((item, index) => (
-            <Link ref={index === 0 ? firstNavigationLinkRef : undefined} id={index === 0 ? "mobile-navigation-first-link" : undefined} key={item.href} href={item.href} onClick={() => closeMenu()} className="group flex min-h-12 items-center justify-between gap-3 rounded-lg px-3 py-3 text-sm font-bold text-primary-foreground transition-colors duration-200 hover:bg-primary-foreground/10 focus-visible:bg-primary-foreground/15 active:bg-primary-foreground/15 motion-reduce:transition-none">
+            <Link ref={index === 0 ? firstNavigationLinkRef : undefined} id={index === 0 ? "mobile-navigation-first-link" : undefined} key={item.href} href={item.href} onClick={() => closeMenu()} className={cn("group flex min-h-12 items-center justify-between gap-3 rounded-lg px-3 py-3 text-sm font-bold text-primary-foreground transition-colors duration-200 hover:bg-primary-foreground/10 focus-visible:bg-primary-foreground/15 active:bg-primary-foreground/15 motion-reduce:transition-none", pathname === item.href || pathname.startsWith(`${item.href}/`) ? "bg-primary-foreground/10" : "")}>
               <span>{item.label}</span>
               <ChevronLeft className="size-4 shrink-0 text-accent transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
             </Link>

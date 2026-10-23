@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isDemoDetailSlug } from "@/lib/mocks/public-demo-routes";
+import { isPublicDemoMode } from "@/lib/public-content-mode";
+
 const detailRoutes: ReadonlyArray<readonly [RegExp, string]> = [
   [/^\/study-abroad\/([^/]+)$/, "countries"],
   [/^\/universities\/([^/]+)$/, "universities"],
@@ -20,7 +23,15 @@ export async function proxy(request: NextRequest) {
 
   const detailRoute = findDetailRoute(request.nextUrl.pathname);
   const baseUrl = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!detailRoute || !baseUrl) return NextResponse.next();
+  if (!detailRoute) return NextResponse.next();
+
+  if (isPublicDemoMode()) {
+    return isDemoDetailSlug(detailRoute.collection, detailRoute.slug)
+      ? NextResponse.next()
+      : NextResponse.rewrite(new URL("/_content-not-found", request.url), { status: 404 });
+  }
+
+  if (!baseUrl) return NextResponse.next();
 
   try {
     const response = await fetch(

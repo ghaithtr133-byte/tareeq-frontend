@@ -1,6 +1,19 @@
 import "server-only";
 
 import { serverApiClient } from "@/api/server-client";
+import {
+  getDemoArticle,
+  getDemoArticles,
+  getDemoCountries,
+  getDemoCountry,
+  getDemoScholarships,
+  getDemoScholarship,
+  getDemoServices,
+  getDemoService,
+  getDemoUniversities,
+  getDemoUniversity,
+} from "@/lib/mocks/public-demo-content";
+import { isPublicDemoMode } from "@/lib/public-content-mode";
 
 export type PublicationStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 export type FeaturedFilter = "true" | "false";
@@ -173,13 +186,13 @@ async function getPublic<T>(path: string, params?: Record<string, string | numbe
   return response.data.data;
 }
 
-export const getCountries = (params: CountryListParams = {}) => getPublic<PublicList<Country>>("/countries", params);
-export const getCountry = (slug: string) => getPublic<Country>(`/countries/${encodeURIComponent(slug)}`);
-export const getUniversities = (params: UniversityListParams = {}) => getPublic<PublicList<University>>("/universities", params);
-export const getUniversity = (slug: string) => getPublic<University>(`/universities/${encodeURIComponent(slug)}`);
-export const getScholarships = (params: ScholarshipListParams = {}) => getPublic<PublicList<Scholarship>>("/scholarships", params);
-export const getScholarship = (slug: string) => getPublic<Scholarship>(`/scholarships/${encodeURIComponent(slug)}`);
-export const getServices = (params: ServiceListParams = {}) => getPublic<PublicList<Service>>("/services", params);
-export const getService = (slug: string) => getPublic<Service>(`/services/${encodeURIComponent(slug)}`);
-export const getArticles = (params: ArticleListParams = {}) => getPublic<PublicList<Article>>("/articles", params);
-export const getArticle = (slug: string) => getPublic<Article>(`/articles/${encodeURIComponent(slug)}`);
+export const getCountries = (params: CountryListParams = {}) => isPublicDemoMode() ? getDemoCountries(params) : getPublic<PublicList<Country>>("/countries", params);
+export const getCountry = (slug: string) => isPublicDemoMode() ? getDemoCountry(slug) : getPublic<Country>(`/countries/${encodeURIComponent(slug)}`);
+export const getUniversities = (params: UniversityListParams = {}) => isPublicDemoMode() ? getDemoUniversities(params) : getPublic<PublicList<University>>("/universities", params);
+export const getUniversity = (slug: string) => isPublicDemoMode() ? getDemoUniversity(slug) : getPublic<University>(`/universities/${encodeURIComponent(slug)}`);
+export const getScholarships = (params: ScholarshipListParams = {}) => isPublicDemoMode() ? getDemoScholarships(params) : getPublic<PublicList<Scholarship>>("/scholarships", params);
+export const getScholarship = (slug: string) => isPublicDemoMode() ? getDemoScholarship(slug) : getPublic<Scholarship>(`/scholarships/${encodeURIComponent(slug)}`);
+export const getServices = (params: ServiceListParams = {}) => isPublicDemoMode() ? getDemoServices(params) : getPublic<PublicList<Service>>("/services", params);
+export const getService = (slug: string) => isPublicDemoMode() ? getDemoService(slug) : getPublic<Service>(`/services/${encodeURIComponent(slug)}`);
+export const getArticles = (params: ArticleListParams = {}) => isPublicDemoMode() ? getDemoArticles(params) : getPublic<PublicList<Article>>("/articles", params);
+export const getArticle = (slug: string) => isPublicDemoMode() ? getDemoArticle(slug) : getPublic<Article>(`/articles/${encodeURIComponent(slug)}`);

@@ -39,6 +39,15 @@ npm run start      # Serve a production build
 
 `NEXT_PUBLIC_SITE_URL` is the approved public website origin used to generate canonical and Open Graph URLs, for example `https://www.example.com`. Leave it empty until the production domain is approved; the frontend deliberately emits no canonical URL when it is unset or invalid.
 
+### Persistent public demo content
+
+`PUBLIC_CONTENT_MODE` selects exactly one public-content source:
+
+- `live` (the default for an absent or invalid value) keeps the existing server-side Axios requests to the Backend.
+- `demo` serves contract-aligned Arabic demonstration records bundled with the Frontend. It does not need a local fixture server or a localhost API URL, so it can be used for a configured deployment review.
+
+Set `PUBLIC_CONTENT_MODE=demo` before building a dedicated demo deployment. Demo mode adds a visible Arabic disclosure and emits `noindex, nofollow` metadata. It never contacts the Backend, merges with live records, or activates as an error fallback. Set `PUBLIC_CONTENT_MODE=live` (or remove it) and build again to restore normal public content and indexing behavior. The legacy `scripts/public-api-fixture-server.mjs` remains an explicit local integration-test tool only; it is not used by either deployed mode.
+
 ### Homepage design-review fixtures
 
 Set `NEXT_PUBLIC_ENABLE_DESIGN_REVIEW_MOCKS=true` only for local visual review or a Vercel Preview deployment. `lib/mocks/design-review-mode.ts` resolves the mode on the server: the flag works only in local development or `VERCEL_ENV=preview`, and is forcibly disabled in Vercel Production and unclassified production contexts. Mock-enabled pages emit `noindex, nofollow`; the fixture records do not create public detail routes, sitemap entries, or Backend requests.

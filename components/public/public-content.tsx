@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import type { Article, ArticleBlock, Country, Pagination, Scholarship, Service, University } from "@/api/public-content";
 import { Container } from "@/components/layout/container";
 import { ContentUnavailable } from "@/components/public/page-components";
+import { buildArticleToc } from "@/lib/article-toc";
 import { queryString, type RouteSearchParams } from "@/lib/public-search-params";
 
 function PublicImage({ src, alt, className = "" }: { src: string | null; alt: string | null; className?: string }) {
@@ -60,7 +61,11 @@ export function CountryCards({ countries }: { countries: Country[] }) {
 }
 
 export function UniversityCards({ universities }: { universities: University[] }) {
-  return <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{universities.map((university) => <Link key={university.id} href={`/universities/${university.slug}`} className="group overflow-hidden border border-primary/15 bg-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">{university.imageUrl ? <div className="aspect-[16/9]"><PublicImage src={university.imageUrl} alt={university.imageAltAr} /></div> : null}<div className="p-6"><p className="text-sm text-muted-foreground">{university.country?.nameAr ?? ""}{university.cityAr ? `، ${university.cityAr}` : ""}</p><h2 className="mt-2 text-xl font-bold text-primary group-hover:text-accent">{university.nameAr}</h2><p className="mt-3 line-clamp-3 text-sm leading-7 text-muted-foreground">{university.overviewAr}</p></div></Link>)}</div>;
+  const featuredId = universities.length >= 3 ? universities.find((university) => university.featured)?.id : undefined;
+  return <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{universities.map((university) => {
+    const isFeatured = university.id === featuredId;
+    return <Link key={university.id} href={`/universities/${university.slug}`} className={`group overflow-hidden border border-primary/15 bg-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${isFeatured ? "sm:col-span-2 sm:grid sm:grid-cols-[minmax(12rem,0.9fr)_minmax(0,1.1fr)] xl:col-span-2" : ""}`}>{university.imageUrl ? <div className={`aspect-[16/9] ${isFeatured ? "sm:aspect-auto" : ""}`}><PublicImage src={university.imageUrl} alt={university.imageAltAr} /></div> : null}<div className={`p-6 ${isFeatured ? "sm:flex sm:flex-col sm:justify-center sm:p-8" : ""}`}><p className="text-sm text-muted-foreground">{university.country?.nameAr ?? ""}{university.cityAr ? `، ${university.cityAr}` : ""}</p>{isFeatured ? <p className="mt-4 text-xs font-bold tracking-[0.14em] text-accent">جامعة مميزة</p> : null}<h2 className={`mt-2 font-bold text-primary group-hover:text-accent ${isFeatured ? "text-2xl leading-9" : "text-xl"}`}>{university.nameAr}</h2><p className={`mt-3 text-sm leading-7 text-muted-foreground ${isFeatured ? "line-clamp-4" : "line-clamp-3"}`}>{university.overviewAr}</p></div></Link>;
+  })}</div>;
 }
 
 export function ScholarshipCards({ scholarships }: { scholarships: Scholarship[] }) {
@@ -72,7 +77,11 @@ export function ServiceCards({ services }: { services: Service[] }) {
 }
 
 export function ArticleCards({ articles }: { articles: Article[] }) {
-  return <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">{articles.map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="group flex flex-col overflow-hidden rounded-xl border border-primary/15 bg-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">{article.coverImageUrl ? <div className="aspect-[16/10]"><PublicImage src={article.coverImageUrl} alt={article.coverImageAltAr} /></div> : null}<div className="flex flex-1 flex-col p-6"><p className="text-xs font-bold tracking-[0.14em] text-accent">مقال تعليمي</p><h2 className="mt-3 text-xl font-bold leading-8 text-primary group-hover:text-accent">{article.titleAr}</h2><p className="mt-3 line-clamp-4 text-sm leading-7 text-muted-foreground">{article.summaryAr}</p></div></Link>)}</div>;
+  const featuredId = articles.length >= 3 ? articles.find((article) => article.featured)?.id : undefined;
+  return <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">{articles.map((article) => {
+    const isFeatured = article.id === featuredId;
+    return <Link key={article.id} href={`/articles/${article.slug}`} className={`group flex flex-col overflow-hidden rounded-xl border border-primary/15 bg-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${isFeatured ? "sm:col-span-2 sm:grid sm:grid-cols-[minmax(12rem,0.95fr)_minmax(0,1.05fr)] xl:col-span-2" : ""}`}>{article.coverImageUrl ? <div className={`aspect-[16/10] ${isFeatured ? "sm:aspect-auto" : ""}`}><PublicImage src={article.coverImageUrl} alt={article.coverImageAltAr} /></div> : null}<div className={`flex flex-1 flex-col p-6 ${isFeatured ? "sm:justify-center sm:p-8" : ""}`}><p className="text-xs font-bold tracking-[0.14em] text-accent">{isFeatured ? "مقال مميز" : "مقال تعليمي"}</p><h2 className={`mt-3 font-bold leading-8 text-primary group-hover:text-accent ${isFeatured ? "text-2xl leading-9" : "text-xl"}`}>{article.titleAr}</h2><p className={`mt-3 text-sm leading-7 text-muted-foreground ${isFeatured ? "line-clamp-5" : "line-clamp-4"}`}>{article.summaryAr}</p></div></Link>;
+  })}</div>;
 }
 
 export function DetailImage({ src, alt }: { src: string | null; alt: string | null }) {
@@ -80,13 +89,14 @@ export function DetailImage({ src, alt }: { src: string | null; alt: string | nu
 }
 
 export function ArticleBlocks({ blocks }: { blocks: ArticleBlock[] }) {
+  const headingIds = new Map(buildArticleToc(blocks).map((item) => [item.blockIndex, item.id]));
   return <div className="mt-8 space-y-5 text-base leading-8 text-muted-foreground">{blocks.map((block, index) => {
     const key = `${block.type}-${index}`;
-    if (block.type === "heading2") return <h2 key={key} className="pt-4 text-2xl font-bold leading-9 text-primary">{block.text}</h2>;
-    if (block.type === "heading3") return <h3 key={key} className="pt-3 text-xl font-bold leading-8 text-primary">{block.text}</h3>;
-    if (block.type === "bulleted-list") return <ul key={key} className="list-disc space-y-2 pe-6"><li>{block.text}</li></ul>;
-    if (block.type === "numbered-list") return <ol key={key} className="list-decimal space-y-2 pe-6"><li>{block.text}</li></ol>;
-    if (block.type === "quote") return <blockquote key={key} className="border-s-4 border-accent bg-secondary/60 p-5 text-primary">{block.text}</blockquote>;
+    if (block.type === "heading2") return <h2 id={headingIds.get(index)} key={key} className="scroll-mt-28 pt-8 text-2xl font-bold leading-10 text-primary sm:text-3xl">{block.text}</h2>;
+    if (block.type === "heading3") return <h3 id={headingIds.get(index)} key={key} className="scroll-mt-28 pt-4 text-xl font-bold leading-9 text-primary">{block.text}</h3>;
+    if (block.type === "bulleted-list") return <ul key={key} className="list-disc space-y-2 pe-6 leading-8"><li>{block.text}</li></ul>;
+    if (block.type === "numbered-list") return <ol key={key} className="list-decimal space-y-2 pe-6 leading-8"><li>{block.text}</li></ol>;
+    if (block.type === "quote") return <blockquote key={key} className="border-s-4 border-accent bg-secondary/60 p-5 leading-8 text-primary">{block.text}</blockquote>;
     return <p key={key}>{block.text}</p>;
   })}</div>;
 }

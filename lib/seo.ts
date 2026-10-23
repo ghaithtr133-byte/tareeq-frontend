@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { isPublicDemoMode } from "@/lib/public-content-mode";
+
 type PageMetadataOptions = {
   index?: boolean;
   pathname?: string;
@@ -33,7 +35,7 @@ export function createPageMetadata(
   return {
     title,
     description,
-    robots: index ? undefined : { index: false, follow: false },
+    robots: index && !isPublicDemoMode() ? undefined : { index: false, follow: false },
     ...(canonical ? { alternates: { canonical } } : {}),
     openGraph: {
       title,

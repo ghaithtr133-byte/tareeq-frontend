@@ -16,6 +16,7 @@ import {
   designReviewMock,
   isDesignReviewMockEnabled,
 } from "@/lib/mocks/public-design-review";
+import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata(
@@ -104,7 +105,7 @@ const heroImage = {
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const review = isDesignReviewMockEnabled;
+  const review = isDesignReviewMockEnabled && !isPublicDemoMode();
   const scholarships = review ? designReviewMock.scholarships.slice(0, 3) : [];
   const articles = review ? designReviewMock.articles.slice(0, 3) : [];
   const live = review
@@ -141,7 +142,7 @@ export default async function Home() {
           <div className="flex max-w-2xl flex-col justify-center py-2 lg:py-[clamp(5rem,9vw,8.5rem)]">
             <p className="flex items-center gap-3 text-sm font-semibold tracking-[0.14em] text-[#D4B57A]">
               <span className="h-px w-10 bg-accent" aria-hidden="true" />
-              استشارات 
+              استشارات  ّّ
             </p>
             <h1
               id="hero-title"
