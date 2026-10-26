@@ -2,7 +2,10 @@
 import Link from "next/link";
 import NextImage from "next/image";
 import {
+  BookOpenText,
   CircleDollarSign,
+  ClipboardList,
+  Compass,
   FileText,
   GraduationCap,
   MapPinned,
@@ -42,14 +45,23 @@ type Card = {
   image?: string;
   alt?: string;
   date?: string;
+  location?: string;
+};
+const demoUniversityLogos: Record<string, string> = {
+  "university-bucharest": "/images/universities/university-of-bucharest.svg",
 };
 const journey = [
   ["01", "اختيار الوجهة", "حدّد ما يناسب خطتك الدراسية."],
   ["02", "اختيار الجامعة", "اقرأ الخيارات المنشورة بوضوح."],
-  ["03", "تجهيز ملف التقديم", "رتّب وثائقك وخطوتك التالية."],
+  ["03", "تقديم الطلب", "رتّب وثائقك وخطوتك التالية."],
   ["04", "بدء الرحلة", "تابع مسارك بمعلومات موثوقة."],
 ] as const;
-const serviceIcons = [GraduationCap, MapPinned, CircleDollarSign, FileText];
+const serviceIcons: Record<string, typeof GraduationCap> = {
+  "destination-guidance": Compass,
+  "university-guidance": GraduationCap,
+  "application-preparation": ClipboardList,
+  "visa-guidance": FileText,
+};
 const demoDestinationLines: Record<string, string> = {
   turkey: "استكشف الدراسة والجامعات في تركيا",
   malaysia: "تعرّف على خيارات الدراسة في ماليزيا",
@@ -144,12 +156,16 @@ function MoreLink({
     </Link>
   );
 }
-function UniversityMark({ title }: { title: string }) {
+function UniversityMark({ title, logo }: { title: string; logo?: string }) {
   return (
-    <div className="grid aspect-[16/7] place-items-center border-b border-[#E2E8F0] bg-[#F8FAFC] px-5 text-center">
-      <span className="max-w-48 text-base font-extrabold leading-6 text-[#082B50]">
-        {title}
-      </span>
+    <div className="grid h-36 place-items-center px-6 py-5 text-center">
+      {logo ? (
+        <NextImage src={logo} alt={`شعار ${title}`} width={160} height={128} className="max-h-28 w-auto max-w-full object-contain" />
+      ) : (
+        <span className="grid size-20 place-items-center rounded-full bg-[#F1F5F9] text-[#8EA3BA]" aria-label={`شعار ${title} غير متاح`}>
+          <GraduationCap className="size-10 stroke-[1.5]" aria-hidden="true" />
+        </span>
+      )}
     </div>
   );
 }
@@ -424,38 +440,37 @@ export default async function Home() {
       ) : null}
       {universities.length ? (
         <section
-          className="border-y border-[#E2E8F0] bg-white py-20 sm:py-24"
+          className="border-y border-[#E2E8F0] bg-white py-16 sm:py-20"
           aria-labelledby="universities-title"
         >
           <Container>
-            <div className="flex flex-wrap items-end justify-between gap-5">
-              <Heading
-                id="universities-title"
-                eyebrow="جامعات مميزة"
-                title="اكتشف الجامعات المناسبة لخطة دراستك"
-                intro="السجلات المعروضة تعتمد على المحتوى المنشور فقط."
-              />
-              <MoreLink href="/universities">عرض جميع الجامعات</MoreLink>
+            <div className="grid gap-4 text-center lg:grid-cols-[1fr_auto_1fr] lg:items-end">
+              <div className="lg:col-start-2 lg:row-start-1">
+                <h2 id="universities-title" className="text-3xl font-bold leading-tight text-[#082B50] sm:text-4xl">جامعات مميزة</h2>
+                <p className="mt-2 text-base leading-7 text-[#52647A]">تعرّف على خيارات الدراسة الجامعية المنشورة.</p>
+              </div>
+              <div className="lg:col-start-3 lg:row-start-1 lg:justify-self-end">
+                <MoreLink href="/universities">عرض جميع الجامعات</MoreLink>
+              </div>
             </div>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
               {universities.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="group overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_16px_30px_-28px_rgba(8,43,80,0.65)] transition-shadow hover:shadow-[0_22px_36px_-26px_rgba(8,43,80,0.5)]"
+                  className="group flex min-w-0 flex-col rounded-xl border border-[#E2E8F0] bg-white text-center shadow-[0_10px_25px_-22px_rgba(8,43,80,0.5)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-20px_rgba(8,43,80,0.5)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#A47B2D] motion-reduce:transform-none motion-reduce:transition-none"
                 >
-                  <UniversityMark title={item.title} />
-                  <div className="p-5">
-                    <span className="text-xs font-bold text-[#A47B2D]">
-                      {item.meta ?? "جامعة منشورة"}
-                    </span>
-                    <h3 className="mt-2 text-lg font-bold leading-8 text-[#082B50]">
+                  <UniversityMark title={item.title} logo={demoMode ? demoUniversityLogos[item.slug ?? ""] : undefined} />
+                  <div className="flex flex-1 flex-col items-center px-5 pb-5">
+                    <h3 className="text-base font-bold leading-7 text-[#082B50] 2xl:text-lg">
                       {item.title}
                     </h3>
-                    <p className="mt-2 line-clamp-2 text-[0.9375rem] leading-7 text-[#52647A] 2xl:text-base">
-                      {item.body}
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#17669C]">
+                    <p className="mt-0.5 text-sm text-[#52647A]">{item.meta}</p>
+                    <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-semibold text-[#52647A]">
+                      {item.location ? <span className="rounded-full bg-[#F1F5F9] px-3 py-1">{item.location}</span> : null}
+                      <span className="rounded-full bg-[#F1F5F9] px-3 py-1">جامعة منشورة</span>
+                    </div>
+                    <span className="mt-auto inline-flex min-h-11 items-center gap-2 pt-3 text-sm font-bold text-[#17669C] transition-colors group-hover:text-[#A47B2D] group-focus-visible:text-[#A47B2D] motion-reduce:transition-none">
                       التفاصيل <ArrowLeftIcon className="size-4" />
                     </span>
                   </div>
@@ -467,33 +482,30 @@ export default async function Home() {
       ) : null}
       {services.length ? (
         <section
-          className="bg-[#F1F5F9] py-20 sm:py-24"
+          className="bg-white py-16 sm:py-20"
           aria-labelledby="services-title"
         >
           <Container>
-            <Heading
-              id="services-title"
-              eyebrow="خدماتنا"
-              title="دعم عملي لكل خطوة في رحلتك الدراسية"
-              intro="خدمات منشورة تساعدك على ترتيب الأسئلة والاستعداد للخطوة التالية."
-              center
-            />
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-              {services.map((item, index) => {
-                const Icon = serviceIcons[index % serviceIcons.length];
+            <div className="text-center">
+              <h2 id="services-title" className="text-3xl font-bold leading-tight text-[#082B50] sm:text-4xl">خدماتنا</h2>
+              <p className="mt-2 text-base leading-7 text-[#52647A]">نرافقك في كل خطوة من رحلتك الدراسية.</p>
+            </div>
+            <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${services.length >= 5 ? "xl:grid-cols-5" : "xl:grid-cols-4"}`}>
+              {services.map((item) => {
+                const Icon = serviceIcons[item.slug ?? ""] ?? BookOpenText;
                 return (
                   <Link
                     key={item.id}
                     href={item.href}
-                    className="group min-h-52 rounded-xl border border-[#E2E8F0] bg-white p-5 text-center shadow-[0_12px_25px_-25px_rgba(8,43,80,0.65)]"
+                    className="group flex min-w-0 flex-col items-center rounded-xl border border-[#E2E8F0] bg-white px-5 py-6 text-center shadow-[0_10px_25px_-23px_rgba(8,43,80,0.48)] transition-shadow duration-300 hover:shadow-[0_16px_28px_-19px_rgba(8,43,80,0.5)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#A47B2D] motion-reduce:transition-none"
                   >
-                    <span className="mx-auto grid size-10 place-items-center text-[#C8A253]">
-                      <Icon className="size-7" aria-hidden="true" />
+                    <span className="grid size-11 place-items-center text-[#B7852C] transition-transform duration-300 group-hover:scale-105 group-focus-visible:scale-105 motion-reduce:transform-none motion-reduce:transition-none">
+                      <Icon className="size-8 stroke-[1.7]" aria-hidden="true" />
                     </span>
-                    <h3 className="mt-4 text-lg font-bold text-[#082B50] group-hover:text-[#17669C]">
+                    <h3 className="mt-3 text-lg font-bold leading-7 text-[#082B50]">
                       {item.title}
                     </h3>
-                    <p className="mt-3 line-clamp-3 text-[0.9375rem] leading-7 text-[#52647A] 2xl:text-base">
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[#52647A] 2xl:text-[0.9375rem]">
                       {item.body}
                     </p>
                   </Link>
@@ -504,47 +516,39 @@ export default async function Home() {
         </section>
       ) : null}
       <section
-        className="relative overflow-hidden bg-[#082B50] py-18 text-white sm:py-20"
+        className="relative isolate overflow-hidden rounded-[1.5rem] bg-[#082B50] text-white"
         aria-labelledby="journey-title"
       >
         <span
-          className="pointer-events-none absolute bottom-0 start-0 h-20 w-56 bg-[radial-gradient(ellipse_at_bottom_left,rgba(200,162,83,0.28),transparent_65%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[url('/images/journey/journey-background.png')] bg-cover bg-left sm:h-56 lg:inset-0 lg:h-auto lg:bg-cover lg:bg-left"
           aria-hidden="true"
         />
-        <Container className="relative">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <Heading
-              id="journey-title"
-              eyebrow="رحلتك الدراسية"
-              title="رحلتك تبدأ بخطوة واضحة"
-              intro="من اختيار الوجهة إلى تجهيز المسار الدراسي، نرتّب المعلومات المنشورة أمامك."
-              light
-            />
+        <span className="pointer-events-none absolute inset-x-0 top-24 h-32 bg-gradient-to-b from-transparent to-[#082B50] lg:inset-0 lg:h-auto lg:bg-gradient-to-l lg:from-[#082B50]/20 lg:via-[#082B50]/35 lg:to-[#082B50]/70" aria-hidden="true" />
+        <Container className="relative pt-48 pb-10 sm:pt-56 lg:py-14 xl:grid xl:grid-cols-[minmax(15rem,26%)_minmax(0,1fr)] xl:items-center xl:gap-8">
+          <div className="max-w-md text-right">
+            <p className="text-sm font-bold text-[#F5D98E]">خطوات الرحلة</p>
+            <h2 id="journey-title" className="mt-2 text-3xl font-bold leading-tight text-white xl:text-4xl">رحلتك الدراسية</h2>
+            <p className="mt-2 text-base leading-7 text-[#D8E3F0]">من الخطوة الأولى إلى بداية رحلتك، نرتّب الخيارات بوضوح.</p>
             <a
-              href={createWhatsappUrl(
-                "مرحبًا، أود الاستفسار عن خطوات بدء رحلتي الدراسية.",
-              )}
+              href={createWhatsappUrl("مرحبًا، أود الاستفسار عن خطوات بدء رحلتي الدراسية.")}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-bold text-white transition-colors hover:text-[#C8A253] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C8A253]"
+              className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#F5D98E] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253] motion-reduce:transition-none"
             >
-              ابدأ رحلتك
-              <ArrowLeftIcon className="size-4" />
+              ابدأ رحلتك <ArrowLeftIcon className="size-4" />
             </a>
           </div>
-          <ol className="relative mt-12 grid gap-9 md:grid-cols-2 xl:grid-cols-4 xl:gap-0 xl:before:absolute xl:before:inset-x-0 xl:before:top-3 xl:before:h-px xl:before:bg-[#C8A253]/75">
+          <ol className="relative mt-8 grid gap-5 border-r border-[#C8A253]/65 pr-6 xl:mt-0 xl:grid-cols-4 xl:gap-3 xl:border-r-0 xl:pr-0 xl:before:absolute xl:before:inset-x-6 xl:before:top-[1.125rem] xl:before:h-px xl:before:bg-[#C8A253]/75">
             {journey.map(([number, title, body]) => (
               <li
                 key={number}
-                className="relative pt-8 xl:px-5 first:xl:pe-0 last:xl:ps-0"
+                className="group relative min-w-0 pr-3 xl:pr-0 xl:pt-12 xl:text-center"
               >
-                <span className="absolute top-0 grid size-7 place-items-center rounded-full bg-[#C8A253] text-xs font-extrabold text-[#082B50]">
+                <span className="absolute -right-[2.35rem] top-0 grid size-9 place-items-center rounded-full border-2 border-[#082B50] bg-[#C8A253] text-sm font-extrabold text-[#082B50] transition-transform duration-300 group-hover:scale-105 xl:right-1/2 xl:top-0 xl:translate-x-1/2 motion-reduce:transition-none">
                   {number}
                 </span>
-                <h3 className="mt-2 text-lg font-bold">{title}</h3>
-                <p className="mt-3 max-w-64 text-base leading-8 text-white/75">
-                  {body}
-                </p>
+                <h3 className="text-lg font-bold leading-7 text-white">{title}</h3>
+                <p className="mt-1 text-sm leading-6 text-[#D8E3F0]">{body}</p>
               </li>
             ))}
           </ol>
@@ -751,10 +755,11 @@ function countryCard(item: Country): Card {
 function universityCard(item: University): Card {
   return {
     id: item.id,
+    slug: item.slug,
     title: item.nameAr,
     href: `/universities/${item.slug}`,
-    body: item.overviewAr,
     meta: item.country?.nameAr ?? item.cityAr,
+    location: item.country?.nameAr === item.cityAr ? undefined : item.cityAr,
   };
 }
 function scholarshipCard(item: Scholarship): Card {
@@ -769,6 +774,7 @@ function scholarshipCard(item: Scholarship): Card {
 function serviceCard(item: Service): Card {
   return {
     id: item.id,
+    slug: item.slug,
     title: item.titleAr,
     href: `/services/${item.slug}`,
     body: item.summaryAr,
