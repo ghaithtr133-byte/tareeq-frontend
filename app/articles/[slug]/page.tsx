@@ -11,6 +11,7 @@ import { Breadcrumbs, ContentSection } from "@/components/public/page-components
 import { ApiUnavailable, ArticleBlocks, DetailImage } from "@/components/public/public-content";
 import { buildArticleToc } from "@/lib/article-toc";
 import { createPageMetadata } from "@/lib/seo";
+import { createWhatsappUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ export default async function ArticleDetailPage({ params }: Props) {
             <aside className="hidden xl:sticky xl:top-28 xl:block xl:self-start" dir="rtl">
               <div className="border border-primary/15 bg-card p-5">
                 <ArticleTableOfContents items={tocItems} variant="desktop" />
-                <a href="https://wa.me/963992277142" target="_blank" rel="noreferrer" className="mt-5 block border-b-2 border-[#D4B57A] bg-primary px-4 py-4 text-center text-primary-foreground transition-colors hover:bg-[#203A5E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+                <a href={createWhatsappUrl("مرحبًا، أود الاستفسار عن مساعدة في التقديم.")} target="_blank" rel="noreferrer" className="mt-5 block border-b-2 border-[#D4B57A] bg-primary px-4 py-4 text-center text-primary-foreground transition-colors hover:bg-[#203A5E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                   <span className="block text-base font-bold">قدّم الآن</span>
                   <span className="mt-1 block text-xs leading-5 text-primary-foreground/75">تواصل معنا لمساعدتك في التقديم</span>
                 </a>
@@ -91,7 +92,7 @@ export default async function ArticleDetailPage({ params }: Props) {
               <DetailImage src={article.coverImageUrl} alt={article.coverImageAltAr} />
               <div className="mt-6 space-y-4 xl:hidden">
                 <ArticleTableOfContents items={tocItems} variant="mobile" />
-                <a href="https://wa.me/963992277142" target="_blank" rel="noreferrer" className="block border-b-2 border-[#D4B57A] bg-primary px-5 py-4 text-center text-primary-foreground transition-colors hover:bg-[#203A5E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+                <a href={createWhatsappUrl("مرحبًا، أود الاستفسار عن مساعدة في التقديم.")} target="_blank" rel="noreferrer" className="block border-b-2 border-[#D4B57A] bg-primary px-5 py-4 text-center text-primary-foreground transition-colors hover:bg-[#203A5E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                   <span className="block text-base font-bold">قدّم الآن</span>
                   <span className="mt-1 block text-xs leading-5 text-primary-foreground/75">تواصل معنا لمساعدتك في التقديم</span>
                 </a>
@@ -109,7 +110,7 @@ export default async function ArticleDetailPage({ params }: Props) {
                 <p className="text-sm font-semibold text-[#D4B57A]">خطوتك التالية</p>
                 <h2 id="article-consultation-title" className="mt-3 text-2xl font-bold leading-9">تحتاج مساعدة في اختيار خطوتك الدراسية؟</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-primary-foreground/80">رتّب أسئلتك واطلب إرشادًا تعليميًا يناسب المعلومات المنشورة التي تقرؤها.</p>
-                <Link href="/contact" className="mt-5 inline-flex min-h-11 items-center border border-primary-foreground/30 px-5 text-sm font-bold text-primary-foreground transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">تواصل مع فريقنا</Link>
+                <a href={createWhatsappUrl("مرحبًا، أود الاستفسار عن مساعدة في اختيار خطوتي الدراسية.")} target="_blank" rel="noreferrer" className="mt-5 inline-flex min-h-11 items-center border border-primary-foreground/30 px-5 text-sm font-bold text-primary-foreground transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">تواصل مع فريقنا</a>
               </aside>
               <div className="mt-12"><ScholarshipRecommendationList scholarships={scholarships} /></div>
             </article>

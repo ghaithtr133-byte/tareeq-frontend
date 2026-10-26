@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "@/components/ui/icons";
+import { createWhatsappUrl } from "@/lib/whatsapp";
 
 export function PageIntro({
   eyebrow,
@@ -142,10 +143,10 @@ export function ContentUnavailable({
       </p>
       {contact ? (
         <Button asChild variant="outline" className="mt-6">
-          <Link href="/contact">
+          <a href={createWhatsappUrl()} target="_blank" rel="noreferrer">
             <span>تواصل معنا</span>
             <ArrowLeftIcon className="size-4" />
-          </Link>
+          </a>
         </Button>
       ) : null}
     </div>

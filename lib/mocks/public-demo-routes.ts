@@ -4,7 +4,7 @@
  * Proxy can return a real 404 without importing Axios or contacting the API.
  */
 const demoSlugs = {
-  countries: ["romania", "turkey", "poland", "hungary"],
+  countries: ["romania", "turkey", "poland", "hungary", "malaysia", "cyprus", "united-kingdom"],
   universities: ["university-bucharest", "polytechnic-university-bucharest", "istanbul-university", "middle-east-technical-university", "university-of-warsaw", "eotvos-lorand-university"],
   scholarships: ["romania-academic-scholarship", "bucharest-excellence-scholarship", "turkey-masters-scholarship", "ankara-study-grant", "poland-research-scholarship", "hungary-language-preparation"],
   services: ["destination-guidance", "university-guidance", "application-preparation", "visa-guidance"],

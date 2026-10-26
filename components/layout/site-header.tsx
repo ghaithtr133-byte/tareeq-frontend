@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -7,10 +8,12 @@ import { ChevronLeft, Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { createWhatsappUrl } from "@/lib/whatsapp";
 
 import { Container } from "./container";
 
 const navigation = [
+  { href: "/", label: "الرئيسية" },
   { href: "/study-abroad", label: "الدراسة في الخارج" },
   { href: "/universities", label: "الجامعات" },
   { href: "/scholarships", label: "المنح" },
@@ -73,29 +76,32 @@ export function SiteHeader() {
   }, [isOpen]);
 
   return (
-    <header ref={headerRef} className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-xl">
-      <Container className="flex min-h-[5.5rem] items-center justify-between gap-4">
-        <Link href="/" className="group inline-flex rounded-sm py-2" onClick={() => closeMenu()}>
-          <span className="text-right leading-none">
-            <span className="block text-lg font-bold tracking-tight text-primary">طريق الأكاديمية</span>
-            <span className="mt-1 block text-[9px] font-bold tracking-[0.2em] text-accent" dir="ltr">TAREEQ ACADEMY</span>
-          </span>
-          <span className="sr-only">شعار نصي مؤقت لطريق الأكاديمية والعودة إلى بداية الصفحة</span>
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-[#082B50]/10 bg-white/95 shadow-[0_8px_24px_-24px_rgba(8,43,80,0.5)] backdrop-blur-xl">
+      <Container className="flex min-h-[4.25rem] items-center justify-between gap-4 2xl:min-h-[4.75rem]">
+        <Link href="/" className="inline-flex shrink-0 rounded-sm py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent" onClick={() => closeMenu()}>
+          <Image
+            src="/images/brand/tareeq-academy-logo.png"
+            alt="أكاديمية طريق"
+            width={177}
+            height={118}
+            priority
+            className="h-10 w-auto object-contain sm:h-11"
+          />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex xl:gap-2" aria-label="التنقل الرئيسي">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="التنقل الرئيسي">
           {navigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
-              <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined} className={cn("border-b-2 px-2 py-2 text-[0.75rem] font-bold transition-colors duration-150 focus-visible:bg-secondary xl:px-3 xl:text-[0.8125rem]", isActive ? "border-accent text-primary" : "border-transparent text-foreground/75 hover:border-accent/45 hover:text-primary")}>
+              <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined} className={cn("rounded-md px-3 py-2 text-[0.9375rem] font-bold transition-colors duration-150 focus-visible:bg-[#F1F5F9] xl:px-4 2xl:text-base", isActive ? "bg-[#F1F5F9] text-[#082B50]" : "text-[#52647A] hover:bg-[#F1F5F9] hover:text-[#082B50]")}>
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        <Button asChild size="sm" variant="outline" className="hidden border-accent/70 bg-[#F7F1E5] px-5 text-primary hover:border-accent hover:bg-accent/15 lg:inline-flex">
-          <a href="https://wa.me/963992277142" target="_blank" rel="noreferrer">تواصل عبر واتساب</a>
+        <Button asChild size="sm" className="hidden h-10 rounded-md bg-[#C8A253] px-5 text-[0.9375rem] text-[#082B50] shadow-[0_8px_16px_-12px_rgba(164,123,45,0.75)] hover:bg-[#D8B96E] lg:inline-flex">
+          <a href={createWhatsappUrl()} target="_blank" rel="noreferrer">تواصل معنا</a>
         </Button>
 
         <Button
@@ -113,16 +119,19 @@ export function SiteHeader() {
         </Button>
       </Container>
 
-      {isOpen ? <div aria-hidden="true" className="fixed inset-x-0 bottom-0 top-[5.5rem] z-40 bg-primary/25 backdrop-blur-[1px] lg:hidden" onPointerDown={() => closeMenu(true)} /> : null}
+      {isOpen ? <div aria-hidden="true" className="fixed inset-x-0 bottom-0 top-[4.25rem] z-40 bg-primary/25 backdrop-blur-[1px] lg:hidden" onPointerDown={() => closeMenu(true)} /> : null}
       <div id="mobile-navigation" aria-hidden={!isOpen} className={cn("absolute end-4 top-full z-[60] mt-3 w-[min(21rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-primary-foreground/15 bg-primary p-2 shadow-[0_24px_48px_-22px_color-mix(in_srgb,var(--primary)_70%,transparent)] transition-[opacity,transform,visibility] duration-200 ease-out motion-reduce:transition-none sm:end-8 lg:hidden", isOpen ? "visible translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-2 opacity-0")}>
         <p className="px-3 pb-2 pt-1 text-[0.625rem] font-bold tracking-[0.16em] text-accent">استكشف طريقك التعليمي</p>
         <nav aria-label="التنقل على الجوال">
           {navigation.map((item, index) => (
-            <Link ref={index === 0 ? firstNavigationLinkRef : undefined} id={index === 0 ? "mobile-navigation-first-link" : undefined} key={item.href} href={item.href} onClick={() => closeMenu()} className={cn("group flex min-h-12 items-center justify-between gap-3 rounded-lg px-3 py-3 text-sm font-bold text-primary-foreground transition-colors duration-200 hover:bg-primary-foreground/10 focus-visible:bg-primary-foreground/15 active:bg-primary-foreground/15 motion-reduce:transition-none", pathname === item.href || pathname.startsWith(`${item.href}/`) ? "bg-primary-foreground/10" : "")}>
+            <Link ref={index === 0 ? firstNavigationLinkRef : undefined} id={index === 0 ? "mobile-navigation-first-link" : undefined} key={item.href} href={item.href} onClick={() => closeMenu()} className={cn("group flex min-h-12 items-center justify-between gap-3 rounded-lg px-3 py-3 text-base font-bold text-primary-foreground transition-colors duration-200 hover:bg-primary-foreground/10 focus-visible:bg-primary-foreground/15 active:bg-primary-foreground/15 motion-reduce:transition-none", pathname === item.href || pathname.startsWith(`${item.href}/`) ? "bg-primary-foreground/10" : "")}>
               <span>{item.label}</span>
               <ChevronLeft className="size-4 shrink-0 text-accent transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
             </Link>
           ))}
+          <a href={createWhatsappUrl()} target="_blank" rel="noreferrer" onClick={() => closeMenu()} className="mt-2 flex min-h-12 items-center justify-center rounded-lg bg-accent px-3 py-3 text-sm font-bold text-primary transition-colors hover:bg-[#E4C984] focus-visible:bg-[#E4C984]">
+            ابدأ رحلتك
+          </a>
           </nav>
       </div>
     </header>

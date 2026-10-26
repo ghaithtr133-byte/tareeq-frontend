@@ -1,577 +1,793 @@
-/* eslint-disable @next/next/no-img-element -- The established editorial hero image is externally hosted. */
+/* eslint-disable @next/next/no-img-element -- public API content may provide remote image URLs. */
 import Link from "next/link";
-
-import { getArticles, getCountries, getScholarships, getServices, getUniversities } from "@/api/public-content";
+import NextImage from "next/image";
+import {
+  CircleDollarSign,
+  FileText,
+  GraduationCap,
+  MapPinned,
+} from "lucide-react";
+import {
+  getArticles,
+  getCountries,
+  getScholarships,
+  getServices,
+  getUniversities,
+  type Article,
+  type Country,
+  type Scholarship,
+  type Service,
+  type University,
+} from "@/api/public-content";
 import { Container } from "@/components/layout/container";
-import {
-  ContentSection,
-  EditorialLink,
-  SectionTitle,
-} from "@/components/public/page-components";
-import { ApiUnavailable, ArticleCards, CountryCards, ScholarshipCards, ServiceCards, UniversityCards } from "@/components/public/public-content";
+import { ApiUnavailable } from "@/components/public/public-content";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, ArrowUpLeftIcon } from "@/components/ui/icons";
-import { shouldShowDesignReviewDisclosure } from "@/lib/mocks/design-review-mode";
-import {
-  designReviewMock,
-  isDesignReviewMockEnabled,
-} from "@/lib/mocks/public-design-review";
+import { ArrowLeftIcon } from "@/components/ui/icons";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
-
+import { createWhatsappUrl } from "@/lib/whatsapp";
 export const metadata = createPageMetadata(
   "طريق الأكاديمية",
   "استشارات تعليمية وتوجيه للدراسة في الخارج.",
-  { index: !isDesignReviewMockEnabled, pathname: "/" },
+  { pathname: "/" },
 );
-
-function EditorialImage({
+export const dynamic = "force-dynamic";
+type Card = {
+  id: string;
+  slug?: string;
+  title: string;
+  href: string;
+  body?: string;
+  meta?: string;
+  image?: string;
+  alt?: string;
+  date?: string;
+};
+const journey = [
+  ["01", "اختيار الوجهة", "حدّد ما يناسب خطتك الدراسية."],
+  ["02", "اختيار الجامعة", "اقرأ الخيارات المنشورة بوضوح."],
+  ["03", "تجهيز ملف التقديم", "رتّب وثائقك وخطوتك التالية."],
+  ["04", "بدء الرحلة", "تابع مسارك بمعلومات موثوقة."],
+] as const;
+const serviceIcons = [GraduationCap, MapPinned, CircleDollarSign, FileText];
+const demoDestinationLines: Record<string, string> = {
+  turkey: "استكشف الدراسة والجامعات في تركيا",
+  malaysia: "تعرّف على خيارات الدراسة في ماليزيا",
+  cyprus: "اطّلع على خيارات الدراسة في قبرص",
+  "united-kingdom": "قارن خيارات الدراسة في بريطانيا",
+};
+function Image({
   src,
   alt,
   className = "",
-  priority = false,
 }: {
-  src: string;
-  alt: string;
+  src?: string;
+  alt?: string;
   className?: string;
-  priority?: boolean;
 }) {
-  return (
+  return src ? (
     <img
       src={src}
-      alt={alt}
+      alt={alt ?? ""}
       className={`h-full w-full object-cover ${className}`}
-      loading={priority ? "eager" : "lazy"}
+      loading="lazy"
     />
+  ) : (
+    <div className={`bg-[#EAF0F6] ${className}`} aria-hidden="true" />
   );
 }
-
-function DestinationFlag({
-  country,
+function Eyebrow({
+  children,
+  light = false,
 }: {
-  country: "romania" | "turkey" | "poland";
+  children: string;
+  light?: boolean;
 }) {
-  const sharedProps = {
-    "aria-hidden": true,
-    className:
-      "h-[18px] w-[26px] shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]",
-    focusable: false,
-    viewBox: "0 0 26 18",
-  };
-
-  if (country === "romania") {
+  return (
+    <p
+      className={`text-sm font-extrabold tracking-[0.13em] ${light ? "text-[#F5D98E]" : "text-[#A47B2D]"}`}
+    >
+      {children}
+    </p>
+  );
+}
+function Heading({
+  id,
+  eyebrow,
+  title,
+  intro,
+  light = false,
+  center = false,
+}: {
+  id?: string;
+  eyebrow: string;
+  title: string;
+  intro?: string;
+  light?: boolean;
+  center?: boolean;
+}) {
+  return (
+    <div className={`${center ? "mx-auto text-center" : ""} max-w-2xl`}>
+      <Eyebrow light={light}>{eyebrow}</Eyebrow>
+      <h2
+        id={id}
+        className={`mt-3 text-3xl font-bold leading-[1.3] tracking-[-0.03em] sm:text-4xl ${light ? "text-white" : "text-[#082B50]"}`}
+      >
+        {title}
+      </h2>
+      {intro ? (
+        <p
+          className={`mt-3 text-base leading-8 2xl:text-lg 2xl:leading-9 ${light ? "text-white/75" : "text-[#52647A]"}`}
+        >
+          {intro}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+function MoreLink({
+  href,
+  children,
+  light = false,
+}: {
+  href: string;
+  children: string;
+  light?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center gap-2 text-[0.9375rem] font-bold transition-colors hover:text-[#C8A253] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C8A253] ${light ? "text-white" : "text-[#082B50]"}`}
+    >
+      {children}
+      <ArrowLeftIcon className="size-4" />
+    </Link>
+  );
+}
+function UniversityMark({ title }: { title: string }) {
+  return (
+    <div className="grid aspect-[16/7] place-items-center border-b border-[#E2E8F0] bg-[#F8FAFC] px-5 text-center">
+      <span className="max-w-48 text-base font-extrabold leading-6 text-[#082B50]">
+        {title}
+      </span>
+    </div>
+  );
+}
+function DestinationFlag({ slug }: { slug?: string }) {
+  const className =
+    "h-[18px] w-[27px] shrink-0 overflow-hidden rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.45)]";
+  if (slug === "turkey")
     return (
-      <svg {...sharedProps}>
-        <path fill="#002B7F" d="M0 0h8.67v18H0z" />
-        <path fill="#FCD116" d="M8.67 0h8.66v18H8.67z" />
-        <path fill="#CE1126" d="M17.33 0H26v18h-8.67z" />
-      </svg>
-    );
-  }
-
-  if (country === "turkey") {
-    return (
-      <svg {...sharedProps}>
-        <path fill="#E30A17" d="M0 0h26v18H0z" />
-        <circle cx="10" cy="9" r="5.1" fill="#fff" />
-        <circle cx="11.7" cy="9" r="4.1" fill="#E30A17" />
+      <svg aria-hidden="true" viewBox="0 0 30 20" className={className}>
+        <path fill="#E30A17" d="M0 0h30v20H0z" />
+        <circle fill="#fff" cx="12" cy="10" r="5.5" />
+        <circle fill="#E30A17" cx="13.7" cy="10" r="4.4" />
         <path
           fill="#fff"
-          d="m15.9 5.8.78 2.4h2.53l-2.04 1.48.78 2.4-2.05-1.48-2.05 1.48.78-2.4-2.04-1.48h2.53z"
+          d="m17.7 6.5.8 2.4H21l-2 1.5.8 2.4-2.1-1.5-2 1.5.8-2.4-2-1.5H17z"
         />
       </svg>
     );
-  }
-
+  if (slug === "malaysia")
+    return (
+      <svg aria-hidden="true" viewBox="0 0 28 18" className={className}>
+        <path fill="#fff" d="M0 0h28v18H0z" />
+        {[0, 2.58, 5.16, 7.74, 10.32, 12.9, 15.48].map((y) => (
+          <rect key={y} y={y} width="28" height="1.29" fill="#CC0001" />
+        ))}
+        <path fill="#010066" d="M0 0h14v10.3H0z" />
+        <circle fill="#FFCC00" cx="6" cy="5.2" r="3.1" />
+        <circle fill="#010066" cx="7" cy="4.7" r="2.7" />
+        <path
+          fill="#FFCC00"
+          d="m10.4 2.1.4 1.5 1.4-.5-.9 1.3 1.2.9-1.5.1-.1 1.5-.8-1.3-1.4.7.7-1.4-1.1-.9 1.5.1z"
+        />
+      </svg>
+    );
+  if (slug === "cyprus")
+    return (
+      <svg aria-hidden="true" viewBox="0 0 30 20" className={className}>
+        <path fill="#fff" d="M0 0h30v20H0z" />
+        <path
+          fill="#D5782B"
+          d="m6 9 5-3 5 .7 3-1.5 1.8 1.8 3.4-.1-2 2.2-4 .8-2.6 2.1-4.9-.2-2.2-1.5z"
+        />
+        <path
+          fill="none"
+          stroke="#457B42"
+          strokeLinecap="round"
+          strokeWidth="1.2"
+          d="M8 14c4 3 10 3 14 0m-11 1-1-2m4 3-.4-2m3.5 2 .5-2m3.3 1 1-2"
+        />
+      </svg>
+    );
+  if (slug === "united-kingdom" || slug === "britain" || slug === "uk")
+    return (
+      <svg aria-hidden="true" viewBox="0 0 30 20" className={className}>
+        <path fill="#012169" d="M0 0h30v20H0z" />
+        <path stroke="#fff" strokeWidth="4" d="m0 0 30 20M30 0 0 20" />
+        <path stroke="#C8102E" strokeWidth="1.5" d="m0 0 30 20M30 0 0 20" />
+        <path fill="#fff" d="M0 7h30v6H0zM12 0h6v20h-6z" />
+        <path fill="#C8102E" d="M0 8.5h30v3H0zM13.5 0h3v20h-3z" />
+      </svg>
+    );
   return (
-    <svg {...sharedProps}>
-      <path fill="#fff" d="M0 0h26v9H0z" />
-      <path fill="#DC143C" d="M0 9h26v9H0z" />
-    </svg>
+    <span
+      aria-hidden="true"
+      className="grid h-[18px] w-[27px] shrink-0 place-items-center rounded-[2px] bg-white/90 text-[#082B50]"
+    >
+      <MapPinned className="size-3.5" />
+    </span>
   );
 }
-
-const studentJourney = [
-  { number: "01", title: "أخبرنا عن خطتك الدراسية", description: "شاركنا ما تبحث عنه لنفهم أولوياتك التعليمية." },
-  { number: "02", title: "نساعدك في اختيار وجهتك وجامعتك", description: "نرتّب معك أسئلة المقارنة بين الخيارات المتاحة." },
-  { number: "03", title: "نرافقك خلال خطوات التقديم", description: "نقدّم توجيهًا واضحًا لفهم إجراءات القبول الجامعي." },
-] as const;
-
-const heroImage = {
-  src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=85",
-  alt: "طلاب يتعاونون حول طاولة في بيئة تعليمية",
-} as const;
-
-export const dynamic = "force-dynamic";
-
 export default async function Home() {
-  const review = isDesignReviewMockEnabled && !isPublicDemoMode();
-  const scholarships = review ? designReviewMock.scholarships.slice(0, 3) : [];
-  const articles = review ? designReviewMock.articles.slice(0, 3) : [];
-  const live = review
-    ? null
-    : await Promise.allSettled([
-        getCountries({ featured: "true", limit: 3, sort: "manual" }),
-        getUniversities({ featured: "true", limit: 3, sort: "newest" }),
-        getScholarships({ featured: "true", limit: 3, sort: "newest" }),
-        getServices({ featured: "true", limit: 3, sort: "manual" }),
-        getArticles({ featured: "true", limit: 3, sort: "newest" }),
-      ]);
-  const countriesResult = live?.[0];
-  const universitiesResult = live?.[1];
-  const scholarshipsResult = live?.[2];
-  const servicesResult = live?.[3];
-  const articlesResult = live?.[4];
-
+  const content = await Promise.allSettled([
+    getCountries({ limit: 4, sort: "manual" }),
+    getUniversities({ featured: "true", limit: 4, sort: "newest" }),
+    getScholarships({ featured: "true", limit: 4, sort: "newest" }),
+    getServices({ limit: 5, sort: "manual" }),
+    getArticles({ limit: 6, sort: "newest" }),
+  ]);
+  const countries =
+    content[0].status === "fulfilled"
+      ? content[0].value.items.map(countryCard)
+      : [];
+  const universities =
+    content[1].status === "fulfilled"
+      ? content[1].value.items.map(universityCard)
+      : [];
+  const scholarships =
+    content[2].status === "fulfilled"
+      ? content[2].value.items.map(scholarshipCard)
+      : [];
+  const services =
+    content[3].status === "fulfilled"
+      ? content[3].value.items.map(serviceCard)
+      : [];
+  const articles =
+    content[4].status === "fulfilled"
+      ? content[4].value.items.map(articleCard)
+      : [];
+  const failed = content.some((entry) => entry.status === "rejected");
+  const demoMode = isPublicDemoMode();
+  const heroCards = [
+    { label: "وجهات دراسية", count: countries.length, Icon: MapPinned },
+    { label: "جامعات منشورة", count: universities.length, Icon: GraduationCap },
+    { label: "منح وبرامج", count: scholarships.length, Icon: CircleDollarSign },
+    { label: "خدمات تعليمية", count: services.length, Icon: FileText },
+  ];
   return (
-    <main className="overflow-x-clip">
+    <main className="overflow-x-clip bg-[#FAF9F6]">
       <section
         id="intro"
-        className="relative isolate overflow-hidden bg-primary text-primary-foreground"
         aria-labelledby="hero-title"
+        className="isolate bg-white"
       >
-        <div
-          className="absolute inset-y-0 start-0 hidden w-[48%] bg-[#245a9c] lg:block"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -top-24 end-[38%] size-72 rounded-full border border-accent/35 lg:size-[29rem]"
-          aria-hidden="true"
-        />
-        <Container className="relative grid gap-9 py-10 sm:py-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch lg:gap-0 lg:py-0">
-          <div className="flex max-w-2xl flex-col justify-center py-2 lg:py-[clamp(5rem,9vw,8.5rem)]">
-            <p className="flex items-center gap-3 text-sm font-semibold tracking-[0.14em] text-[#D4B57A]">
-              <span className="h-px w-10 bg-accent" aria-hidden="true" />
-              استشارات  ّّ
-            </p>
-            <h1
-              id="hero-title"
-              className="mt-6 max-w-xl text-4xl font-bold leading-[1.2] tracking-[-0.045em] text-primary-foreground md:text-5xl xl:text-6xl"
-            >
-              رحلتك للدراسة في الخارج تبدأ هنا
-            </h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-primary-foreground/80 sm:text-lg sm:leading-9">
-              تساعد طريق الأكاديمية الطلاب على اختيار وجهات الدراسة والجامعات،
-              وتقدّم توجيهاً واضحاً خلال إجراءات القبول الجامعي.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                asChild
-                size="lg"
-                className="bg-accent text-primary hover:bg-accent/90"
-              >
-                <Link href="/apply">ابدأ طلبك</Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-primary-foreground/45 text-primary-foreground hover:bg-primary-foreground/10"
-              >
-                <a
-                  href="https://wa.me/963992277142"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  تواصل عبر واتساب
-                </a>
-              </Button>
-            </div>
-            <p className="mt-6 text-xs leading-6 text-primary-foreground/65">
-              للاستفسارات العامة: <span dir="ltr">+963 992 277 142</span>
-            </p>
-          </div>
-          <div className="relative min-h-[17rem] overflow-hidden border border-primary-foreground/15 sm:min-h-[23rem] lg:-ms-4 lg:min-h-full lg:border-y-0">
-            <EditorialImage
-              {...heroImage}
-              priority
-              className="object-[52%_center] opacity-90"
+        <div className="relative">
+          <div className="relative h-[17rem] min-w-0 overflow-hidden bg-[#17669C] sm:h-[23rem] lg:absolute lg:inset-0 lg:h-auto">
+            <NextImage
+              src="/images/hero/study-abroad-student-landmarks.png"
+              alt="طالب يحمل حاسوبًا أمام معالم عالمية للدراسة في الخارج"
+              fill
+              loading="eager"
+              fetchPriority="high"
+              sizes="100vw"
+              className="object-cover object-[left_22%] lg:object-[left_18%]"
             />
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-primary/70 via-primary/10 to-transparent"
+            <span
+              className="pointer-events-none absolute inset-y-0 right-0 hidden w-[47%] bg-gradient-to-r from-transparent via-white/85 to-white lg:block"
               aria-hidden="true"
             />
-            <div className="absolute inset-x-5 bottom-5 border-s-2 border-accent bg-primary/85 p-4 backdrop-blur-sm sm:bottom-7 sm:end-7 sm:max-w-xs">
-              <p className="text-lg font-bold leading-7 text-primary-foreground">
-                ابدأ بخطوة مدروسة نحو مستقبلك الأكاديمي.
-              </p>
-            </div>
           </div>
-        </Container>
+          <Container className="relative z-10 grid min-w-0 grid-cols-1 lg:min-h-[29rem] lg:grid-cols-[minmax(0,43%)_minmax(0,57%)] xl:min-h-[31rem] 2xl:min-h-[34rem]">
+            <div className="row-start-1 min-w-0 pb-9 pt-8 text-right sm:pb-12 lg:col-start-1 lg:flex lg:items-center lg:py-10">
+              <div className="min-w-0">
+                <p className="text-base font-bold text-[#A47B2D]">
+                  أكاديمية طريق
+                </p>
+                <h1
+                  id="hero-title"
+                  className="mt-3 max-w-[34rem] text-[2.2rem] font-extrabold leading-[1.16] tracking-[-0.04em] text-[#082B50] sm:text-5xl xl:max-w-[38rem] xl:text-[clamp(3.6rem,3.4vw,4rem)]"
+                >
+                  طريقك نحو جامعة أحلامك يبدأ من هنا
+                </h1>
+                <p className="mt-5 max-w-[32rem] text-base leading-8 text-[#435A73] sm:text-[1.0625rem] 2xl:max-w-[36rem] 2xl:text-lg 2xl:leading-9">
+                  اكتشف فرص الدراسة في أفضل الجامعات حول العالم، مع دعم كامل من
+                  اختيار التخصص وحتى الوصول إلى مقعدك الجامعي.
+                </p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <Button
+                    type="button"
+                    size="lg"
+                    disabled
+                    aria-disabled="true"
+                    className="h-13 w-full rounded-lg bg-[#082B50] px-8 text-base font-bold text-white shadow-[0_12px_24px_-14px_rgba(8,43,80,0.75)] hover:bg-[#0D3E70] disabled:cursor-not-allowed disabled:opacity-100 sm:w-auto"
+                  >
+                    ابدأ رحلتك <ArrowLeftIcon className="size-4" />
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="h-13 w-full rounded-lg border-2 border-[#17669C] bg-white/95 px-7 text-base font-bold text-[#082B50] hover:bg-[#F1F5F9] sm:w-auto"
+                  >
+                    <Link href="/study-abroad">استكشف الوجهات</Link>
+                  </Button>
+                </div>
+                <p className="mt-4 text-[0.9375rem] font-semibold leading-7 text-[#52647A]">
+                  محتوى منشور يساعدك على المقارنة واتخاذ قرار واعٍ.
+                </p>
+              </div>
+            </div>
+            <div className="row-start-2 grid min-w-0 grid-cols-1 gap-3 pb-7 min-[375px]:grid-cols-2 md:grid-cols-4 lg:col-span-2 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:gap-5 2xl:pb-7">
+              {heroCards.map(({ label, count, Icon }) => (
+                <div
+                  key={label}
+                  className="flex min-h-[5.25rem] min-w-0 items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-[#082B50] shadow-[0_12px_30px_-15px_rgba(8,43,80,0.45)] sm:gap-3 sm:px-4 2xl:min-h-[6rem] 2xl:px-5"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#FAF4E7] 2xl:size-11">
+                    <Icon
+                      className="size-5 text-[#A47B2D] 2xl:size-7"
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <span className="min-w-0 leading-6">
+                    {demoMode ? (
+                      <strong
+                        className="block text-right text-xl font-extrabold tabular-nums 2xl:text-2xl"
+                        dir="ltr"
+                      >
+                        {count}
+                      </strong>
+                    ) : null}
+                    <span className="block text-sm font-bold leading-6 2xl:text-[0.9375rem]">
+                      {label}
+                    </span>
+                  </span>
+                </div>
+              ))}
+              {demoMode ? (
+                <span className="w-fit rounded bg-[#082B50]/90 px-2 py-1 text-xs font-semibold text-white min-[375px]:col-span-2 md:col-span-4">
+                  أرقام للعرض التجريبي فقط
+                </span>
+              ) : null}
+            </div>
+          </Container>
+        </div>
       </section>
 
-      <ContentSection className="bg-background">
-        <Container>
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <SectionTitle
-              eyebrow="وجهات الدراسة"
-              title="اكتشف وجهتك الدراسية"
-              intro="تعرّف على وجهات الدراسة التي تساعد أكاديمية طريق في استكشاف خياراتها."
-              eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]"
-            />
-            <EditorialLink href="/study-abroad">استكشف الوجهات</EditorialLink>
-          </div>
-          {review ? (
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {designReviewMock.destinations.map((destination) => (
+      {countries.length ? (
+        <section
+          className="bg-white py-16 sm:py-20"
+          aria-labelledby="destinations-title"
+        >
+          <Container>
+            <div className="grid gap-x-5 gap-y-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:grid-rows-[auto_auto] lg:items-center xl:gap-x-8">
+              <p className="text-sm font-bold text-[#8A6428] lg:col-start-1 lg:row-start-1 lg:self-end">
+                اكتشف العالم
+              </p>
+              <h2
+                id="destinations-title"
+                className="min-w-0 text-3xl font-extrabold leading-[1.3] text-[#082B50] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-self-center lg:text-center lg:text-[2rem] xl:text-4xl"
+              >
+                وجهات الدراسة الأكثر طلباً
+              </h2>
+              <p className="text-base leading-7 text-[#52647A] lg:col-start-1 lg:row-start-2 lg:self-start">
+                وجهات مميزة لدراستك الجامعية
+              </p>
+              <div className="mt-2 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:justify-self-end">
+                <MoreLink href="/study-abroad">عرض جميع الوجهات</MoreLink>
+              </div>
+            </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4 2xl:gap-6">
+              {countries.map((item) => (
                 <Link
-                  key={destination.slug}
-                  href={`/study-abroad/${destination.slug}`}
-                  className="group relative isolate min-h-72 overflow-hidden rounded-xl border border-primary/15 bg-primary p-6 text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+                  key={item.id}
+                  href={item.href}
+                  className="group relative isolate block aspect-[8/5] min-h-[12rem] min-w-0 w-full overflow-hidden rounded-xl bg-[#123B61] text-white shadow-[0_14px_26px_-18px_rgba(8,43,80,0.65)] transition-shadow duration-300 hover:shadow-[0_18px_30px_-16px_rgba(8,43,80,0.7)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#A47B2D] motion-reduce:transition-none"
                 >
-                  <EditorialImage
-                    {...destination.image}
-                    className="absolute inset-0 scale-100 object-cover opacity-95 transition-transform duration-200 ease-out group-hover:scale-[1.03] group-focus-visible:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100 motion-reduce:group-focus-visible:scale-100"
+                  <Image
+                    src={item.image}
+                    alt={item.alt}
+                    className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.03] group-focus-visible:scale-[1.03] motion-reduce:transition-none"
                   />
                   <span
-                    className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/30 to-primary/5"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-[#061B32]/95 via-[#061B32]/50 to-transparent"
                     aria-hidden="true"
                   />
-                  <span className="relative flex h-full flex-col justify-end">
-                    {/* <span className="text-xs font-bold tracking-[0.14em] text-accent drop-shadow-sm">
-                      {destination.note}
-                    </span> */}
-                    <span>
+                  <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 text-right sm:p-5">
+                    <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="text-3xl font-bold leading-none">
-                          {destination.name}
+                        <DestinationFlag slug={item.slug} />
+                        <span className="text-xl font-extrabold leading-tight 2xl:text-2xl">
+                          {item.title}
                         </span>
-                        <DestinationFlag country={destination.slug} />
                       </span>
-                      <span className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-primary-foreground/90 transition-colors duration-200 group-hover:text-accent group-focus-visible:text-accent motion-reduce:transition-none">
-                        عرض الوجهة <ArrowLeftIcon className="size-4" />
+                      <span className="mt-1.5 line-clamp-2 text-sm font-medium leading-5 text-white/95">
+                        {demoMode
+                          ? (demoDestinationLines[item.slug ?? ""] ?? item.body)
+                          : item.body}
                       </span>
+                    </span>
+                    <span
+                      className="grid size-9 shrink-0 place-items-center rounded-full bg-[#C8A253] text-[#082B50] shadow-sm transition-colors group-hover:bg-[#E4C984] group-focus-visible:bg-[#E4C984] motion-reduce:transition-none"
+                      aria-hidden="true"
+                    >
+                      <ArrowLeftIcon className="size-4" />
                     </span>
                   </span>
                 </Link>
               ))}
             </div>
-          ) : countriesResult?.status === "fulfilled" && countriesResult.value.items.length ? <CountryCards countries={countriesResult.value.items} /> : countriesResult?.status === "rejected" ? <div className="mt-10"><ApiUnavailable /></div> : null}
-        </Container>
-      </ContentSection>
-
-      {review ? (
-        <>
-          {shouldShowDesignReviewDisclosure ? (
-            <div className="border-y border-accent/35 bg-secondary/65 py-3 text-center text-sm font-semibold text-primary">
-              هذه معاينة تحتوي على محتوى إرشادي غير منشور.
-            </div>
-          ) : null}
-          <ContentSection className="bg-secondary/65">
-            <Container className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
-              <SectionTitle
-                eyebrow="كيف نساعدك"
-                title="كيف نساعدك في رحلتك الدراسية؟"
-                intro="نقدّم إرشاداً تعليمياً يساعدك على فهم خيارات الدراسة واختيار المسار المناسب."
-                eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]"
+          </Container>
+        </section>
+      ) : null}
+      {universities.length ? (
+        <section
+          className="border-y border-[#E2E8F0] bg-white py-20 sm:py-24"
+          aria-labelledby="universities-title"
+        >
+          <Container>
+            <div className="flex flex-wrap items-end justify-between gap-5">
+              <Heading
+                id="universities-title"
+                eyebrow="جامعات مميزة"
+                title="اكتشف الجامعات المناسبة لخطة دراستك"
+                intro="السجلات المعروضة تعتمد على المحتوى المنشور فقط."
               />
-              <div className="grid gap-px bg-primary/15 md:grid-cols-2 xl:grid-cols-3">
-                {designReviewMock.services.map((service, index) => {
-                  const isLastService = index === designReviewMock.services.length - 1;
-
-                  return (
-                  <article
-                    key={service.number}
-                    className={`bg-background p-6 sm:p-7 ${isLastService ? "md:col-span-2 xl:col-span-1 md:flex md:items-start md:gap-8 xl:block" : ""}`}
-                  >
-                    <p
-                      className="text-xs font-bold tracking-[0.16em] text-accent md:shrink-0"
-                      dir="ltr"
-                    >
-                      {service.number}
-                    </p>
-                    <div>
-                      <h3 className="mt-8 text-xl font-bold leading-8 text-primary md:mt-0 xl:mt-8">
-                        {service.title}
-                      </h3>
-                      <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground">
-                        {service.description}
-                      </p>
-                    </div>
-                  </article>
-                  );
-                })}
-              </div>
-            </Container>
-          </ContentSection>
-          <section
-            className="bg-[#EDF3F8] py-14 text-[#162D50] sm:py-20 lg:py-24"
-            aria-labelledby="journey-title"
-          >
-            <Container>
-              <div className="max-w-2xl">
-                <p className="text-sm font-semibold tracking-[0.14em] text-[#8A6428]">
-                  رحلتك الدراسية
-                </p>
-                <h2
-                  id="journey-title"
-                  className="mt-4 text-3xl font-bold leading-[1.35] tracking-tight text-[#162D50] sm:text-4xl"
+              <MoreLink href="/universities">عرض جميع الجامعات</MoreLink>
+            </div>
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {universities.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="group overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_16px_30px_-28px_rgba(8,43,80,0.65)] transition-shadow hover:shadow-[0_22px_36px_-26px_rgba(8,43,80,0.5)]"
                 >
-                  رحلتك تبدأ بخطوة واضحة
-                </h2>
-                <p className="mt-4 text-sm leading-7 text-[#51667D] sm:text-base">
-                  من استكشاف الخيارات إلى الحصول على الإرشاد المناسب لخطوتك
-                  القادمة.
-                </p>
-              </div>
-              <ol className="mx-auto mt-10 grid max-w-[800px] gap-0 border-y border-[#C7D4E3] lg:max-w-none lg:grid-cols-3">
-                {studentJourney.map((step) => (
-                  <li
-                    key={step.number}
-                    className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 border-b border-[#C7D4E3] py-7 last:border-0 lg:block lg:border-b-0 lg:px-8 lg:first:pe-0 lg:last:ps-8 lg:not(:last-child):border-s"
-                  >
-                    <span
-                      className="text-sm font-semibold tracking-[0.14em] text-[#162D50]"
-                      dir="ltr"
-                    >
-                      {step.number}
+                  <UniversityMark title={item.title} />
+                  <div className="p-5">
+                    <span className="text-xs font-bold text-[#A47B2D]">
+                      {item.meta ?? "جامعة منشورة"}
                     </span>
-                    <h3 className="text-xl font-bold text-[#162D50] lg:mt-5">{step.title}</h3>
-                    <p className="col-start-2 mt-2 max-w-sm text-sm leading-7 text-[#51667D] lg:mt-3">
-                      {step.description}
+                    <h3 className="mt-2 text-lg font-bold leading-8 text-[#082B50]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-[0.9375rem] leading-7 text-[#52647A] 2xl:text-base">
+                      {item.body}
                     </p>
-                  </li>
-                ))}
-              </ol>
-            </Container>
-          </section>
-          <ContentSection className="bg-background py-10 sm:py-12 lg:py-14">
-            <Container>
-              <div className="flex flex-wrap items-end justify-between gap-6">
-                <SectionTitle
-                  eyebrow="الجامعات"
-                  title="استكشف الجامعات"
-                  intro="استكشف مؤسسات تعليمية في وجهات دراسية مختلفة."
-                  eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]"
-                />
-                <EditorialLink href="/universities">
-                  استكشف جميع الجامعات
-                </EditorialLink>
-              </div>
-              <div className="mt-10 grid gap-4 md:grid-cols-2 min-[1200px]:!grid-cols-3">
-                {designReviewMock.universities.map((university, index) => (
-                  <article
-                    key={university.name}
-                    className={`group overflow-hidden border border-primary/15 bg-card ${index > 3 ? "hidden min-[1200px]:block" : ""}`}
+                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#17669C]">
+                      التفاصيل <ArrowLeftIcon className="size-4" />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </Container>
+        </section>
+      ) : null}
+      {services.length ? (
+        <section
+          className="bg-[#F1F5F9] py-20 sm:py-24"
+          aria-labelledby="services-title"
+        >
+          <Container>
+            <Heading
+              id="services-title"
+              eyebrow="خدماتنا"
+              title="دعم عملي لكل خطوة في رحلتك الدراسية"
+              intro="خدمات منشورة تساعدك على ترتيب الأسئلة والاستعداد للخطوة التالية."
+              center
+            />
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              {services.map((item, index) => {
+                const Icon = serviceIcons[index % serviceIcons.length];
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="group min-h-52 rounded-xl border border-[#E2E8F0] bg-white p-5 text-center shadow-[0_12px_25px_-25px_rgba(8,43,80,0.65)]"
                   >
-                    <div className="relative aspect-[16/8] overflow-hidden">
-                      <EditorialImage
-                        {...university.image}
-                        className="transition-transform duration-300 group-hover:scale-105"
+                    <span className="mx-auto grid size-10 place-items-center text-[#C8A253]">
+                      <Icon className="size-7" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-4 text-lg font-bold text-[#082B50] group-hover:text-[#17669C]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 line-clamp-3 text-[0.9375rem] leading-7 text-[#52647A] 2xl:text-base">
+                      {item.body}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </Container>
+        </section>
+      ) : null}
+      <section
+        className="relative overflow-hidden bg-[#082B50] py-18 text-white sm:py-20"
+        aria-labelledby="journey-title"
+      >
+        <span
+          className="pointer-events-none absolute bottom-0 start-0 h-20 w-56 bg-[radial-gradient(ellipse_at_bottom_left,rgba(200,162,83,0.28),transparent_65%)]"
+          aria-hidden="true"
+        />
+        <Container className="relative">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <Heading
+              id="journey-title"
+              eyebrow="رحلتك الدراسية"
+              title="رحلتك تبدأ بخطوة واضحة"
+              intro="من اختيار الوجهة إلى تجهيز المسار الدراسي، نرتّب المعلومات المنشورة أمامك."
+              light
+            />
+            <a
+              href={createWhatsappUrl(
+                "مرحبًا، أود الاستفسار عن خطوات بدء رحلتي الدراسية.",
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-bold text-white transition-colors hover:text-[#C8A253] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C8A253]"
+            >
+              ابدأ رحلتك
+              <ArrowLeftIcon className="size-4" />
+            </a>
+          </div>
+          <ol className="relative mt-12 grid gap-9 md:grid-cols-2 xl:grid-cols-4 xl:gap-0 xl:before:absolute xl:before:inset-x-0 xl:before:top-3 xl:before:h-px xl:before:bg-[#C8A253]/75">
+            {journey.map(([number, title, body]) => (
+              <li
+                key={number}
+                className="relative pt-8 xl:px-5 first:xl:pe-0 last:xl:ps-0"
+              >
+                <span className="absolute top-0 grid size-7 place-items-center rounded-full bg-[#C8A253] text-xs font-extrabold text-[#082B50]">
+                  {number}
+                </span>
+                <h3 className="mt-2 text-lg font-bold">{title}</h3>
+                <p className="mt-3 max-w-64 text-base leading-8 text-white/75">
+                  {body}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </Container>
+      </section>
+      {articles.length ? (
+        <section
+          className="bg-white py-20 sm:py-24"
+          aria-labelledby="articles-title"
+        >
+          <Container>
+            <div className="flex flex-wrap items-end justify-between gap-5">
+              <Heading
+                id="articles-title"
+                eyebrow="أحدث المقالات"
+                title="محتوى يساعدك على اتخاذ القرار"
+                intro="قراءات تعليمية منظمة من المقالات المنشورة."
+              />
+              <MoreLink href="/articles">عرض جميع المقالات</MoreLink>
+            </div>
+            <div className="mt-10 grid gap-5 lg:grid-cols-[1.28fr_0.72fr]">
+              {articles[0] ? (
+                <Link
+                  href={articles[0].href}
+                  className="group relative min-h-[29rem] overflow-hidden rounded-2xl bg-[#082B50] text-white"
+                >
+                  <Image
+                    src={articles[0].image}
+                    alt={articles[0].alt}
+                    className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <span className="absolute inset-0 bg-gradient-to-t from-[#082B50]/95 via-[#082B50]/35 to-[#082B50]/5" />
+                  <span className="absolute inset-x-0 bottom-0 p-7">
+                    <span className="inline-block rounded bg-[#17669C] px-3 py-1 text-xs font-bold">
+                      مقال مميز
+                    </span>
+                    <h3 className="mt-4 max-w-xl text-2xl font-bold leading-10">
+                      {articles[0].title}
+                    </h3>
+                    <p className="mt-3 max-w-xl line-clamp-2 text-base leading-8 text-white/85">
+                      {articles[0].body}
+                    </p>
+                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#F5D98E]">
+                      اقرأ المقال <ArrowLeftIcon className="size-4" />
+                    </span>
+                  </span>
+                </Link>
+              ) : null}
+              <div className="grid gap-5">
+                {articles.slice(1, 3).map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="group grid min-h-52 grid-cols-[0.8fr_1.2fr] overflow-hidden rounded-xl border border-[#E2E8F0] bg-white"
+                  >
+                    <div className="overflow-hidden">
+                      <Image
+                        src={item.image}
+                        alt={item.alt}
+                        className="transition-transform duration-500 group-hover:scale-105"
                       />
-                      {/* <span className="absolute end-3 top-3 bg-primary/85 px-2 py-1 text-[0.625rem] font-bold text-primary-foreground">
-                        صورة تعليمية إرشادية
-                      </span> */}
                     </div>
                     <div className="p-5">
-                      <h3 className="text-xl font-bold leading-8 text-primary">
-                        {university.name}
-                      </h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {university.place}
-                      </p>
-                      <EditorialLink href="/universities">
-                        <span className="mt-5">استكشف الجامعات</span>
-                      </EditorialLink>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </Container>
-          </ContentSection>
-          <ContentSection className="bg-[#edf1f5] py-10 sm:py-12 lg:py-14">
-            <Container>
-              <SectionTitle
-                eyebrow="المنح الدراسية"
-                title="اكتشف المنح الدراسية"
-                intro="نماذج إرشادية تساعدك على تنظيم البحث في أنواع التمويل الدراسي."
-                eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]"
-              />
-              <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {scholarships.map((scholarship, index) => {
-                  const isOddFinalCard = scholarships.length % 2 === 1 && index === scholarships.length - 1;
-
-                  return (
-                    <article
-                      key={`${scholarship.country}-${scholarship.level}`}
-                      className={`overflow-hidden border-t-2 border-accent bg-card ${isOddFinalCard ? "md:col-span-2 md:grid md:grid-cols-[minmax(14rem,0.75fr)_minmax(0,1.25fr)] xl:block xl:col-span-1" : ""}`}
-                    >
-                      <div className={`aspect-[16/7] overflow-hidden ${isOddFinalCard ? "md:aspect-auto xl:aspect-[16/7]" : ""}`}>
-                        <EditorialImage
-                          {...scholarship.image}
-                          className="transition-transform duration-300 hover:scale-105"
-                        />
-                      </div>
-                      <div className={`p-6 ${isOddFinalCard ? "md:flex md:flex-col md:justify-center xl:block" : ""}`}>
-                        <p className="text-xs font-bold tracking-[0.15em] text-accent">
-                          {scholarship.country}
-                        </p>
-                        <h3 className="mt-3 text-xl font-bold leading-8 text-primary">
-                          {scholarship.title}
-                        </h3>
-                        <dl className={`mt-5 grid gap-2 border-t border-primary/10 pt-4 text-sm ${isOddFinalCard ? "md:max-w-md xl:max-w-none" : ""}`}>
-                          <div className="flex justify-between gap-4">
-                            <dt className="font-medium text-[#51667D]">المستوى</dt>
-                            <dd className="font-semibold text-primary">
-                              {scholarship.level}
-                            </dd>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <dt className="font-medium text-[#51667D]">
-                              محور البحث
-                            </dt>
-                            <dd className="font-semibold text-primary">
-                              {scholarship.category}
-                            </dd>
-                          </div>
-                        </dl>
-                        <EditorialLink href="/scholarships">
-                          <span className="mt-5">اكتشف المنح الدراسية</span>
-                        </EditorialLink>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </Container>
-          </ContentSection>
-          <ContentSection className="bg-background py-10 sm:py-12 lg:py-14">
-            <Container>
-              <SectionTitle
-                eyebrow="مقالات تعليمية"
-                title="دليلك إلى الدراسة بالخارج"
-                intro="مقالات تساعدك على فهم الخيارات والاستعداد لرحلتك التعليمية."
-                eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]"
-              />
-              <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {articles.map((article, index) => {
-                  const isOddFinalCard = articles.length % 2 === 1 && index === articles.length - 1;
-
-                  return (
-                  <article
-                    key={article.title}
-                    className={`group flex overflow-hidden rounded-xl border border-primary/15 bg-card ${isOddFinalCard ? "md:col-span-2 md:flex-row xl:col-span-1 xl:flex-col" : "flex-col"}`}
-                  >
-                    <div className={`aspect-[16/10] overflow-hidden bg-primary ${isOddFinalCard ? "md:w-[38%] md:shrink-0 md:aspect-auto xl:w-auto xl:aspect-[16/10]" : ""}`}>
-                      <EditorialImage
-                        {...article.image}
-                        className="opacity-85 transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="flex flex-1 flex-col p-6">
-                      <p className="text-[0.625rem] font-bold tracking-[0.15em] text-accent">
-                        دليل إرشادي
-                      </p>
-                      <h3 className="mt-3 text-2xl font-bold leading-9 text-primary">
-                        {article.title}
-                      </h3>
-                      <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                        {article.summary}
-                      </p>
-                      <EditorialLink href="/articles">
-                        <span className="mt-5">اقرأ المقالات</span>
-                      </EditorialLink>
-                    </div>
-                  </article>
-                  );
-                })}
-              </div>
-            </Container>
-          </ContentSection>
-          <ContentSection className="bg-secondary/65 py-10 sm:py-12 lg:py-14">
-            <Container>
-              <SectionTitle
-                eyebrow="فيديوهات تعليمية"
-                title="فيديوهات عن الدراسة بالخارج"
-                intro="مواد مرئية تساعدك على استكشاف الدراسة والحياة الجامعية."
-                eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]"
-              />
-              <div className="mt-10 grid gap-5 md:grid-cols-2">
-                {designReviewMock.videos.map((video) => (
-                  <a
-                    key={video.url}
-                    href={video.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group overflow-hidden border border-primary/15 bg-card focus-visible:outline-offset-4"
-                  >
-                    <div className="relative aspect-video overflow-hidden">
-                      <EditorialImage
-                        {...video.thumbnail}
-                        className="transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <span className="absolute inset-0 grid place-items-center bg-primary/25">
-                        <span className="grid size-14 place-items-center rounded-full bg-background text-primary">
-                          <ArrowUpLeftIcon className="size-5" />
-                        </span>
+                      <span className="text-xs font-bold text-[#A47B2D]">
+                        مقال تعليمي
                       </span>
+                      <h3 className="mt-2 line-clamp-3 text-lg font-bold leading-8 text-[#082B50]">
+                        {item.title}
+                      </h3>
+                      {item.date ? (
+                        <time className="mt-3 block text-xs text-[#52647A]">
+                          {item.date}
+                        </time>
+                      ) : null}
                     </div>
-                    <p className="p-5 text-lg font-bold text-primary">
-                      {video.title}
-                    </p>
-                  </a>
+                  </Link>
                 ))}
               </div>
-            </Container>
-          </ContentSection>
-        </>
+            </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {articles.slice(3).map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="group flex items-center gap-4 rounded-xl border border-[#E2E8F0] p-4 transition-colors hover:bg-[#F8FAFC]"
+                >
+                  <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-[#EAF0F6]">
+                    <Image src={item.image} alt={item.alt} />
+                  </div>
+                  <span>
+                    <span className="line-clamp-2 block font-bold leading-7 text-[#082B50]">
+                      {item.title}
+                    </span>
+                    <span className="mt-1 block text-xs text-[#52647A]">
+                      {item.date ?? "مقال منشور"}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </Container>
+        </section>
       ) : null}
-
-      {!review ? (
-        <>
-          {servicesResult?.status === "fulfilled" && servicesResult.value.items.length ? <ContentSection className="bg-secondary/65"><Container><SectionTitle eyebrow="كيف نساعدك" title="كيف نساعدك في رحلتك الدراسية؟" intro="خدمات تعليمية منشورة تساعدك على فهم الخطوة التالية." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><ServiceCards services={servicesResult.value.items} /></Container></ContentSection> : servicesResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
-          <section className="bg-[#EDF3F8] py-14 text-[#162D50] sm:py-20 lg:py-24" aria-labelledby="live-journey-title"><Container><div className="max-w-2xl"><p className="text-sm font-semibold tracking-[0.14em] text-[#8A6428]">رحلتك الدراسية</p><h2 id="live-journey-title" className="mt-4 text-3xl font-bold leading-[1.35] tracking-tight sm:text-4xl">رحلتك تبدأ بخطوة واضحة</h2><p className="mt-4 text-sm leading-7 text-[#51667D] sm:text-base">من استكشاف الخيارات إلى الحصول على الإرشاد المناسب لخطوتك القادمة.</p></div><ol className="mx-auto mt-10 grid max-w-[800px] gap-0 border-y border-[#C7D4E3] lg:max-w-none lg:grid-cols-3">{studentJourney.map((step) => <li key={step.number} className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 border-b border-[#C7D4E3] py-7 last:border-0 lg:block lg:border-b-0 lg:px-8 lg:first:pe-0 lg:last:ps-8 lg:not(:last-child):border-s"><span className="text-sm font-semibold tracking-[0.14em] text-[#162D50]" dir="ltr">{step.number}</span><h3 className="text-xl font-bold text-[#162D50] lg:mt-5">{step.title}</h3><p className="col-start-2 mt-2 max-w-sm text-sm leading-7 text-[#51667D] lg:mt-3">{step.description}</p></li>)}</ol></Container></section>
-          {universitiesResult?.status === "fulfilled" && universitiesResult.value.items.length ? <ContentSection className="bg-background"><Container><SectionTitle eyebrow="الجامعات" title="استكشف الجامعات" intro="مؤسسات تعليمية منشورة في وجهات دراسية مختلفة." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><UniversityCards universities={universitiesResult.value.items} /></Container></ContentSection> : universitiesResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
-          {scholarshipsResult?.status === "fulfilled" && scholarshipsResult.value.items.length ? <ContentSection className="bg-[#edf1f5]"><Container><SectionTitle eyebrow="المنح الدراسية" title="اكتشف المنح الدراسية" intro="فرص تمويل منشورة بمعلومات معتمدة." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><ScholarshipCards scholarships={scholarshipsResult.value.items} /></Container></ContentSection> : scholarshipsResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
-          {articlesResult?.status === "fulfilled" && articlesResult.value.items.length ? <ContentSection className="bg-background"><Container><SectionTitle eyebrow="مقالات تعليمية" title="دليلك إلى الدراسة بالخارج" intro="مقالات منشورة تساعدك على فهم الخيارات والاستعداد." eyebrowClassName="text-sm font-semibold tracking-[0.14em] text-[#8A6428]" /><ArticleCards articles={articlesResult.value.items} /></Container></ContentSection> : articlesResult?.status === "rejected" ? <ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection> : null}
-        </>
+      {scholarships.length ? (
+        <section
+          className="bg-[#F1F5F9] py-20 sm:py-24"
+          aria-labelledby="scholarships-title"
+        >
+          <Container>
+            <div className="flex flex-wrap items-end justify-between gap-5">
+              <Heading
+                id="scholarships-title"
+                eyebrow="المنح الدراسية"
+                title="المنح والبرامج المميزة"
+                intro="تفاصيل التمويل والحالة تعتمد على السجلات المنشورة فقط."
+              />
+              <MoreLink href="/scholarships">عرض جميع المنح</MoreLink>
+            </div>
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {scholarships.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="rounded-xl border border-[#E2E8F0] border-t-4 border-t-[#C8A253] bg-white p-6 shadow-[0_16px_30px_-28px_rgba(8,43,80,0.65)]"
+                >
+                  <span className="text-xs font-bold text-[#A47B2D]">
+                    {item.meta ?? "منحة دراسية"}
+                  </span>
+                  <h3 className="mt-3 text-xl font-bold leading-8 text-[#082B50]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-4 border-t border-[#E2E8F0] pt-4 text-base leading-7 text-[#52647A]">
+                    {item.body ?? "تفاصيل التمويل المنشورة"}
+                  </p>
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#17669C]">
+                    عرض التفاصيل <ArrowLeftIcon className="size-4" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </Container>
+        </section>
       ) : null}
-
+      {failed ? (
+        <section className="bg-white">
+          <Container>
+            <ApiUnavailable />
+          </Container>
+        </section>
+      ) : null}
       <section
-        className="border-t border-[#C7D4E3] bg-[#F8F7F3] py-14 text-[#162D50] sm:py-20"
+        className="relative overflow-hidden bg-[#082B50] py-16 text-white sm:py-20"
         aria-labelledby="consultation-title"
       >
-        <Container className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold tracking-[0.14em] text-[#8A6428]">
-              خطوتك التالية
-            </p>
+        <span
+          className="pointer-events-none absolute inset-y-0 start-0 w-1/3 bg-[linear-gradient(110deg,rgba(23,102,156,0.45),transparent)]"
+          aria-hidden="true"
+        />
+        <Container className="relative flex flex-wrap items-center justify-between gap-8">
+          <div>
+            <Eyebrow light>خطوتك التالية</Eyebrow>
             <h2
               id="consultation-title"
-              className="mt-4 text-3xl font-bold leading-[1.35] sm:text-4xl"
+              className="mt-3 text-3xl font-bold leading-[1.3] sm:text-4xl"
             >
-              هل تحتاج مساعدة في اختيار وجهتك الدراسية؟
+              مستعد لبدء رحلتك الدراسية؟
             </h2>
-            <p className="mt-4 text-sm leading-7 text-[#51667D] sm:text-base">
-              تواصل مع طريق الأكاديمية عبر واتساب للاستفسارات العامة حول الدراسة
-              في الخارج والقبول الجامعي.
+            <p className="mt-3 max-w-2xl text-base leading-8 text-white/75 2xl:text-lg 2xl:leading-9">
+              تواصل عبر واتساب للتعرّف على الخيارات المنشورة وكيفية ترتيب خطوتك
+              التالية.
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-            <Button
-              asChild
-              size="lg"
-              className="bg-accent text-primary hover:bg-accent/90"
+          <Button
+            asChild
+            size="lg"
+            className="bg-[#C8A253] text-[#082B50] hover:bg-[#D8B96E]"
+          >
+            <a
+              href={createWhatsappUrl(
+                "مرحبًا، أود الاستفسار عن خيارات الدراسة المتاحة.",
+              )}
+              target="_blank"
+              rel="noreferrer"
             >
-              <a
-                href="https://wa.me/963992277142"
-                target="_blank"
-                rel="noreferrer"
-              >
-                تواصل عبر واتساب
-              </a>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-[#162D50]/45 text-[#162D50] hover:bg-[#162D50]/10"
-            >
-              <Link href="/apply">معلومات طلب المساعدة</Link>
-            </Button>
-          </div>
+              تواصل عبر واتساب
+            </a>
+          </Button>
         </Container>
       </section>
     </main>
   );
+}
+function countryCard(item: Country): Card {
+  return {
+    id: item.id,
+    slug: item.slug,
+    title: item.nameAr,
+    href: `/study-abroad/${item.slug}`,
+    body: item.introductionAr,
+    image: item.imageUrl ?? undefined,
+    alt: item.imageAltAr ?? undefined,
+  };
+}
+function universityCard(item: University): Card {
+  return {
+    id: item.id,
+    title: item.nameAr,
+    href: `/universities/${item.slug}`,
+    body: item.overviewAr,
+    meta: item.country?.nameAr ?? item.cityAr,
+  };
+}
+function scholarshipCard(item: Scholarship): Card {
+  return {
+    id: item.id,
+    title: item.titleAr,
+    href: `/scholarships/${item.slug}`,
+    body: item.fundingType,
+    meta: item.country?.nameAr ?? item.studyLevel,
+  };
+}
+function serviceCard(item: Service): Card {
+  return {
+    id: item.id,
+    title: item.titleAr,
+    href: `/services/${item.slug}`,
+    body: item.summaryAr,
+  };
+}
+function articleCard(item: Article): Card {
+  return {
+    id: item.id,
+    title: item.titleAr,
+    href: `/articles/${item.slug}`,
+    body: item.summaryAr,
+    image: item.coverImageUrl ?? undefined,
+    alt: item.coverImageAltAr ?? undefined,
+    date: item.publishedAt
+      ? new Intl.DateTimeFormat("ar", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }).format(new Date(item.publishedAt))
+      : undefined,
+  };
 }

@@ -16,6 +16,9 @@ yarn-error.log*
 pnpm-debug.log*
 *.tsbuildinfo
 
+# local browser screenshots and visual test output
+/test-artifacts/
+
 # editor and operating system files
 .DS_Store
 Thumbs.db

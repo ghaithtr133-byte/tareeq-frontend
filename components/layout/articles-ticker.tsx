@@ -1,10 +1,13 @@
+/* eslint-disable @next/next/no-img-element -- public API article media can be remote. */
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { FileText, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { Container } from "@/components/layout/container";
 import {
+  createArticleTickerRail,
   mergeArticleTickerItems,
   type ArticleTickerItem,
   type ArticleTickerPage,
@@ -12,13 +15,11 @@ import {
 
 type Props = { initialPage: ArticleTickerPage };
 
-const rotationInterval = 8_000;
 const nextPageDelay = 600;
 
 export function ArticlesTicker({ initialPage }: Props) {
   const [items, setItems] = useState<ArticleTickerItem[]>(initialPage.items);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [manuallyPaused, setManuallyPaused] = useState(false);
+  const [isRailReady, setIsRailReady] = useState(initialPage.totalPages <= initialPage.page);
   const [interactionPaused, setInteractionPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -37,11 +38,11 @@ export function ArticlesTicker({ initialPage }: Props) {
     let stopped = false;
 
     async function loadFollowingPages() {
-      for (let page = initialPage.page + 1; page <= initialPage.totalPages; page += 1) {
-        await new Promise((resolve) => window.setTimeout(resolve, nextPageDelay));
-        if (stopped) return;
+      try {
+        for (let page = initialPage.page + 1; page <= initialPage.totalPages; page += 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, nextPageDelay));
+          if (stopped) return;
 
-        try {
           const response = await fetch(`/api/articles/ticker?page=${page}`, {
             signal: controller.signal,
             headers: { Accept: "application/json" },
@@ -49,9 +50,11 @@ export function ArticlesTicker({ initialPage }: Props) {
           if (!response.ok) return;
           const payload = (await response.json()) as ArticleTickerPage;
           setItems((current) => mergeArticleTickerItems(current, payload.items));
-        } catch (error) {
-          if ((error as DOMException).name !== "AbortError") return;
         }
+      } catch (error) {
+        if ((error as DOMException).name !== "AbortError") return;
+      } finally {
+        if (!stopped) setIsRailReady(true);
       }
     }
 
@@ -62,26 +65,13 @@ export function ArticlesTicker({ initialPage }: Props) {
     };
   }, [initialPage.page, initialPage.totalPages]);
 
-  useEffect(() => {
-    if (manuallyPaused || interactionPaused || reducedMotion || items.length < 2) return;
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % items.length);
-    }, rotationInterval);
-    return () => window.clearInterval(timer);
-  }, [interactionPaused, items.length, manuallyPaused, reducedMotion]);
-
   if (!items.length) return null;
 
-  const safeActiveIndex = activeIndex < items.length ? activeIndex : 0;
-  const activeItem = items[safeActiveIndex];
-  const changeArticle = (direction: 1 | -1) => {
-    setManuallyPaused(true);
-    setActiveIndex((current) => (current + direction + items.length) % items.length);
-  };
+  const tickerRail = createArticleTickerRail(items);
 
   return (
     <section
-      className="overflow-hidden border-b border-[#C3A36B]/35 bg-[#F6F2E9] text-primary"
+      className="overflow-hidden border-b border-[#C8A253]/35 bg-[#082B50] text-white"
       aria-label="أحدث المقالات المنشورة"
       onMouseEnter={() => setInteractionPaused(true)}
       onMouseLeave={() => setInteractionPaused(false)}
@@ -90,52 +80,34 @@ export function ArticlesTicker({ initialPage }: Props) {
         if (!event.currentTarget.contains(event.relatedTarget)) setInteractionPaused(false);
       }}
     >
-      <div className="mx-auto flex min-h-11 max-w-7xl items-stretch px-4 sm:px-8">
-        <span className="-my-px ms-0 flex shrink-0 items-center border-b-2 border-[#C3A36B] bg-[#172F50] px-3 text-[0.625rem] font-extrabold tracking-[0.12em] text-[#F7E7BF] sm:px-4 sm:text-[0.6875rem]">أحدث المقالات</span>
-        <div className="flex min-w-0 flex-1 items-center gap-2 ps-3 sm:ps-4">
-          <span className="hidden h-4 w-px shrink-0 bg-[#C3A36B]/60 sm:block" aria-hidden="true" />
-          <div className="hidden min-w-0 flex-1 overflow-hidden sm:block" dir="ltr">
-            <div className={`flex w-max items-center whitespace-nowrap motion-reduce:translate-x-0 ${manuallyPaused || interactionPaused || reducedMotion ? "[animation-play-state:paused]" : "animate-[ticker-marquee_75s_linear_infinite]"}`}>
-              {[...items, ...items].map((item, index) => (
-                <span key={`${item.id}-${index}`} className="flex items-center" aria-hidden={index >= items.length}>
-                  <Link href={`/articles/${item.slug}`} tabIndex={index >= items.length ? -1 : undefined} className="px-5 text-sm font-semibold leading-5 text-[#203A5E] transition-colors hover:text-[#8A6428] focus-visible:text-[#8A6428]" dir="rtl">
-                    {item.titleAr}
-                  </Link>
-                  <span className="size-1 rounded-full bg-[#C3A36B]/70" aria-hidden="true" />
+      <Container className="flex h-9 items-stretch">
+        <span className="flex shrink-0 items-center gap-2 pe-3 text-[0.625rem] font-extrabold tracking-[0.12em] text-[#F5D98E] sm:pe-5 sm:text-[0.6875rem]">
+          <Menu className="size-3 shrink-0" aria-hidden="true" />
+          <span>أحدث المقالات</span>
+        </span>
+        <div className="flex min-w-0 flex-1 items-center ps-1 sm:ps-3">
+          <div className="min-w-0 flex-1 overflow-hidden" dir="ltr">
+            <div className={`flex w-max items-center whitespace-nowrap motion-reduce:animate-none ${isRailReady ? "animate-[ticker-marquee_75s_linear_infinite]" : ""} ${interactionPaused || reducedMotion ? "[animation-play-state:paused]" : ""}`}>
+              {tickerRail.map((item) => (
+                <span key={`${item.id}-${item.copy}`} className="flex items-center">
+                  {item.copy === 0 ? (
+                    <Link href={`/articles/${item.slug}`} className="flex items-center gap-2 px-5 text-xs font-semibold leading-5 text-white/90 transition-colors hover:text-[#F5D98E] focus-visible:text-[#F5D98E]" dir="rtl">
+                      {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" className="size-5 rounded object-cover" loading="lazy" /> : <span className="grid size-5 place-items-center rounded bg-white/10 text-[#F5D98E]"><FileText className="size-3" aria-hidden="true" /></span>}
+                      {item.titleAr}
+                    </Link>
+                  ) : (
+                    <span className="flex items-center gap-2 px-5 text-xs font-semibold leading-5 text-white/90" dir="rtl" aria-hidden="true">
+                      {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" className="size-5 rounded object-cover" loading="lazy" /> : <span className="grid size-5 place-items-center rounded bg-white/10 text-[#F5D98E]"><FileText className="size-3" aria-hidden="true" /></span>}
+                      {item.titleAr}
+                    </span>
+                  )}
+                  <span className="size-1 rounded-full bg-[#C8A253]" aria-hidden="true" />
                 </span>
               ))}
             </div>
           </div>
-          <Link
-            href={`/articles/${activeItem.slug}`}
-            className="min-w-0 flex-1 truncate rounded-sm py-2 text-sm font-semibold leading-5 text-[#203A5E] transition-colors hover:text-[#8A6428] focus-visible:text-[#8A6428] sm:hidden"
-            aria-label={`اقرأ المقال: ${activeItem.titleAr}`}
-          >
-            <span key={activeItem.id} className="block animate-[ticker-item-in_420ms_cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none">
-              {activeItem.titleAr}
-            </span>
-          </Link>
-        <div className="flex shrink-0 items-center gap-1 border-s border-[#C3A36B]/45 ps-2">
-          <button
-            type="button"
-            className="grid size-8 place-items-center rounded-sm text-[#8A6428] transition-colors hover:bg-[#E9DFC9] focus-visible:bg-[#E9DFC9]"
-            aria-pressed={manuallyPaused}
-            aria-label={manuallyPaused ? "استئناف حركة أحدث المقالات" : "إيقاف حركة أحدث المقالات"}
-            onClick={() => setManuallyPaused((value) => !value)}
-          >
-            {manuallyPaused ? <Play className="size-3.5" aria-hidden="true" /> : <Pause className="size-3.5" aria-hidden="true" />}
-          </button>
-          <div className="flex sm:hidden" aria-label="التنقل بين أحدث المقالات">
-            <button type="button" className="grid size-8 place-items-center rounded-sm text-[#8A6428] hover:bg-[#E9DFC9] focus-visible:bg-[#E9DFC9]" aria-label="المقال السابق" onClick={() => changeArticle(-1)}>
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
-            <button type="button" className="grid size-8 place-items-center rounded-sm text-[#8A6428] hover:bg-[#E9DFC9] focus-visible:bg-[#E9DFC9]" aria-label="المقال التالي" onClick={() => changeArticle(1)}>
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-          </div>
         </div>
-        </div>
-      </div>
+      </Container>
     </section>
   );
 }

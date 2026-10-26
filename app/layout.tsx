@@ -33,8 +33,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="ar" dir="rtl">
       <body className="font-sans antialiased">
         <QueryProvider>
-          <SiteHeader />
           {articleTicker?.items.length ? <ArticlesTicker initialPage={articleTicker} /> : null}
+          <SiteHeader />
           {isDemo ? (
             <p className="border-b border-[#8A6428]/25 bg-[#F7F1E5] px-5 py-2 text-center text-xs font-semibold leading-5 text-[#6D4D1F]" role="status">
               محتوى تجريبي لأغراض العرض — سيتم تحديثه عند نشر البيانات الرسمية.
