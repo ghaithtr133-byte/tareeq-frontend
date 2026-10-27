@@ -48,15 +48,15 @@ export function SiteFooter() {
   return (
     <footer id="contact" className="relative overflow-hidden bg-[#041F3C] text-primary-foreground">
       <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#C8A253] to-transparent" aria-hidden="true" />
-      <Container className="grid items-start gap-8 py-10 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-8 sm:py-12 xl:grid-cols-[1.35fr_repeat(3,minmax(0,0.8fr))] xl:gap-x-8 xl:gap-y-0 xl:py-14">
-        <div className="max-w-sm sm:grid sm:max-w-none sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-5 xl:col-span-1">
+      <Container className="grid items-start gap-8 py-10 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-8 sm:py-12 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-8 xl:grid-cols-[1.8fr_repeat(3,minmax(0,0.7fr))] xl:gap-y-0 xl:py-14">
+        <div className="max-w-sm sm:max-w-none lg:col-span-3 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-5 xl:col-span-1">
           <div>
             <Link href="/" className="inline-flex rounded-sm bg-[#FAF9F6] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
               <Image src="/images/brand/tareeq-academy-logo.png" alt="أكاديمية طريق" width={177} height={118} className="h-16 w-auto object-contain" />
             </Link>
-            <p className="mt-4 text-sm leading-7 text-primary-foreground/80">استشارات تعليمية ومساعدة في القبول الجامعي وتوجيه للدراسة في الخارج.</p>
+            <p className="mt-4 max-w-[21rem] text-sm leading-7 text-primary-foreground/80">استشارات تعليمية ومساعدة في القبول الجامعي وتوجيه للدراسة في الخارج.</p>
           </div>
-          <ContactDetails className="mt-6 hidden sm:block sm:mt-0" />
+          <ContactDetails className="mt-6 hidden sm:block lg:mt-0" />
         </div>
 
         <div className="sm:hidden">
@@ -88,7 +88,7 @@ export function SiteFooter() {
         </div>
 
         {footerSections.map((section) => (
-          <nav key={section.id} aria-label={section.label} className="hidden sm:block xl:col-span-1">
+          <nav key={section.id} aria-label={section.label} className="hidden sm:block lg:col-span-1">
             <p className="text-xs font-extrabold tracking-[0.14em] text-[#F5D98E]">{section.label}</p>
             <div className="mt-4"><FooterLinks links={section.links} /></div>
           </nav>

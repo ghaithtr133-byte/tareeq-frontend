@@ -363,7 +363,7 @@ export default async function Home() {
                 </p>
               </div>
             </div>
-            <div className="row-start-2 grid min-w-0 grid-cols-1 gap-3 pb-7 min-[375px]:grid-cols-2 md:grid-cols-4 lg:col-span-2 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:gap-5 2xl:pb-7">
+            <div className="row-start-2 grid min-w-0 grid-cols-2 gap-3 pb-7 md:grid-cols-4 lg:col-span-2 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:gap-5 2xl:pb-7">
               {heroCards.map(({ label, count, Icon }) => (
                 <div
                   key={label}
@@ -391,7 +391,7 @@ export default async function Home() {
                 </div>
               ))}
               {demoMode ? (
-                <span className="w-fit rounded bg-[#082B50]/90 px-2 py-1 text-xs font-semibold text-white min-[375px]:col-span-2 md:col-span-4">
+                <span className="w-fit rounded bg-[#082B50]/90 px-2 py-1 text-xs font-semibold text-white col-span-2 md:col-span-4">
                   أرقام للعرض التجريبي فقط
                 </span>
               ) : null}
@@ -484,7 +484,7 @@ export default async function Home() {
               <p className="text-base leading-7 text-[#52647A] lg:col-start-2 lg:row-start-2">
                 تعرّف على خيارات الدراسة الجامعية المنشورة.
               </p>
-              <div className="mt-2 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center lg:justify-self-end">
+              <div   className="mt-2 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center lg:justify-self-end">
                 <MoreLink href="/universities" blue>
                   عرض جميع الجامعات
                 </MoreLink>
@@ -616,7 +616,7 @@ export default async function Home() {
           aria-labelledby="articles-title"
         >
           <Container>
-            <div className="flex flex-wrap items-end justify-between gap-5">
+            <div className="flex flex-wrap items-end justify-between gap-5 sm:items-center">
               <Heading
                 id="articles-title"
                 eyebrow="أحدث المقالات"
@@ -725,7 +725,7 @@ export default async function Home() {
           aria-labelledby="scholarships-title"
         >
           <Container>
-            <div className="flex flex-wrap items-end justify-between gap-5">
+            <div className="flex flex-wrap items-end justify-between gap-5 sm:items-center">
               <Heading
                 id="scholarships-title"
                 eyebrow="المنح الدراسية"
