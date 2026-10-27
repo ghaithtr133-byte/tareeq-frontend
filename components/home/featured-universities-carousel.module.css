@@ -1,0 +1,228 @@
+.frame {
+  width: 100%;
+  container-type: inline-size;
+}
+
+.carousel {
+  position: relative;
+  margin-top: 2rem;
+  margin-inline: auto;
+  width: min(100%, 20rem);
+}
+
+.track {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  outline-offset: 4px;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.track[data-all-visible="true"] {
+  justify-content: center;
+}
+
+.track:focus-visible {
+  outline: 2px solid #a47b2d;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex: 0 0 100%;
+  min-width: 0;
+  min-height: 12.5rem;
+  flex-direction: column;
+  align-items: center;
+  scroll-snap-align: start;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: #fff;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 10px 24px -22px rgb(8 43 80 / 50%);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 17px 28px -19px rgb(8 43 80 / 48%);
+}
+
+.card:focus-visible {
+  outline: 3px solid #a47b2d;
+  outline-offset: -4px;
+}
+
+.flag {
+  position: absolute;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+}
+
+.flagImage {
+  display: block;
+  width: 1.65rem;
+  height: 1.1rem;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgb(8 43 80 / 20%);
+}
+
+.logoArea {
+  display: grid;
+  height: 5.5rem;
+  width: 100%;
+  place-items: center;
+}
+
+.logo {
+  max-height: 5.25rem;
+  max-width: 8rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.logoFallback {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: 9999px;
+  background: #edf2f7;
+  color: #8ba0b6;
+}
+
+.name {
+  margin-top: 0.35rem;
+  color: #082b50;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  transition: color 200ms ease;
+}
+
+.card:hover .name,
+.card:focus-visible .name {
+  color: #c8a253;
+}
+
+.country {
+  margin-top: 0.15rem;
+  color: #52647a;
+  font-size: 0.875rem;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.65rem;
+}
+
+.badge {
+  border-radius: 9999px;
+  background: #dce6f0;
+  padding: 0.2rem 0.65rem;
+  color: #294866;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.controls {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.arrow {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid #d4dfe9;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 92%);
+  color: #082b50;
+  box-shadow: 0 5px 16px -12px rgb(8 43 80 / 50%);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+
+.arrow:hover:not(:disabled),
+.arrow:focus-visible {
+  border-color: #c8a253;
+  background: #f9f3e8;
+  color: #a47b2d;
+}
+
+.arrow:focus-visible {
+  outline: 2px solid #a47b2d;
+  outline-offset: 2px;
+}
+
+.arrow:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+@container (min-width: 33.5rem) {
+  .carousel {
+    width: min(100%, 41rem);
+  }
+
+  .card {
+    flex-basis: calc((100% - 1rem) / 2);
+  }
+
+  .controls {
+    inset-inline: -1.5rem;
+  }
+}
+
+@container (min-width: 50.75rem) {
+  .carousel {
+    width: min(100%, 62rem);
+  }
+
+  .card {
+    flex-basis: calc((100% - 2rem) / 3);
+  }
+}
+
+@container (min-width: 68rem) {
+  .carousel {
+    width: min(100%, 83rem);
+  }
+
+  .card {
+    flex-basis: calc((100% - 3rem) / 4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .name,
+  .arrow {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+}
