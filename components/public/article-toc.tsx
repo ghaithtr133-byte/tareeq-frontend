@@ -68,7 +68,7 @@ export function ArticleTableOfContents({ items, variant = "responsive" }: Props)
       {(variant === "responsive" || variant === "mobile") ? <details className={`border border-primary/15 bg-card p-4 ${variant === "responsive" ? "xl:hidden" : ""}`}>
         <summary className="cursor-pointer list-none text-sm font-bold text-primary marker:hidden">
           فهرس المقال
-          <span className="me-2 text-xs font-medium text-muted-foreground">عرض العناوين</span>
+          <span className="me-2 text-xs font-normal text-muted-foreground">عرض العناوين</span>
         </summary>
         <TocLinks items={items} activeId={activeId} />
       </details> : null}

@@ -358,7 +358,7 @@ export default async function Home() {
                     <Link href="/study-abroad">استكشف الوجهات</Link>
                   </Button>
                 </div>
-                <p className="mt-4 text-[0.9375rem] font-semibold leading-7 text-[#52647A]">
+                <p className="mt-4 text-[0.9375rem] font-normal leading-7 text-[#52647A]">
                   محتوى منشور يساعدك على المقارنة واتخاذ قرار واعٍ.
                 </p>
               </div>
@@ -391,7 +391,7 @@ export default async function Home() {
                 </div>
               ))}
               {demoMode ? (
-                <span className="w-fit rounded bg-[#082B50]/90 px-2 py-1 text-xs font-semibold text-white col-span-2 md:col-span-4">
+                <span className="w-fit rounded bg-[#082B50]/90 px-2 py-1 text-xs font-bold text-white col-span-2 md:col-span-4">
                   أرقام للعرض التجريبي فقط
                 </span>
               ) : null}
@@ -449,7 +449,7 @@ export default async function Home() {
                           {item.title}
                         </span>
                       </span>
-                      <span className="mt-1.5 line-clamp-2 text-sm font-medium leading-5 text-white/95">
+                      <span className="mt-1.5 line-clamp-2 text-sm font-normal leading-5 text-white/95">
                         {demoMode
                           ? (demoDestinationLines[item.slug ?? ""] ?? item.body)
                           : item.body}

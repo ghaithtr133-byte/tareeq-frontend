@@ -81,12 +81,12 @@ export default async function ArticleDetailPage({ params }: Props) {
             </aside>
             <article className="min-w-0" dir="rtl">
               <header className="border-b border-border/80 pb-8 sm:pb-10">
-                <p className="text-sm font-semibold text-[#8A6428]">مقال تعليمي</p>
+                <p className="text-sm font-bold text-[#8A6428]">مقال تعليمي</p>
                 <h1 id="page-title" className="mt-3 text-3xl font-bold leading-[1.4] tracking-[-0.025em] text-primary sm:text-5xl xl:text-[3.25rem]">{article.titleAr}</h1>
                 <p className="mt-5 text-base leading-8 text-muted-foreground sm:text-lg sm:leading-9">{article.summaryAr}</p>
                 <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                   {published ? <time dateTime={article.publishedAt ?? undefined}>{published}</time> : null}
-                  {article.country ? <Link href={`/study-abroad/${article.country.slug}`} className="font-semibold text-primary hover:text-accent">الدراسة في {article.country.nameAr}</Link> : null}
+                  {article.country ? <Link href={`/study-abroad/${article.country.slug}`} className="font-bold text-primary hover:text-accent">الدراسة في {article.country.nameAr}</Link> : null}
                 </div>
               </header>
               <DetailImage src={article.coverImageUrl} alt={article.coverImageAltAr} />
@@ -107,7 +107,7 @@ export default async function ArticleDetailPage({ params }: Props) {
                 </nav>
               ) : null}
               <aside aria-labelledby="article-consultation-title" className="mt-10 border-e-4 border-accent bg-primary px-6 py-7 text-primary-foreground sm:px-8">
-                <p className="text-sm font-semibold text-[#D4B57A]">خطوتك التالية</p>
+                <p className="text-sm font-bold text-[#D4B57A]">خطوتك التالية</p>
                 <h2 id="article-consultation-title" className="mt-3 text-2xl font-bold leading-9">تحتاج مساعدة في اختيار خطوتك الدراسية؟</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-primary-foreground/80">رتّب أسئلتك واطلب إرشادًا تعليميًا يناسب المعلومات المنشورة التي تقرؤها.</p>
                 <a href={createWhatsappUrl("مرحبًا، أود الاستفسار عن مساعدة في اختيار خطوتي الدراسية.")} target="_blank" rel="noreferrer" className="mt-5 inline-flex min-h-11 items-center border border-primary-foreground/30 px-5 text-sm font-bold text-primary-foreground transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">تواصل مع فريقنا</a>

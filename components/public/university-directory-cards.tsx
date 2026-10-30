@@ -28,7 +28,7 @@ export function DirectoryUniversityCard({ university, demo }: { university: Univ
         {logo ? <Image src={logo} alt={`شعار ${university.nameAr}`} width={56} height={56} className="max-h-full w-auto object-contain" /> : <GraduationCap className="size-8 text-[#91A6BA]" strokeWidth={1.5} aria-hidden="true" />}
       </span>
       <h3 className="min-h-14 text-lg font-extrabold leading-7 text-[#082B50]">{university.nameAr}</h3>
-      <div className="mt-2 flex min-h-6 flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-medium text-[#52647A]">
+      <div className="mt-2 flex min-h-6 flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-normal text-[#52647A]">
         {university.country?.nameAr ? <span className="inline-flex items-center gap-1.5"><CountryFlag slug={university.country.slug} />{university.country.nameAr}</span> : null}
         {university.cityAr ? <span className="inline-flex items-center gap-1"><MapPin className="size-4 text-[#8A9BAD]" aria-hidden="true" />{university.cityAr}</span> : null}
       </div>
@@ -47,7 +47,7 @@ export function DirectoryScholarshipCard({ scholarship, university }: { scholars
     </div>
     <div className="flex flex-1 flex-col items-center px-4 pb-5 pt-4 text-center">
       <h3 className="min-h-14 font-extrabold leading-7 text-[#082B50]">{scholarship.titleAr}</h3>
-      {scholarship.university?.nameAr ? <p className="mt-2 min-h-6 text-sm font-medium leading-6 text-[#52647A]">{scholarship.university.nameAr}</p> : <span className="mt-2 min-h-6" aria-hidden="true" />}
+      {scholarship.university?.nameAr ? <p className="mt-2 min-h-6 text-sm font-normal leading-6 text-[#52647A]">{scholarship.university.nameAr}</p> : <span className="mt-2 min-h-6" aria-hidden="true" />}
       {[scholarship.studyLevel, scholarship.fundingType].some(Boolean) ? <p className="mt-2 min-h-6 text-sm leading-6 text-[#607185]">{[scholarship.studyLevel, scholarship.fundingType].filter(Boolean).join(" • ")}</p> : <span className="mt-2 min-h-6" aria-hidden="true" />}
       {scholarship.country?.nameAr ? <p className="mt-2 inline-flex min-h-6 items-center gap-1.5 text-sm text-[#52647A]"><CountryFlag slug={scholarship.country.slug} />{scholarship.country.nameAr}</p> : <span className="mt-2 min-h-6" aria-hidden="true" />}
       <span className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-bold text-[#17669C] transition-colors group-hover:text-[#A47B2D]">عرض التفاصيل <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" /></span>

@@ -91,12 +91,12 @@ export function ArticlesTicker({ initialPage }: Props) {
               {tickerRail.map((item) => (
                 <span key={`${item.id}-${item.copy}`} className="flex items-center">
                   {item.copy === 0 ? (
-                    <Link href={`/articles/${item.slug}`} className="flex items-center gap-2 px-5 text-xs font-semibold leading-5 text-white/90 transition-colors hover:text-[#F5D98E] focus-visible:text-[#F5D98E]" dir="rtl">
+                    <Link href={`/articles/${item.slug}`} className="flex items-center gap-2 px-5 text-xs font-bold leading-5 text-white/90 transition-colors hover:text-[#F5D98E] focus-visible:text-[#F5D98E]" dir="rtl">
                       {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" className="size-5 rounded object-cover" loading="lazy" /> : <span className="grid size-5 place-items-center rounded bg-white/10 text-[#F5D98E]"><FileText className="size-3" aria-hidden="true" /></span>}
                       {item.titleAr}
                     </Link>
                   ) : (
-                    <span className="flex items-center gap-2 px-5 text-xs font-semibold leading-5 text-white/90" dir="rtl" aria-hidden="true">
+                    <span className="flex items-center gap-2 px-5 text-xs font-bold leading-5 text-white/90" dir="rtl" aria-hidden="true">
                       {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" className="size-5 rounded object-cover" loading="lazy" /> : <span className="grid size-5 place-items-center rounded bg-white/10 text-[#F5D98E]"><FileText className="size-3" aria-hidden="true" /></span>}
                       {item.titleAr}
                     </span>

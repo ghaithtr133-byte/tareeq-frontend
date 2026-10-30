@@ -34,7 +34,7 @@ export function FilterPanel({ action, title = "تصفية النتائج", child
 }
 
 export function FilterField({ label, htmlFor, children }: { label: string; htmlFor: string; children: ReactNode }) {
-  return <label htmlFor={htmlFor} className="grid gap-2 text-sm font-semibold text-primary">{label}{children}</label>;
+  return <label htmlFor={htmlFor} className="grid gap-2 text-sm font-bold text-primary">{label}{children}</label>;
 }
 
 export const inputClassName = "min-h-11 w-full border border-primary/20 bg-background px-3 text-sm text-primary placeholder:text-muted-foreground focus-visible:border-accent focus-visible:outline-none";
@@ -69,7 +69,7 @@ export function UniversityCards({ universities }: { universities: University[] }
 }
 
 export function ScholarshipCards({ scholarships }: { scholarships: Scholarship[] }) {
-  return <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{scholarships.map((scholarship) => <Link key={scholarship.id} href={`/scholarships/${scholarship.slug}`} className="border-t-2 border-accent bg-card p-6 transition-shadow hover:shadow-[0_18px_46px_-36px_color-mix(in_srgb,var(--primary)_45%,transparent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold tracking-[0.14em] text-accent">{scholarship.country?.nameAr ?? "منحة دراسية"}</p><span className="text-xs font-semibold text-[#51667D]">{scholarship.effectiveApplicationStatus === "CLOSED" ? "مغلق" : "مفتوح"}</span></div><h2 className="mt-3 text-xl font-bold leading-8 text-primary">{scholarship.titleAr}</h2><dl className="mt-5 grid gap-2 border-t border-primary/10 pt-4 text-sm"><div className="flex justify-between gap-3"><dt className="font-medium text-[#51667D]">المستوى</dt><dd className="font-semibold text-primary">{scholarship.studyLevel}</dd></div><div className="flex justify-between gap-3"><dt className="font-medium text-[#51667D]">التمويل</dt><dd className="font-semibold text-primary">{scholarship.fundingType}</dd></div></dl></Link>)}</div>;
+  return <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{scholarships.map((scholarship) => <Link key={scholarship.id} href={`/scholarships/${scholarship.slug}`} className="border-t-2 border-accent bg-card p-6 transition-shadow hover:shadow-[0_18px_46px_-36px_color-mix(in_srgb,var(--primary)_45%,transparent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold tracking-[0.14em] text-accent">{scholarship.country?.nameAr ?? "منحة دراسية"}</p><span className="text-xs font-bold text-[#51667D]">{scholarship.effectiveApplicationStatus === "CLOSED" ? "مغلق" : "مفتوح"}</span></div><h2 className="mt-3 text-xl font-bold leading-8 text-primary">{scholarship.titleAr}</h2><dl className="mt-5 grid gap-2 border-t border-primary/10 pt-4 text-sm"><div className="flex justify-between gap-3"><dt className="font-normal text-[#51667D]">المستوى</dt><dd className="font-bold text-primary">{scholarship.studyLevel}</dd></div><div className="flex justify-between gap-3"><dt className="font-normal text-[#51667D]">التمويل</dt><dd className="font-bold text-primary">{scholarship.fundingType}</dd></div></dl></Link>)}</div>;
 }
 
 export function ServiceCards({ services }: { services: Service[] }) {

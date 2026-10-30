@@ -189,7 +189,7 @@ export function UniversityDirectoryFilters({
                 setDraft(next);
                 navigate(next);
               }}
-              className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[#F1F5F9] px-3 text-xs font-semibold text-[#082B50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C8A253]"
+              className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[#F1F5F9] px-3 text-xs font-bold text-[#082B50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C8A253]"
               aria-label={`إزالة فلتر ${label}`}
             >
               {label}
@@ -211,7 +211,7 @@ export function UniversitySort({
 }) {
   const router = useRouter();
   return (
-    <label className="flex items-center gap-2 text-sm font-semibold text-[#52647A]">
+    <label className="flex items-center gap-2 text-sm font-bold text-[#52647A]">
       الترتيب{" "}
       <select
         value={value}

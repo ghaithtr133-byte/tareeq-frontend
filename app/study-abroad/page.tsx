@@ -91,7 +91,7 @@ export default async function StudyAbroadPage({
                 اكتشف الوجهات الدراسية المتاحة، وتعرّف على مميزات كل دولة لتبدأ رحلتك الأكاديمية بثقة.
               </p>
             </div>
-            <p className="border-s-2 border-[#C8A253] ps-4 text-sm font-semibold leading-7 text-[#17669C] md:max-w-52">
+            <p className="border-s-2 border-[#C8A253] ps-4 text-sm font-bold leading-7 text-[#17669C] md:max-w-52">
               بداية واضحة لاكتشاف خياراتك الأكاديمية حول العالم.
             </p>
           </div>

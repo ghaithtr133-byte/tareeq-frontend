@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Almarai } from "next/font/google";
 
 import { ArticlesTicker } from "@/components/layout/articles-ticker";
 import { getArticleTickerPage } from "@/lib/article-ticker-server";
@@ -10,6 +11,13 @@ import { getSiteOrigin } from "@/lib/seo";
 import { QueryProvider } from "@/providers/query-provider";
 
 import "./globals.css";
+
+const almarai = Almarai({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "700", "800"],
+  display: "swap",
+  variable: "--font-almarai",
+});
 
 const siteOrigin = getSiteOrigin();
 const isDemoBuild = isPublicDemoMode();
@@ -30,13 +38,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const articleTicker = await getArticleTickerPage().catch(() => undefined);
 
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" className={almarai.variable}>
       <body className="font-sans antialiased">
         <QueryProvider>
           {articleTicker?.items.length ? <ArticlesTicker initialPage={articleTicker} /> : null}
           <SiteHeader />
           {isDemo ? (
-            <p className="border-b border-[#8A6428]/25 bg-[#F7F1E5] px-5 py-2 text-center text-xs font-semibold leading-5 text-[#6D4D1F]" role="status">
+            <p className="border-b border-[#8A6428]/25 bg-[#F7F1E5] px-5 py-2 text-center text-xs font-bold leading-5 text-[#6D4D1F]" role="status">
               محتوى تجريبي لأغراض العرض — سيتم تحديثه عند نشر البيانات الرسمية.
             </p>
           ) : null}
