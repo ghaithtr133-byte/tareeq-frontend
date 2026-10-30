@@ -414,7 +414,7 @@ export default async function Home() {
                 id="destinations-title"
                 className="min-w-0 text-3xl font-extrabold leading-[1.3] text-[#082B50] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-self-center lg:text-center lg:text-[2rem] xl:text-4xl"
               >
-                وجهات الدراسة الأكثر طلباً
+                الوجهات الدراسية الأكثر طلباً
               </h2>
               <p className="text-base leading-7 text-[#52647A] lg:col-start-1 lg:row-start-2 lg:self-start">
                 وجهات مميزة لدراستك الجامعية

@@ -33,9 +33,9 @@ const footerSections: Array<{ id: FooterSectionId; label: string; links: FooterL
   },
   {
     id: "destinations",
-    label: "وجهات الدراسة",
+    label: "الوجهات الدراسية",
     links: [
-      { href: "/study-abroad", label: "الدراسة في الخارج" },
+      { href: "/study-abroad", label: "الوجهات الدراسية" },
       { href: "/universities", label: "الجامعات" },
       { href: "/scholarships", label: "المنح الدراسية" },
     ],

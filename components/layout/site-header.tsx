@@ -14,7 +14,7 @@ import { Container } from "./container";
 
 const navigation = [
   { href: "/", label: "الرئيسية" },
-  { href: "/study-abroad", label: "الدراسة في الخارج" },
+  { href: "/study-abroad", label: "الوجهات الدراسية" },
   { href: "/universities", label: "الجامعات" },
   { href: "/scholarships", label: "المنح" },
   { href: "/services", label: "الخدمات" },

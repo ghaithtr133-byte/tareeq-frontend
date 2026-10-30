@@ -1,17 +1,177 @@
-import { getCountries, getScholarships, getUniversities } from "@/api/public-content";
+import {
+  getCountries,
+  getScholarships,
+  getUniversities,
+} from "@/api/public-content";
 import { ContentSection, PageIntro } from "@/components/public/page-components";
-import { ApiUnavailable, EmptyContent, FilterField, FilterPanel, PaginationLinks, ScholarshipCards, inputClassName } from "@/components/public/public-content";
-import { scholarshipsParams, type RouteSearchParams } from "@/lib/public-search-params";
+import {
+  ApiUnavailable,
+  EmptyContent,
+  FilterField,
+  FilterPanel,
+  PaginationLinks,
+  ScholarshipCards,
+  inputClassName,
+} from "@/components/public/public-content";
+import {
+  scholarshipsParams,
+  type RouteSearchParams,
+} from "@/lib/public-search-params";
 import { createPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = createPageMetadata("المنح الدراسية", "تصفح المنح المنشورة لدى طريق الأكاديمية.", { index: true, pathname: "/scholarships" });
+export const metadata = createPageMetadata(
+  "المنح الدراسية",
+  "تصفح المنح المنشورة لدى طريق الأكاديمية.",
+  { index: true, pathname: "/scholarships" },
+);
 
-export default async function ScholarshipsPage({ searchParams }: { searchParams: Promise<RouteSearchParams> }) {
-  const rawParams = await searchParams; const params = scholarshipsParams(rawParams);
-  const [scholarships, countries, universities] = await Promise.allSettled([getScholarships(params), getCountries({ limit: 50, sort: "manual" }), getUniversities({ limit: 50, sort: "name" })]);
-  if (scholarships.status === "rejected") return <main><PageIntro eyebrow="المنح الدراسية" title="فرص تمويل تُعرض بوضوح" intro="تصفح المنح المنشورة ومعلوماتها المعتمدة." /><ContentSection><div className="mx-auto max-w-5xl px-5 sm:px-8"><ApiUnavailable /></div></ContentSection></main>;
-  const countryOptions = countries.status === "fulfilled" ? countries.value.items : [];
-  const universityOptions = universities.status === "fulfilled" ? universities.value.items : [];
-  return <main><PageIntro eyebrow="المنح الدراسية" title="فرص تمويل تُعرض بوضوح" intro="تصفح المنح المنشورة ومعلوماتها المعتمدة." /><ContentSection><div className="mx-auto w-full max-w-7xl px-5 sm:px-8"><FilterPanel action="/scholarships" title="ابحث ضمن المنح المنشورة"><FilterField label="بحث" htmlFor="search"><input id="search" name="search" type="search" defaultValue={params.search} className={inputClassName} /></FilterField><FilterField label="البلد" htmlFor="country"><select id="country" name="country" defaultValue={params.country ?? ""} className={inputClassName}><option value="">كل البلدان</option>{countryOptions.map((country) => <option key={country.id} value={country.slug}>{country.nameAr}</option>)}</select></FilterField><FilterField label="الجامعة" htmlFor="university"><select id="university" name="university" defaultValue={params.university ?? ""} className={inputClassName}><option value="">كل الجامعات</option>{universityOptions.map((university) => <option key={university.id} value={university.slug}>{university.nameAr}</option>)}</select></FilterField><FilterField label="المستوى الدراسي" htmlFor="studyLevel"><input id="studyLevel" name="studyLevel" defaultValue={params.studyLevel} className={inputClassName} /></FilterField><FilterField label="نوع التمويل" htmlFor="fundingType"><input id="fundingType" name="fundingType" defaultValue={params.fundingType} className={inputClassName} /></FilterField><FilterField label="حالة التقديم" htmlFor="applicationStatus"><select id="applicationStatus" name="applicationStatus" defaultValue={params.applicationStatus ?? ""} className={inputClassName}><option value="">الكل</option><option value="OPEN">مفتوح</option><option value="CLOSED">مغلق</option></select></FilterField><FilterField label="الظهور" htmlFor="featured"><select id="featured" name="featured" defaultValue={params.featured ?? ""} className={inputClassName}><option value="">الكل</option><option value="true">مميزة</option><option value="false">غير مميزة</option></select></FilterField><FilterField label="الترتيب" htmlFor="sort"><select id="sort" name="sort" defaultValue={params.sort ?? "newest"} className={inputClassName}><option value="newest">الأحدث</option><option value="deadline">الموعد النهائي</option></select></FilterField></FilterPanel>{scholarships.value.items.length ? <ScholarshipCards scholarships={scholarships.value.items} /> : <div className="mt-8"><EmptyContent title="لا توجد منح منشورة تطابق الطلب" /></div>}<PaginationLinks pathname="/scholarships" params={rawParams} pagination={scholarships.value.pagination} /></div></ContentSection></main>;
+export default async function ScholarshipsPage({
+  searchParams,
+}: {
+  searchParams: Promise<RouteSearchParams>;
+}) {
+  const rawParams = await searchParams;
+  const params = scholarshipsParams(rawParams);
+  const [scholarships, countries, universities] = await Promise.allSettled([
+    getScholarships(params),
+    getCountries({ limit: 50, sort: "manual" }),
+    getUniversities({ limit: 50, sort: "name" }),
+  ]);
+  if (scholarships.status === "rejected")
+    return (
+      <main>
+        <PageIntro
+          eyebrow="المنح الدراسية"
+          title="فرص تمويل تُعرض بوضوح"
+          intro="تصفح المنح المنشورة ومعلوماتها المعتمدة."
+        />
+        <ContentSection>
+          <div className="mx-auto max-w-5xl px-5 sm:px-8">
+            <ApiUnavailable />
+          </div>
+        </ContentSection>
+      </main>
+    );
+  const countryOptions =
+    countries.status === "fulfilled" ? countries.value.items : [];
+  const universityOptions =
+    universities.status === "fulfilled" ? universities.value.items : [];
+  return (
+    <main>
+      <PageIntro
+        eyebrow="المنح الدراسية"
+        title="فرص تمويل تُعرض بوضوح"
+        intro="تصفح المنح المنشورة ومعلوماتها المعتمدة."
+      />
+      <ContentSection>
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
+          <FilterPanel action="/scholarships" title="ابحث ضمن المنح المنشورة">
+            <FilterField label="بحث" htmlFor="search">
+              <input
+                id="search"
+                name="search"
+                type="search"
+                defaultValue={params.search}
+                className={inputClassName}
+              />
+            </FilterField>
+            <FilterField label="البلد" htmlFor="country">
+              <select
+                id="country"
+                name="country"
+                defaultValue={params.country ?? ""}
+                className={inputClassName}
+              >
+                <option value="">كل البلدان</option>
+                {countryOptions.map((country) => (
+                  <option key={country.id} value={country.slug}>
+                    {country.nameAr}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+            <FilterField label="الجامعة" htmlFor="university">
+              <select
+                id="university"
+                name="university"
+                defaultValue={params.university ?? ""}
+                className={inputClassName}
+              >
+                <option value="">كل الجامعات</option>
+                {universityOptions.map((university) => (
+                  <option key={university.id} value={university.slug}>
+                    {university.nameAr}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+            <FilterField label="المستوى الدراسي" htmlFor="studyLevel">
+              <input
+                id="studyLevel"
+                name="studyLevel"
+                defaultValue={params.studyLevel}
+                className={inputClassName}
+              />
+            </FilterField>
+            <FilterField label="نوع التمويل" htmlFor="fundingType">
+              <input
+                id="fundingType"
+                name="fundingType"
+                defaultValue={params.fundingType}
+                className={inputClassName}
+              />
+            </FilterField>
+            <FilterField label="حالة التقديم" htmlFor="applicationStatus">
+              <select
+                id="applicationStatus"
+                name="applicationStatus"
+                defaultValue={params.applicationStatus ?? ""}
+                className={inputClassName}
+              >
+                <option value="">الكل</option>
+                <option value="OPEN">مفتوح</option>
+                <option value="CLOSED">مغلق</option>
+              </select>
+            </FilterField>
+            <FilterField label="الظهور" htmlFor="featured">
+              <select
+                id="featured"
+                name="featured"
+                defaultValue={params.featured ?? ""}
+                className={inputClassName}
+              >
+                <option value="">الكل</option>
+                <option value="true">مميزة</option>
+                <option value="false">غير مميزة</option>
+              </select>
+            </FilterField>
+            <FilterField label="الترتيب" htmlFor="sort">
+              <select
+                id="sort"
+                name="sort"
+                defaultValue={params.sort ?? "newest"}
+                className={inputClassName}
+              >
+                <option value="newest">الأحدث</option>
+                <option value="deadline">الموعد النهائي</option>
+              </select>
+            </FilterField>
+          </FilterPanel>
+          {scholarships.value.items.length ? (
+            <ScholarshipCards scholarships={scholarships.value.items} />
+          ) : (
+            <div className="mt-8">
+              <EmptyContent title="لا توجد منح منشورة تطابق الطلب" />
+            </div>
+          )}
+          <PaginationLinks
+            pathname="/scholarships"
+            params={rawParams}
+            pagination={scholarships.value.pagination}
+          />
+        </div>
+      </ContentSection>
+    </main>
+  );
 }
