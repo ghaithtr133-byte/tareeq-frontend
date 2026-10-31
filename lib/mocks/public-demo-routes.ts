@@ -6,7 +6,7 @@
 const demoSlugs = {
   countries: ["romania", "turkey", "poland", "hungary", "malaysia", "cyprus", "united-kingdom"],
   universities: ["university-bucharest", "polytechnic-university-bucharest", "istanbul-university", "middle-east-technical-university", "university-of-warsaw", "eotvos-lorand-university"],
-  scholarships: ["romania-academic-scholarship", "bucharest-excellence-scholarship", "turkey-masters-scholarship", "ankara-study-grant", "poland-research-scholarship", "hungary-language-preparation"],
+  scholarships: ["romania-academic-scholarship", "bucharest-excellence-scholarship", "turkey-masters-scholarship", "ankara-study-grant", "poland-research-scholarship", "hungary-language-preparation", "demo-global-discovery", "demo-language-pathways", "demo-research-fellowship", "demo-creative-studies", "demo-academic-bridge", "demo-science-exchange", "demo-graduate-path", "demo-open-learning"],
   services: ["destination-guidance", "university-guidance", "application-preparation", "visa-guidance"],
   articles: ["study-guide", "turkey-guide", "compare-study-destinations", "ielts-and-admission-plan", "quiet-study-note", "romania-living-costs", "documents-before-application", "university-questions", "how-to-read-admission-requirements", "budget-planning-notes", "choosing-study-level", "research-before-contact", "application-timeline"],
 } as const;

@@ -26,6 +26,7 @@ class ApiError extends Error {}
 const { getDemoCountries } = loadTypeScript("lib/mocks/public-demo-content.ts", {
   "server-only": {},
   "@/api/error": { ApiError },
+  "@/lib/mocks/scholarship-directory-fixtures": loadTypeScript("lib/mocks/scholarship-directory-fixtures.ts"),
 });
 const { queryString } = loadTypeScript("lib/public-search-params.ts");
 const { paginationItems } = loadTypeScript("components/public/study-abroad-pagination.tsx", {

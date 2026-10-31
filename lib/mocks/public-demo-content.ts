@@ -1,4 +1,5 @@
 import "server-only";
+import { createDirectoryDemoScholarships } from "@/lib/mocks/scholarship-directory-fixtures";
 
 import { ApiError } from "@/api/error";
 import type {
@@ -530,6 +531,9 @@ const scholarships: Scholarship[] = [
   },
 ];
 
+// Additional fictional records exercise directory pagination without changing existing university relationships.
+scholarships.push(...createDirectoryDemoScholarships(countries));
+
 const services: Service[] = [
   {
     id: "demo-service-destination",
@@ -974,6 +978,7 @@ function includesSearch(item: DemoResource, search: string) {
     "nameAr" in item ? item.nameAr : undefined,
     "nameEn" in item ? item.nameEn : undefined,
     "titleAr" in item ? item.titleAr : undefined,
+    "applicationStatus" in item ? item.titleEn : undefined,
     "summaryAr" in item ? item.summaryAr : undefined,
     "introductionAr" in item ? item.introductionAr : undefined,
     "overviewAr" in item ? item.overviewAr : undefined,
@@ -1016,7 +1021,7 @@ function listDemo<T extends DemoResource>(
     items = items.filter(
       (item) =>
         "applicationStatus" in item &&
-        item.applicationStatus === params.applicationStatus,
+        (item.effectiveApplicationStatus ?? item.applicationStatus) === params.applicationStatus,
     );
   if (params.sort === "manual")
     items.sort(
