@@ -1,53 +1,32 @@
-/* eslint-disable @next/next/no-img-element -- Public API media URLs are optional external content. */
 import Link from "next/link";
-
+import { ArrowLeft, BookOpen, GraduationCap } from "lucide-react";
 import type { Article, Scholarship } from "@/api/public-content";
+import { ArticleDetailMedia } from "@/components/public/article-detail-media";
+import { ScholarshipCountryFlag } from "@/components/public/scholarship-country-flag";
+import { articlePublicationDate } from "@/lib/article-directory";
+import { scholarshipStatus } from "@/lib/scholarship-directory";
 
-function publishedLabel(value: string | null) {
-  if (!value) return null;
-  return new Intl.DateTimeFormat("ar", { dateStyle: "medium" }).format(new Date(value));
-}
-
-export function ArticleRecommendationList({ articles, compact = false }: { articles: Article[]; compact?: boolean }) {
+const panel = "min-w-0 rounded-2xl border border-[#E1E7EE] bg-white p-4 shadow-[0_4px_18px_-12px_rgba(8,43,80,0.2)]";
+export function ArticleRecommendationList({ articles }: { articles: Article[] }) {
   if (!articles.length) return null;
-
-  return (
-    <section aria-labelledby="latest-articles-title" className={compact ? "border border-primary/15 bg-card p-4" : "border-t border-primary/15 pt-10"}>
-      <p className="text-xs font-bold tracking-[0.12em] text-[#8A6428]">اكتشف المزيد</p>
-      <h2 id="latest-articles-title" className={compact ? "mt-2 text-lg font-bold text-primary" : "mt-3 text-2xl font-bold text-primary"}>أحدث المقالات</h2>
-      <div className={`mt-4 grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`}>
-        {articles.map((article) => (
-          <Link key={article.id} href={`/articles/${article.slug}`} className="group grid min-h-24 grid-cols-[4.75rem_minmax(0,1fr)] gap-3 border-b border-primary/10 pb-3 last:border-b-0 last:pb-0 transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-            <div className="overflow-hidden bg-secondary">
-              {article.coverImageUrl ? <img src={article.coverImageUrl} alt={article.coverImageAltAr ?? ""} className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100" loading="lazy" /> : <span className="grid h-full place-items-center text-xs font-bold text-primary/60">مقال</span>}
-            </div>
-            <div className="min-w-0">
-              <p className="text-[0.6875rem] font-bold text-[#8A6428]">{publishedLabel(article.publishedAt) ?? "مقال تعليمي"}</p>
-              <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-6 text-primary group-hover:text-accent">{article.titleAr}</h3>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
+  return <section aria-labelledby="latest-articles-title" className={panel}>
+    <h2 id="latest-articles-title" className="mb-3 flex items-center gap-2 text-lg font-bold leading-8 text-primary"><BookOpen className="size-5 shrink-0 text-[#B68B3D]" aria-hidden="true" />أحدث المقالات</h2>
+    <div className="divide-y divide-[#E8EDF3]">{articles.map((article) => <Link key={article.id} href={`/articles/${article.slug}`} data-latest-article={article.id} className="group grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] items-start gap-3 rounded-sm py-3 first:pt-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-secondary"><ArticleDetailMedia src={article.coverImageUrl} alt={article.coverImageAltAr} compact /></div>
+      <div className="min-w-0"><h3 className="line-clamp-3 text-sm font-bold leading-6 text-primary group-hover:text-[#17669C]">{article.titleAr}</h3>{articlePublicationDate(article.publishedAt) ? <time dateTime={article.publishedAt!} className="mt-1 block text-xs leading-6 text-muted-foreground">{articlePublicationDate(article.publishedAt)}</time> : null}</div>
+    </Link>)}</div>
+    <Link href="/articles" className="mt-1 inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-bold text-[#17669C]">عرض جميع المقالات<ArrowLeft className="size-4" aria-hidden="true" /></Link>
+  </section>;
 }
 
-export function ScholarshipRecommendationList({ scholarships }: { scholarships: Scholarship[] }) {
-  if (!scholarships.length) return null;
-
-  return (
-    <section aria-labelledby="related-scholarships-title" className="border-t border-primary/15 pt-10">
-      <p className="text-sm font-bold text-[#8A6428]">فرص مرتبطة</p>
-      <h2 id="related-scholarships-title" className="mt-3 text-2xl font-bold text-primary">منح قد تهمك</h2>
-      <div className="mt-5 grid gap-3">
-        {scholarships.map((scholarship) => (
-          <Link key={scholarship.id} href={`/scholarships/${scholarship.slug}`} className="group border-e-2 border-accent bg-card p-4 transition-colors hover:bg-secondary/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-            <p className="text-xs font-bold text-[#51667D]">{scholarship.country?.nameAr ?? "منحة دراسية"}</p>
-            <h3 className="mt-2 text-sm font-bold leading-6 text-primary group-hover:text-accent">{scholarship.titleAr}</h3>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">{scholarship.studyLevel} · {scholarship.fundingType}</p>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
+export function ScholarshipRecommendationList({ scholarships, media = {} }: { scholarships: Scholarship[]; media?: Record<string, { src: string; alt: string }> }) {
+  const published = scholarships.filter((item) => item.status === "PUBLISHED").slice(0, 3);
+  if (!published.length) return null;
+  return <section aria-labelledby="related-scholarships-title" className={panel}>
+    <h2 id="related-scholarships-title" className="mb-3 flex items-start gap-2 text-base font-bold leading-8 text-primary xl:text-lg"><GraduationCap className="mt-1 size-5 shrink-0 text-[#B68B3D]" aria-hidden="true" />المنح المرتبطة بهذا الموضوع</h2>
+    <div className="divide-y divide-[#E8EDF3]">{published.map((scholarship) => <Link key={scholarship.id} href={`/scholarships/${scholarship.slug}`} data-related-scholarship={scholarship.id} className="group grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] items-start gap-3 rounded-sm py-3 first:pt-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-secondary"><ArticleDetailMedia src={media[scholarship.slug]?.src ?? null} alt={media[scholarship.slug]?.alt ?? null} compact /></div>
+      <div className="min-w-0"><h3 className="line-clamp-3 text-sm font-bold leading-6 text-primary group-hover:text-[#17669C]">{scholarship.titleAr}</h3>{scholarship.country ? <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs leading-6 text-muted-foreground"><span className="scale-75 origin-right"><ScholarshipCountryFlag slug={scholarship.country.slug} name={scholarship.country.nameAr} /></span>{scholarship.country.nameAr}</div> : null}<span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6875rem] leading-5 ${scholarshipStatus(scholarship) === "OPEN" ? "bg-[#E5F3EC] text-[#17633C]" : "bg-[#ECEFF3] text-[#4C596B]"}`}>{scholarshipStatus(scholarship) === "OPEN" ? "التقديم مفتوح" : "التقديم مغلق"}</span></div>
+    </Link>)}</div>
+  </section>;
 }

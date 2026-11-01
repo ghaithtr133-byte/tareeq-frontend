@@ -89,16 +89,23 @@ export function DetailImage({ src, alt }: { src: string | null; alt: string | nu
 }
 
 export function ArticleBlocks({ blocks }: { blocks: ArticleBlock[] }) {
-  const headingIds = new Map(buildArticleToc(blocks).map((item) => [item.blockIndex, item.id]));
-  return <div className="mt-8 space-y-5 text-base leading-8 text-muted-foreground">{blocks.map((block, index) => {
-    const key = `${block.type}-${index}`;
-    if (block.type === "heading2") return <h2 id={headingIds.get(index)} key={key} className="scroll-mt-28 pt-8 text-2xl font-bold leading-10 text-primary sm:text-3xl">{block.text}</h2>;
-    if (block.type === "heading3") return <h3 id={headingIds.get(index)} key={key} className="scroll-mt-28 pt-4 text-xl font-bold leading-9 text-primary">{block.text}</h3>;
-    if (block.type === "bulleted-list") return <ul key={key} className="list-disc space-y-2 pe-6 leading-8"><li>{block.text}</li></ul>;
-    if (block.type === "numbered-list") return <ol key={key} className="list-decimal space-y-2 pe-6 leading-8"><li>{block.text}</li></ol>;
-    if (block.type === "quote") return <blockquote key={key} className="border-s-4 border-accent bg-secondary/60 p-5 leading-8 text-primary">{block.text}</blockquote>;
-    return <p key={key}>{block.text}</p>;
-  })}</div>;
+  const ids = new Map(buildArticleToc(blocks).map((item) => [item.blockIndex, item.id]));
+  const content: ReactNode[] = [];
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index];
+    const key = index;
+    if (block.type === "heading2" || block.type === "heading3") {
+      const Heading = block.type === "heading2" ? "h2" : "h3";
+      content.push(<Heading id={ids.get(index)} style={{ borderInlineStartColor: "var(--accent)" }} tabIndex={-1} key={key} className={`scroll-mt-0 border-s-4 border-accent/70 ps-3 font-bold text-primary [overflow-wrap:anywhere] ${block.type === "heading2" ? "pt-1 text-2xl leading-10" : "text-xl leading-9"}`}>{block.text}</Heading>);
+    } else if (block.type === "bulleted-list" || block.type === "numbered-list") {
+      const entries = [block.text];
+      while (blocks[index + 1]?.type === block.type) { index += 1; entries.push(blocks[index].text); }
+      const List = block.type === "bulleted-list" ? "ul" : "ol";
+      content.push(<List key={key} className={`space-y-2 ps-6 marker:font-bold marker:text-[#A47C35] ${block.type === "bulleted-list" ? "list-disc" : "list-decimal"}`}>{entries.map((text, item) => <li key={item}>{text}</li>)}</List>);
+    } else if (block.type === "quote") content.push(<blockquote key={key} className="rounded-xl border-s-4 border-accent bg-[#F4F6F9] p-5 leading-8 text-primary">{block.text}</blockquote>);
+    else if (block.type === "paragraph") content.push(<p key={key} className="whitespace-pre-line">{block.text}</p>);
+  }
+  return <div data-article-body className="mt-6 space-y-6 text-base leading-9 text-[#34465B] [overflow-wrap:anywhere]">{content}</div>;
 }
 
 export function PageShell({ children }: { children: ReactNode }) {

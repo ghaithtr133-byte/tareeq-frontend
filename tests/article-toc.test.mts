@@ -22,3 +22,10 @@ test("buildArticleToc creates unique anchors for repeated Arabic and mixed-langu
 test("buildArticleToc omits articles without structured headings", () => {
   assert.deepEqual(buildArticleToc([{ type: "paragraph", text: "مقال قصير" }]), []);
 });
+
+test("literal numbered heading titles cannot collide with repeated-heading suffixes", () => {
+  const blocks = ["Section", "Section", "Section 2", "Section", "Section 2"].map((text) => ({ type: "heading2", text }));
+  const items = buildArticleToc(blocks);
+  assert.equal(new Set(items.map((item) => item.id)).size, blocks.length);
+  assert.deepEqual(buildArticleToc(blocks), items);
+});

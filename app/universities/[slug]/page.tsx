@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
-import { getScholarships, getUniversity } from "@/api/public-content";
+import { MapPin } from "lucide-react";
+import { getUniversity } from "@/api/public-content";
+import { loadUniversityScholarships } from "@/api/university-detail-actions";
 import { ApiError } from "@/api/error";
 import { Container } from "@/components/layout/container";
-import { Breadcrumbs, ContentSection, PageIntro } from "@/components/public/page-components";
-import { ApiUnavailable, DetailImage, ScholarshipCards } from "@/components/public/public-content";
+import { ApiUnavailable } from "@/components/public/public-content";
+import { UniversityDetails, UniversityHeroLogo } from "@/components/public/university-details";
+import { UniversityDirectoryImage } from "@/components/public/university-directory-image";
+import { ScholarshipCountryFlag } from "@/components/public/scholarship-country-flag";
+import { demoUniversityDetails } from "@/lib/mocks/university-detail-fixtures";
+import { isPublicDemoMode } from "@/lib/public-content-mode";
+import { emptyUniversityContent } from "@/lib/university-details";
 import { createPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -14,15 +21,47 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  try { const university = await getUniversity(slug); return createPageMetadata(university.seoTitleAr ?? university.nameAr, university.seoDescriptionAr ?? university.overviewAr, { index: true, pathname: `/universities/${university.slug}`, imageUrl: university.imageUrl, publishedAt: university.publishedAt }); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); return createPageMetadata("الجامعة", "معلومات الجامعة المنشورة لدى طريق الأكاديمية."); }
+  try {
+    const university = await getUniversity(slug);
+    return createPageMetadata(university.seoTitleAr ?? university.nameAr, university.seoDescriptionAr ?? university.overviewAr, {
+      index: true, pathname: `/universities/${university.slug}`, imageUrl: isPublicDemoMode() ? undefined : university.imageUrl, publishedAt: university.publishedAt,
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    return createPageMetadata("الجامعة", "معلومات الجامعة المنشورة لدى طريق الأكاديمية.");
+  }
 }
 
 export default async function UniversityDetailPage({ params }: Props) {
   const { slug } = await params;
   let university;
-  let unavailable = false;
-  try { university = await getUniversity(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); unavailable = true; }
-  if (unavailable || !university) return <main><ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection></main>;
-  const related = await getScholarships({ university: university.slug, limit: 3 }).then((value) => ({ value })).catch(() => undefined);
-  return <main><Breadcrumbs items={[{ href: "/", label: "الرئيسية" }, { href: "/universities", label: "الجامعات" }, { label: university.nameAr }]} /><PageIntro eyebrow={university.country?.nameAr ?? "الجامعات"} title={university.nameAr} intro={university.overviewAr} /><ContentSection><Container className="max-w-5xl"><DetailImage src={university.imageUrl} alt={university.imageAltAr} /><dl className="mt-8 grid gap-4 border-y border-primary/15 py-6 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">المدينة</dt><dd className="mt-1 font-bold text-primary">{university.cityAr}</dd></div>{university.officialWebsite ? <div><dt className="text-muted-foreground">الموقع الرسمي</dt><dd className="mt-1"><a href={university.officialWebsite} target="_blank" rel="noreferrer" className="font-bold text-primary underline hover:text-accent">زيارة الموقع الرسمي</a></dd></div> : null}</dl></Container></ContentSection><ContentSection className="bg-background"><Container><h2 className="text-2xl font-bold text-primary">منح مرتبطة</h2>{related ? related.value.items.length ? <ScholarshipCards scholarships={related.value.items} /> : <p className="mt-4 text-muted-foreground">لا توجد منح مرتبطة منشورة حاليًا.</p> : <p className="mt-4 text-muted-foreground">يتعذر تحميل المنح المرتبطة حاليًا.</p>}<Link href="/universities" className="mt-10 inline-flex text-sm font-bold text-primary hover:text-accent">العودة إلى الجامعات</Link></Container></ContentSection></main>;
+  try { university = await getUniversity(slug); }
+  catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); }
+  if (!university) return <main><Container className="py-12"><ApiUnavailable /></Container></main>;
+  const demo = isPublicDemoMode();
+  // No inference from missing Backend fields and no automatic Live-to-Demo fallback.
+  const content = demo ? demoUniversityDetails(university) : emptyUniversityContent();
+  const related = await loadUniversityScholarships(university.slug, 1);
+  return <main className="bg-[#F5F8FC] pb-10 sm:pb-14">
+    <section aria-labelledby="university-title" className="border-b bg-gradient-to-l from-[#F5F8FC] to-[#EDF3F8]">
+      <Container className="py-4 sm:py-5">
+        <nav aria-label="مسار التنقل" className="mb-4 text-xs leading-6 text-muted-foreground sm:text-sm"><ol className="flex flex-wrap items-center gap-x-2 gap-y-1"><li><Link href="/" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الرئيسية</Link></li><li aria-hidden="true">/</li><li><Link href="/universities" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الجامعات</Link></li><li aria-hidden="true">/</li><li aria-current="page">{university.nameAr}</li></ol></nav>
+        <div className="grid items-center gap-5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-8">
+          <div className="min-w-0">
+            <div className="flex items-start gap-3 sm:gap-4"><UniversityHeroLogo src={content.logo} name={university.nameAr} /><div className="min-w-0"><h1 id="university-title" className="text-2xl font-bold leading-[1.6] text-primary [overflow-wrap:anywhere] sm:text-3xl">{university.nameAr}</h1>{university.nameEn ? <p dir="ltr" className="mt-1 text-right text-sm leading-6 text-primary/85 [overflow-wrap:anywhere] sm:text-base">{university.nameEn}</p> : null}</div></div>
+            {university.overviewAr ? <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">{university.overviewAr}</p> : null}
+            <dl className="mt-4 flex flex-wrap gap-3 text-sm">
+              {university.country?.nameAr ? <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-white px-4 py-2.5"><ScholarshipCountryFlag slug={university.country.slug} name={university.country.nameAr} /><div><dt className="text-xs text-muted-foreground">الدولة</dt><dd className="mt-1 font-bold text-primary">{university.country.nameAr}</dd></div></div> : null}
+              {university.cityAr ? <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-white px-4 py-2.5"><MapPin className="size-5 text-accent" aria-hidden="true" /><div><dt className="text-xs text-muted-foreground">المدينة</dt><dd className="mt-1 font-bold text-primary">{university.cityAr}</dd></div></div> : null}
+            </dl>
+          </div>
+          <div className="hidden min-w-0 md:block">
+            {demo || !university.imageUrl ? <figure><div className="relative aspect-[3/1] overflow-hidden rounded-2xl bg-white/60"><Image src="/images/universities/university-guide-illustration.png" alt="رسم أكاديمي توضيحي، وليس صورة للحرم الجامعي" fill sizes="(min-width: 768px) 42vw, 100vw" className="object-contain" priority /></div><figcaption className="mt-1 text-center text-xs leading-6 text-muted-foreground">رسم توضيحي — لا يمثل الحرم الجامعي</figcaption></figure> : <UniversityDirectoryImage src={university.imageUrl} alt={university.imageAltAr || university.nameAr} className="aspect-[3/1] rounded-2xl" />}
+          </div>
+        </div>
+        {content.logo ? <p className="mt-2 text-xs leading-6 text-muted-foreground">شعار جامعة بوخارست: <a href="https://commons.wikimedia.org/wiki/File:Logo_Universitatea_din_Bucure%C8%99ti.svg" target="_blank" rel="noreferrer" className="underline">جامعة بوخارست</a>، بدون تعديل، <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer" className="underline">CC BY 3.0</a>.</p> : null}
+      </Container>
+    </section>
+    <Container className="pt-5"><UniversityDetails key={`${demo}-${university.id}`} university={university} content={content} demo={demo} initialScholarships={related.ok ? related.data : null} /></Container>
+  </main>;
 }

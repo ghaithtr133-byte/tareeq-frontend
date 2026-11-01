@@ -229,6 +229,7 @@ export function ScholarshipDirectoryFilters({
                 <Search className="size-4" aria-hidden="true" />
                 بحث
               </button> */}
+              
               <button
                 type="button"
                 onClick={() => {

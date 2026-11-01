@@ -27,17 +27,21 @@ function headingBaseId(text: string) {
  */
 export function buildArticleToc(blocks: readonly ArticleHeadingBlock[]): ArticleTocItem[] {
   const occurrences = new Map<string, number>();
+  const used = new Set<string>();
 
   return blocks.flatMap((block, blockIndex) => {
     if (block.type !== "heading2" && block.type !== "heading3") return [];
 
     const base = headingBaseId(block.text);
-    const count = (occurrences.get(base) ?? 0) + 1;
+    let count = (occurrences.get(base) ?? 0) + 1;
+    let id = count === 1 ? `article-${base}` : `article-${base}-${count}`;
+    while (used.has(id)) { count += 1; id = `article-${base}-${count}`; }
     occurrences.set(base, count);
+    used.add(id);
 
     return [{
       blockIndex,
-      id: count === 1 ? `article-${base}` : `article-${base}-${count}`,
+      id,
       level: block.type === "heading2" ? 2 : 3,
       text: block.text,
     }];

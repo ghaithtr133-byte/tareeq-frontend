@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, MessageCircle, MessageCircleQuestion } from "lucide-react";
+import { ArrowLeft, MessageCircle, MessageCircleQuestion } from "lucide-react";
 
 import { Container } from "@/components/layout/container";
 import { createWhatsappUrl } from "@/lib/whatsapp";
+import { FaqAccordion } from "@/components/public/faq-accordion";
 
 const questions = [
   {
@@ -80,26 +81,7 @@ export function HomeFaq() {
           </aside>
 
           <div className="order-1 min-w-0 space-y-3 lg:order-2 lg:flex-1">
-            {questions.map(({ question, answer }, index) => (
-              <details
-                key={question}
-                name="home-faq"
-                open={index === 0}
-                className="group overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_12px_30px_-26px_rgba(8,43,80,0.3)]"
-              >
-                <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-right text-base font-bold leading-7 text-[#082B50] transition-colors hover:bg-[#FAFBFD] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-[#A47B2D] motion-reduce:transition-none sm:px-6 sm:text-lg [&::-webkit-details-marker]:hidden">
-                  <span>{question}</span>
-                  <ChevronDown className="size-5 shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
-                </summary>
-                <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 group-open:grid-rows-[1fr] motion-reduce:transition-none">
-                  <div className="overflow-hidden">
-                    <div className="border-t border-[#E2E8F0] px-5 py-4 text-right text-base leading-8 text-[#52647A] sm:px-6">
-                      {answer}
-                    </div>
-                  </div>
-                </div>
-              </details>
-            ))}
+            <FaqAccordion items={questions} name="home-faq" />
           </div>
         </div>
       </Container>

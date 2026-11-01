@@ -1,81 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
+import { useEffect, useRef } from "react";
+import { List } from "lucide-react";
 import type { ArticleTocItem } from "@/lib/article-toc";
+import { useArticleReading } from "@/components/public/article-reading-layout";
 
 type Props = { items: ArticleTocItem[]; variant?: "responsive" | "mobile" | "desktop" };
 
-function TocLinks({ activeId, items }: Props & { activeId: string | null }) {
-  const listRef = useRef<HTMLOListElement>(null);
-
+function TocLinks({ items }: Props) {
+  const list = useRef<HTMLOListElement>(null);
+  const { activeId, navigate } = useArticleReading();
   useEffect(() => {
-    if (!activeId) return;
-    listRef.current?.querySelector<HTMLElement>(`[data-toc-id="${activeId}"]`)?.scrollIntoView({ block: "nearest" });
+    const target = list.current?.querySelector<HTMLElement>('[aria-current="location"]');
+    if (!list.current || !target) return;
+    const bounds = list.current.getBoundingClientRect();
+    const current = target.getBoundingClientRect();
+    // Reveal the active item INSIDE the TOC, without scrolling the article/page.
+    if (current.top < bounds.top) list.current.scrollTop -= bounds.top - current.top;
+    else if (current.bottom > bounds.bottom) list.current.scrollTop += current.bottom - bounds.bottom;
   }, [activeId]);
-
-  return (
-    <ol ref={listRef} className="mt-4 max-h-[min(42vh,21rem)] space-y-1 overflow-y-auto border-s border-primary/15 pe-2 text-sm">
-      {items.map((item) => (
-        <li key={item.id} className={item.level === 3 ? "me-3" : ""}>
-          <a
-            href={`#${item.id}`}
-            data-toc-id={item.id}
-            aria-current={activeId === item.id ? "location" : undefined}
-            className={`block border-s-2 px-3 py-2 leading-6 transition-colors motion-reduce:transition-none ${activeId === item.id
-              ? "border-accent bg-[#F7F1E5] font-bold text-primary"
-              : "border-transparent text-muted-foreground hover:bg-secondary/70 hover:text-primary"
-              }`}
-          >
-            {item.text}
-          </a>
-        </li>
-      ))}
-    </ol>
-  );
+  return <ol ref={list} className="mt-3 max-h-[max(8rem,min(38dvh,calc(100dvh-var(--article-header-offset,6rem)-24rem)))] space-y-1 overflow-y-auto overscroll-contain text-sm">
+    {items.map((item) => <li key={item.id} className={item.level === 3 ? "ms-3" : ""}><a href={`#${item.id}`} data-toc-id={item.id} style={{ borderInlineEndColor: activeId === item.id ? "var(--accent)" : "transparent" }} aria-current={activeId === item.id ? "location" : undefined} onClick={(event) => { event.preventDefault(); navigate(item.id); }} className={`flex min-h-11 items-center gap-2 rounded-lg border-e-2 px-3 py-2 leading-6 transition-colors motion-reduce:transition-none ${activeId === item.id ? "border-accent bg-[#FBF5E9] font-bold text-[#8A6326]" : "border-transparent text-primary hover:bg-secondary/70"}`}><span className={`size-2 shrink-0 rounded-full border ${activeId === item.id ? "border-accent bg-accent" : "border-[#AEBBC9]"}`} aria-hidden="true" /><span className="min-w-0 [overflow-wrap:anywhere]">{item.text}</span></a></li>)}
+  </ol>;
 }
 
-/** A small client boundary for the disclosure and current-section indication. */
 export function ArticleTableOfContents({ items, variant = "responsive" }: Props) {
-  const [activeId, setActiveId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!items.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((first, second) => first.boundingClientRect.top - second.boundingClientRect.top);
-
-        if (visible[0]) setActiveId(visible[0].target.id);
-      },
-      { rootMargin: "-28% 0px -62% 0px", threshold: 0 },
-    );
-
-    const headings = items
-      .map((item) => document.getElementById(item.id))
-      .filter((heading): heading is HTMLElement => Boolean(heading));
-
-    headings.forEach((heading) => observer.observe(heading));
-    return () => observer.disconnect();
-  }, [items]);
-
   if (!items.length) return null;
-
-  return (
-    <>
-      {(variant === "responsive" || variant === "mobile") ? <details className={`border border-primary/15 bg-card p-4 ${variant === "responsive" ? "xl:hidden" : ""}`}>
-        <summary className="cursor-pointer list-none text-sm font-bold text-primary marker:hidden">
-          فهرس المقال
-          <span className="me-2 text-xs font-normal text-muted-foreground">عرض العناوين</span>
-        </summary>
-        <TocLinks items={items} activeId={activeId} />
-      </details> : null}
-      {(variant === "responsive" || variant === "desktop") ? <aside className={`${variant === "responsive" ? "sticky top-28 hidden xl:block" : ""} self-start border-s border-primary/15 ps-5`} aria-label="فهرس المقال">
-        <p className="text-sm font-bold text-primary">فهرس المقال</p>
-        <TocLinks items={items} activeId={activeId} />
-      </aside> : null}
-    </>
-  );
+  return <>
+    {variant !== "desktop" ? <details className={`rounded-xl border border-[#E1E7EE] bg-white px-4 py-2 shadow-sm ${variant === "responsive" ? "xl:hidden" : ""}`}><summary className="min-h-11 cursor-pointer text-sm font-bold leading-10 text-primary">فهرس المقال<span className="ms-2 text-xs font-normal text-muted-foreground">عرض العناوين</span></summary><nav aria-label="فهرس المقال"><TocLinks items={items} /></nav></details> : null}
+    {variant !== "mobile" ? <nav aria-label="فهرس المقال" className={`rounded-2xl border border-[#E1E7EE] bg-white p-4 shadow-[0_4px_18px_-12px_rgba(8,43,80,0.2)] ${variant === "responsive" ? "hidden xl:block" : ""}`}><h2 className="flex items-center gap-2 text-lg font-bold text-primary"><List className="size-5" aria-hidden="true" />فهرس المقال</h2><TocLinks items={items} /></nav> : null}
+  </>;
 }
