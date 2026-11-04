@@ -25,6 +25,7 @@ import { HomeSectionError } from "@/components/home/home-section-error";
 import { EmptyState } from "@/components/ui/content-state";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 import { getHomeJourney } from "@/lib/homepage-journey";
+import { approvedHomeCardCopy, homeCardText } from "@/lib/homepage-card-content";
 import { homeMetadataLabel, type HomeResult, type HomeUniversity } from "@/lib/homepage-data";
 import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
 import { ArrowLeftIcon } from "@/components/ui/icons";
@@ -303,7 +304,7 @@ export default async function Home() {
                         </span>
                       </span>
                       <span className="mt-1.5 line-clamp-2 text-sm font-normal leading-5 text-white/95">
-                        {item.body || "المحتوى غير متوفر حالياً"}
+                        {homeCardText(item.body, "وصف الوجهة")}
                       </span>
                     </span>
                     <span
@@ -397,7 +398,7 @@ export default async function Home() {
                       {item.title}
                     </h3>
                     <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[#52647A] 2xl:text-[0.9375rem]">
-                      {item.body || "المحتوى غير متوفر حالياً"}
+                      {homeCardText(item.body, "وصف الخدمة")}
                     </p>
                   </Link>
                 );
@@ -482,15 +483,15 @@ export default async function Home() {
                   <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#082B50]/95 via-[#082B50]/40 to-[#082B50]/5" />
                   <span className="relative p-6 sm:p-7">
                     <span className="inline-block rounded bg-[#17669C] px-3 py-1 text-xs font-bold">
-                      {articles[0].meta || "غير متوفر حالياً"}
+                      {homeCardText(articles[0].meta, "تصنيف المقال")}
                     </span>
                     <h3 className="mt-3 max-w-xl text-2xl font-bold leading-9 sm:text-[1.75rem] sm:leading-10">
                       {articles[0].title}
                     </h3>
                     <p className="mt-3 max-w-xl line-clamp-2 text-base leading-8 text-white/85">
-                      {articles[0].body || "المحتوى غير متوفر حالياً"}
+                      {homeCardText(articles[0].body, "ملخص المقال")}
                     </p>
-                    <span className="mt-2 block text-sm text-white/80">{articles[0].date ? <time>{articles[0].date}</time> : "غير متوفر حالياً"}</span>
+                    <span className="mt-2 block text-sm text-white/80">{articles[0].date ? <time>{articles[0].date}</time> : homeCardText(undefined, "تاريخ النشر")}</span>
                     <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#F5D98E]">
                       اقرأ المقال <ArrowLeftIcon className="size-4" />
                     </span>
@@ -513,12 +514,12 @@ export default async function Home() {
                     </div>
                     <div className="min-w-0 p-3 sm:p-4">
                       <span className="text-xs font-bold text-[#A47B2D]">
-                        {item.meta || "غير متوفر حالياً"}
+                        {homeCardText(item.meta, "تصنيف المقال")}
                       </span>
                       <h3 className="mt-1.5 line-clamp-3 text-lg font-bold leading-7 text-[#082B50]">
                         {item.title}
                       </h3>
-                      <span className="mt-2 block text-xs text-[#52647A]">{item.date ? <time>{item.date}</time> : "غير متوفر حالياً"}</span>
+                      <span className="mt-2 block text-xs text-[#52647A]">{item.date ? <time>{item.date}</time> : homeCardText(undefined, "تاريخ النشر")}</span>
                       <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#17669C]">
                         اقرأ المقال <ArrowLeftIcon className="size-3.5" />
                       </span>
@@ -542,11 +543,11 @@ export default async function Home() {
                     />
                   </div>
                   <span className="min-w-0">
-                    <span className="block text-xs font-bold text-[#A47B2D]">{item.meta || "غير متوفر حالياً"}</span>
+                    <span className="block text-xs font-bold text-[#A47B2D]">{homeCardText(item.meta, "تصنيف المقال")}</span>
                     <span className="line-clamp-2 block font-bold leading-7 text-[#082B50]">
                       {item.title}
                     </span>
-                    <span className="mt-1 block text-xs text-[#52647A]">{item.date ? <time>{item.date}</time> : "غير متوفر حالياً"}</span>
+                    <span className="mt-1 block text-xs text-[#52647A]">{item.date ? <time>{item.date}</time> : homeCardText(undefined, "تاريخ النشر")}</span>
                   </span>
                 </Link>
               ))}
@@ -581,15 +582,15 @@ export default async function Home() {
                 >
                   <span className="inline-flex items-center gap-2 text-sm font-bold text-[#52647A]">
                       <DestinationFlag slug={item.countrySlug} />
-                      {item.location || "غير متوفر حالياً"}
+                      {homeCardText(item.location, "دولة المنحة")}
                   </span>
                   <h3 className="mt-4 text-[1.0625rem] font-bold leading-7 text-[#082B50] sm:text-lg">
                     {item.title}
                   </h3>
-                  <span className="mt-2 text-xs font-bold text-[#52647A]">{item.applicationStatus || "غير متوفر حالياً"}</span>
-                  <span className="mt-2 text-sm text-[#52647A]">{item.meta || "غير متوفر حالياً"}</span>
+                  <span className="mt-2 text-xs font-bold text-[#52647A]">{homeCardText(item.applicationStatus, "حالة التقديم")}</span>
+                  <span className="mt-2 text-sm text-[#52647A]">{homeCardText(item.meta, "المرحلة الدراسية")}</span>
                   <span className="mt-auto inline-flex w-fit rounded-md bg-[#F9E5B0] px-3 py-1.5 text-xs font-bold leading-5 text-[#082B50]">
-                    {item.body || "غير متوفر حالياً"}
+                    {homeCardText(item.body, "نوع التمويل")}
                   </span>
                 </Link>
               ))}
@@ -621,26 +622,28 @@ export default async function Home() {
   );
 }
 function countryCard(item: Country): Card {
+  const original = approvedHomeCardCopy("countries", item.slug, item.nameAr);
   return {
     id: item.id,
     slug: item.slug,
     title: item.nameAr,
     href: `/study-abroad/${item.slug}`,
-    body: item.introductionAr,
+    body: homeCardText(item.introductionAr, "وصف الوجهة", original?.description),
     image: item.imageUrl ?? undefined,
     alt: item.imageAltAr ?? undefined,
   };
 }
 function universityCard(item: HomeUniversity): Card {
+  const original = approvedHomeCardCopy("universities", item.slug, item.nameAr);
   return {
     id: item.id,
     slug: item.slug,
     title: item.nameAr,
     href: `/universities/${item.slug}`,
-    meta: item.country?.nameAr,
+    meta: homeCardText(item.country?.nameAr, "الدولة", original?.country),
     countrySlug: item.country?.slug,
-    location: item.city?.nameAr || item.cityAr,
-    universityType: item.universityType === "PUBLIC" ? "حكومية" : item.universityType === "PRIVATE" ? "خاصة" : undefined,
+    location: homeCardText(item.city?.nameAr || item.cityAr, "المدينة", original?.city),
+    universityType: homeCardText(item.universityType === "PUBLIC" ? "حكومية" : item.universityType === "PRIVATE" ? "خاصة" : undefined, "نوع الجامعة", original?.universityType),
   };
 }
 function scholarshipCard(item: Scholarship): Card {
@@ -656,12 +659,13 @@ function scholarshipCard(item: Scholarship): Card {
   };
 }
 function serviceCard(item: Service): Card {
+  const original = approvedHomeCardCopy("services", item.slug, item.titleAr);
   return {
     id: item.id,
     slug: item.slug,
     title: item.titleAr,
     href: `/services/${item.slug}`,
-    body: item.summaryAr,
+    body: homeCardText(item.summaryAr, "وصف الخدمة", original?.description),
   };
 }
 function articleCard(item: Article): Card {

@@ -120,9 +120,38 @@ test("public projections keep unavailable field slots, join country ids without 
   assert.equal(html.includes("Invalid Date"), false);
   assert.equal(calls.length, 6);
   assert.ok(html.includes("غير متوفر حالياً"));
-  assert.ok(html.includes("المحتوى غير متوفر حالياً"));
+  assert.ok(html.includes("ملخص المقال (غير متوفر حالياً)"));
   assert.equal((html.match(/data-trust-value=/g) ?? []).length, 4);
-  assert.ok(html.includes('aria-label="الشعار غير متوفر حالياً"'));
+  assert.ok(html.includes('aria-label="شعار الجامعة (غير متوفر حالياً)"'));
+});
+
+test("missing card fields use approved same-record text or descriptive labels, never a neighbour's content", async () => {
+  const calls = [];
+  const html = await home(liveLoader({
+    countries: collection([{ ...records.countries[0], slug: "turkey", nameAr: "تركيا" }]),
+    universities: collection([
+      { id: "warsaw", slug: "university-of-warsaw", nameAr: "جامعة وارسو", cityAr: null, universityType: null },
+      { id: "unknown", slug: "unknown-university", nameAr: "جامعة أخرى" },
+      { id: "different", slug: "istanbul-university", nameAr: "مؤسسة مختلفة" },
+    ]),
+    services: collection([{ ...records.services[0], slug: "university-admissions" }]),
+    scholarships: collection([{ ...records.scholarships[0], countryId: null, studyLevel: null, applicationStatus: null, effectiveApplicationStatus: null }]),
+  }, calls));
+  for (const text of ["حكومية (غير متوفر حالياً)", "وارسو (غير متوفر حالياً)", "بولندا (غير متوفر حالياً)", "نوع الجامعة (غير متوفر حالياً)", "المدينة (غير متوفر حالياً)", "الدولة (غير متوفر حالياً)", "استكشف الدراسة والجامعات في تركيا (غير متوفر حالياً)", "مساعدتك في القبول والتسجيل (غير متوفر حالياً)", "نوع التمويل (غير متوفر حالياً)", "المرحلة الدراسية (غير متوفر حالياً)", "حالة التقديم (غير متوفر حالياً)", "دولة المنحة (غير متوفر حالياً)", "تاريخ النشر (غير متوفر حالياً)", "الصورة (غير متوفر حالياً)"]) assert.ok(html.includes(text), text);
+  assert.equal(html.includes("إسطنبول (غير متوفر حالياً)"), false);
+  assert.equal(calls.length, 6);
+  const { homeCardText, approvedHomeCardCopy } = base("lib/homepage-card-content.ts");
+  assert.equal(approvedHomeCardCopy("universities", "university-of-warsaw", "جامعة أخرى"), undefined);
+  assert.equal(approvedHomeCardCopy("universities", "unknown", "جامعة وارسو"), undefined);
+  assert.equal(approvedHomeCardCopy("universities", "constructor", "جامعة أخرى"), undefined);
+  assert.equal(homeCardText(" خاصة ", "نوع الجامعة", "حكومية"), "خاصة");
+  assert.equal(homeCardText(" ", "نوع الجامعة"), "نوع الجامعة (غير متوفر حالياً)");
+  const populated = await home(liveLoader({
+    universities: collection([{ id: "warsaw", slug: "university-of-warsaw", nameAr: "جامعة وارسو", cityAr: "مدينة حقيقية", universityType: "PRIVATE", country: { slug: "poland", nameAr: "دولة حقيقية" } }]),
+    services: collection([{ ...records.services[0], slug: "university-admissions", summaryAr: "وصف حقيقي" }]),
+  }));
+  for (const text of ["مدينة حقيقية", "دولة حقيقية", "وصف حقيقي", "خاصة"]) assert.ok(populated.includes(text));
+  for (const text of ["حكومية (غير متوفر حالياً)", "وارسو (غير متوفر حالياً)", "مساعدتك في القبول والتسجيل (غير متوفر حالياً)"]) assert.equal(populated.includes(text), false);
 });
 
 test("Live Journey restores approved editorial copy, marks only missing steps and preserves real-value priority", async () => {

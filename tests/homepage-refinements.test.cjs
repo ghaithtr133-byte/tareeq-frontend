@@ -126,6 +126,7 @@ test("Statistics, article hierarchy, existing FAQ and closing WhatsApp content a
   assert.equal((trust.match(/data-trust-value=/g) ?? []).length, 4);
   for (const label of ["سنوات من الخبرة", "جامعة في عدة دول", "وجهات دراسية", "طالب وطالبة سجلوا معنا"]) assert.ok(trust.includes(label));
   assert.equal((trust.match(/غير متوفر حالياً/g) ?? []).length, 4);
+  for (const label of ["عدد سنوات الخبرة", "عدد الجامعات", "عدد الوجهات", "عدد الطلاب"]) assert.ok(trust.includes(`${label} (غير متوفر حالياً)`));
   assert.ok(trust.includes("grid-cols-2 sm:grid-cols-4"));
   assert.ok(trust.includes("lucide-map-pinned"));
   assert.equal(trust.includes("ووجهات دراسية"), false);
@@ -173,6 +174,19 @@ test("Homepage spacing stays compact without replacing approved artwork or remov
   assert.ok(hero.includes("/images/hero/study-abroad-student-landmarks.png"));
   assert.equal((hero.match(/<strong/g) ?? []).length, 4);
   assert.ok(section(html, "journey-title").includes("/images/journey/journey-background.png"));
+});
+
+test("Hero shows descriptive missing totals, genuine loading skeletons and supplied zero without temporary labels", () => {
+  const { HomeHero } = loader(ui)("components/home/home-hero.tsx");
+  const missing = renderToStaticMarkup(React.createElement(HomeHero));
+  assert.equal((missing.match(/العدد \(غير متوفر حالياً\)/g) ?? []).length, 4);
+  const pending = renderToStaticMarkup(React.createElement(HomeHero, { pending: true }));
+  assert.equal(pending.includes("غير متوفر حالياً"), false);
+  assert.ok(pending.includes("animate-pulse"));
+  const { MapPinned } = require("lucide-react");
+  const actual = renderToStaticMarkup(React.createElement(HomeHero, { heroCards: [{ label: "وجهات دراسية", count: 0, Icon: MapPinned }] }));
+  assert.equal(actual.includes("غير متوفر حالياً"), false);
+  assert.ok(actual.includes(">0</strong>"));
 });
 
 test("Widescreen expansion is Homepage-only and shared Container defaults remain unchanged", () => {

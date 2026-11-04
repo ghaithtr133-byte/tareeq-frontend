@@ -4,6 +4,7 @@ import { HomeContainer as Container, HomeLink as Link } from "@/components/home/
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { homeEditorial } from "@/lib/homepage-content";
+import { homeCardText } from "@/lib/homepage-card-content";
 
 const loadingCards = [
   { label: "وجهات دراسية", Icon: MapPinned },
@@ -91,7 +92,7 @@ export function HomeHero({ admissionHref = "/services", heroCards = loadingCards
                     />
                   </span>
                   <span className="min-w-0 leading-6">
-                    {pending ? <span aria-hidden="true" className="mb-1 block h-6 w-8 rounded-md bg-[#E5EBF2] motion-safe:animate-pulse motion-reduce:animate-none" /> : <strong className="block text-right text-xl font-extrabold tabular-nums 2xl:text-2xl">{count !== undefined ? count : <span className="text-sm font-normal leading-6">غير متوفر حالياً</span>}</strong>}
+                    {pending ? <span aria-hidden="true" className="mb-1 block h-6 w-8 rounded-md bg-[#E5EBF2] motion-safe:animate-pulse motion-reduce:animate-none" /> : <strong className="block text-right text-xl font-extrabold tabular-nums 2xl:text-2xl">{count !== undefined ? count : <span className="text-sm font-normal leading-6">{homeCardText(undefined, "العدد")}</span>}</strong>}
                     <span className="block text-sm font-bold leading-6 2xl:text-[0.9375rem]">
                       {label}
                     </span>

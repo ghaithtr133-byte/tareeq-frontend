@@ -7,6 +7,7 @@
 - Backend business logic and authentication belong to the separate backend application.
 - Do not invent API contracts, endpoints, or response schemas.
 - Verify the implementation before reporting completion and report any unverified checks or failures clearly.
+- For approved Public Website Live migrations, follow `docs/public-data-state-policy.md`: preserve approved designs and shared states, prioritize real data, visibly label same-record temporary content, and reuse the existing Backend gap report. Do not migrate other pages without explicit approval.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
