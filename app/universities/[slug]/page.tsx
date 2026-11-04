@@ -15,6 +15,7 @@ import { demoUniversityDetails } from "@/lib/mocks/university-detail-fixtures";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { emptyUniversityContent } from "@/lib/university-details";
 import { createPageMetadata } from "@/lib/seo";
+import { innerPageHero } from "@/lib/inner-page-hero";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
@@ -44,11 +45,11 @@ export default async function UniversityDetailPage({ params }: Props) {
   const related = await loadUniversityScholarships(university.slug, 1);
   return <main className="bg-[#F5F8FC] pb-10 sm:pb-14">
     <section aria-labelledby="university-title" className="border-b bg-gradient-to-l from-[#F5F8FC] to-[#EDF3F8]">
-      <Container className="py-4 sm:py-5">
-        <nav aria-label="مسار التنقل" className="mb-4 text-xs leading-6 text-muted-foreground sm:text-sm"><ol className="flex flex-wrap items-center gap-x-2 gap-y-1"><li><Link href="/" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الرئيسية</Link></li><li aria-hidden="true">/</li><li><Link href="/universities" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الجامعات</Link></li><li aria-hidden="true">/</li><li aria-current="page">{university.nameAr}</li></ol></nav>
+      <Container className={innerPageHero.content}>
+        <nav aria-label="مسار التنقل" className={innerPageHero.breadcrumb}><ol className="flex flex-wrap items-center gap-x-2 gap-y-1"><li><Link href="/" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الرئيسية</Link></li><li aria-hidden="true">/</li><li><Link href="/universities" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الجامعات</Link></li><li aria-hidden="true">/</li><li aria-current="page">{university.nameAr}</li></ol></nav>
         <div className="grid items-center gap-5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-8">
           <div className="min-w-0">
-            <div className="flex items-start gap-3 sm:gap-4"><UniversityHeroLogo src={content.logo} name={university.nameAr} /><div className="min-w-0"><h1 id="university-title" className="text-2xl font-bold leading-[1.6] text-primary [overflow-wrap:anywhere] sm:text-3xl">{university.nameAr}</h1>{university.nameEn ? <p dir="ltr" className="mt-1 text-right text-sm leading-6 text-primary/85 [overflow-wrap:anywhere] sm:text-base">{university.nameEn}</p> : null}</div></div>
+            <div className="flex items-start gap-3 sm:gap-4"><UniversityHeroLogo src={content.logo} name={university.nameAr} /><div className="min-w-0"><h1 id="university-title" className={innerPageHero.title}>{university.nameAr}</h1>{university.nameEn ? <p dir="ltr" className="mt-1 text-right text-sm leading-6 text-primary/85 [overflow-wrap:anywhere] sm:text-base">{university.nameEn}</p> : null}</div></div>
             {university.overviewAr ? <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">{university.overviewAr}</p> : null}
             <dl className="mt-4 flex flex-wrap gap-3 text-sm">
               {university.country?.nameAr ? <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-white px-4 py-2.5"><ScholarshipCountryFlag slug={university.country.slug} name={university.country.nameAr} /><div><dt className="text-xs text-muted-foreground">الدولة</dt><dd className="mt-1 font-bold text-primary">{university.country.nameAr}</dd></div></div> : null}

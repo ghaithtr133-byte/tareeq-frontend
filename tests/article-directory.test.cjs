@@ -137,6 +137,10 @@ test("article cards use one accessible detail link, real featured flag/date, and
   assert.equal(html.includes("دقائق قراءة"), false);
   assert.ok(html.includes("اقرأ المزيد"));
   assert.ok(html.includes("motion-safe:hover:-translate-y-0.5"));
+  assert.ok(html.includes('draggable="false"'));
+  assert.equal((html.match(/line-clamp-2/g) ?? []).length, 2);
+  assert.equal(html.includes("line-clamp-3"), false);
+  assert.ok(html.includes("group-focus-visible:underline"));
   const illustrated = renderToStaticMarkup(React.createElement(ArticleDirectoryCard, { article: demo.publicDemoContent.articles[0] }));
   assert.ok(illustrated.includes("motion-safe:group-hover:scale-[1.025]"));
 });
@@ -159,7 +163,29 @@ test("toolbar uses only supported controls and a featured-only checkbox, with ac
   assert.equal((html.match(/<select /g) ?? []).length, 1);
   assert.ok(html.includes('type="checkbox"'));
   assert.ok(html.includes("مسح الكل"));
+  assert.equal(html.includes("الأحدث أولاً"), false);
   for (const text of ["غير مميزة", "قصص نجاح", "category", "newsletter"]) assert.equal(html.includes(text), false);
+});
+
+test("compact Articles hero uses the supplied photograph, keeps copy and actual count, and preserves newest-first fetching", async () => {
+  const calls = [];
+  const local = loader({ ...uiOverrides,
+    "@/api/public-content": { getArticles: async (params) => { calls.push(params); return demo.getDemoArticles(params); }, getCountries: demo.getDemoCountries },
+    "@/lib/public-content-mode": { isPublicDemoMode: () => false },
+  });
+  const page = local("app/articles/page.tsx").default;
+  const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({}) }));
+  const hero = html.match(/<section aria-labelledby="articles-title"[\s\S]*?<\/section>/)[0];
+  assert.ok(fs.existsSync(path.resolve(__dirname, "../public/images/articles/articles-hero.png")));
+  assert.ok(hero.includes('src="/images/articles/articles-hero.png"'));
+  assert.ok(hero.includes("object-cover object-left"));
+  assert.equal(hero.includes("<svg"), false);
+  assert.ok(hero.includes("مقالات ونصائح"));
+  assert.ok(hero.includes("اكتشف مقالاتنا التعليمية التي تساعدك في رحلتك الأكاديمية، وتقدم لك نصائح وخبرات مهمة للدراسة في الخارج."));
+  assert.ok(html.includes('text-[#17669C]">13</strong> مقال'));
+  assert.equal((html.match(/data-article-card=/g) ?? []).length, 12);
+  assert.equal(calls[0].sort, "newest");
+  assert.equal(calls[0].limit, 12);
 });
 
 test("Live adapter requests only the selected API page and propagates failure without Demo fallback", async () => {
@@ -187,6 +213,7 @@ test("route distinguishes API errors from empty results, preserves query context
   const { default: ArticlesPage } = local("app/articles/page.tsx");
   const props = { searchParams: Promise.resolve({ search: "بحث", country: "romania", page: "1" }) };
   const empty = renderToStaticMarkup(await ArticlesPage(props));
+  assert.equal(empty.includes('id="articles-contact-title"'), false, "Directory keeps the reading journey free of a generic closing consultation banner");
   assert.ok(empty.includes("لا توجد مقالات تطابق بحثك"));
   mode = "error";
   const unavailable = renderToStaticMarkup(await ArticlesPage(props));

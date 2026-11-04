@@ -126,7 +126,7 @@ test("Homepage and university FAQ import the same accessible disclosure, preserv
   const detailSource = fs.readFileSync(path.resolve(__dirname, "../components/public/university-details.tsx"), "utf8");
   assert.ok(homeSource.includes('<FaqAccordion items={questions} name="home-faq"'));
   assert.ok(detailSource.includes("<FaqAccordion items={content.faqs}"));
-  const home = renderToStaticMarkup(React.createElement(local("components/home/home-faq.tsx").HomeFaq));
+  const home = renderToStaticMarkup(React.createElement(local("components/home/home-faq.tsx").HomeFaq, { questions: local("lib/mocks/home-faq.ts").demoHomeQuestions }));
   assert.equal((home.match(/<summary/g) ?? []).length, 6);
   assert.ok(home.includes("كيف أختار الجامعة المناسبة؟"));
 });

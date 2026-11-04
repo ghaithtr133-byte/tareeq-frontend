@@ -8,6 +8,9 @@ import { ServiceAboutLink } from "@/components/public/service-about-link";
 import { ServiceDetailIcon, ServiceDetailMedia } from "@/components/public/service-detail-media";
 import { serviceDetailHref, serviceDetailMedia, serviceKind, type ServiceDetailExtras } from "@/lib/service-details";
 import { createWhatsappUrl } from "@/lib/whatsapp";
+import { innerPageHero } from "@/lib/inner-page-hero";
+import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
+import { cn } from "@/lib/utils";
 
 const panel = "min-w-0 rounded-2xl border bg-white p-4 shadow-[0_3px_16px_-12px_rgba(8,43,80,0.22)] sm:p-5";
 const whatsappClass = "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#D3AD60] px-5 py-2.5 text-sm font-bold text-[#082B50] transition-colors hover:bg-[#E1C282] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent motion-reduce:transition-none";
@@ -19,7 +22,7 @@ function SectionHeading({ id, title, icon: Icon }: { id: string; title: string; 
 }
 
 function WhatsappLink({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
-  return <a href={href} target="_blank" rel="noopener noreferrer" className={`${whatsappClass} ${className}`}><MessageCircle className="size-5 shrink-0" aria-hidden="true" />{children}<span className="sr-only">(يفتح في نافذة جديدة)</span></a>;
+  return <a href={href} target="_blank" rel="noopener noreferrer" className={cn(whatsappClass, className)}><MessageCircle className="size-5 shrink-0" aria-hidden="true" />{children}<span className="sr-only">(يفتح في نافذة جديدة)</span></a>;
 }
 
 export function ServiceDetails({ service, extras, related, relatedFailed, demo }: {
@@ -29,14 +32,14 @@ export function ServiceDetails({ service, extras, related, relatedFailed, demo }
   const whatsapp = createWhatsappUrl(`مرحبًا، أود الاستفسار عن خدمة ${service.titleAr}.`);
   return <main className="bg-[#F5F8FC] pb-8 text-primary sm:pb-10">
     <Container>
-      <nav aria-label="مسار التنقل" className="py-3 text-xs leading-6 text-muted-foreground sm:text-sm"><ol className="flex flex-wrap items-center gap-x-2 gap-y-1"><li><Link href="/" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الرئيسية</Link></li><li aria-hidden="true">/</li><li><Link href="/services" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">خدماتنا</Link></li><li aria-hidden="true">/</li><li aria-current="page">{service.titleAr}</li></ol></nav>
-      <section data-service-detail-hero aria-labelledby="service-title" className="grid overflow-hidden rounded-2xl border bg-[#FAFCFE] shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-        <div className="min-w-0 p-5 sm:p-6 lg:p-7">
-          <div className="flex items-start gap-3"><span className="grid size-14 shrink-0 place-items-center rounded-2xl border bg-white text-[#082B50] shadow-sm sm:size-16"><ServiceDetailIcon kind={kind} className="size-8 sm:size-10" /></span><div className="min-w-0"><p className="mb-1 inline-block rounded-full bg-[#F9E9C8] px-3 py-1 text-xs font-bold text-[#75541F]">خدماتنا</p><h1 id="service-title" className="text-2xl font-bold leading-[1.5] text-[#082B50] [overflow-wrap:anywhere] lg:text-3xl">{service.titleAr}</h1></div></div>
+      <nav aria-label="مسار التنقل" className={`${innerPageHero.breadcrumb} py-3`}><ol className="flex flex-wrap items-center gap-x-2 gap-y-1"><li><Link href="/" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">الرئيسية</Link></li><li aria-hidden="true">/</li><li><Link href="/services" className="rounded hover:text-primary focus-visible:outline-2 focus-visible:outline-accent">خدماتنا</Link></li><li aria-hidden="true">/</li><li aria-current="page">{service.titleAr}</li></ol></nav>
+      <section data-service-detail-hero aria-labelledby="service-title" className={`${innerPageHero.minimum} grid overflow-hidden rounded-2xl border bg-[#FAFCFE] shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]`}>
+        <div className={innerPageHero.panel}>
+          <div className="flex items-start gap-3"><span className="grid size-14 shrink-0 place-items-center rounded-2xl border bg-white text-[#082B50] shadow-sm sm:size-16"><ServiceDetailIcon kind={kind} className="size-8 sm:size-10" /></span><div className="min-w-0"><p className="mb-1 inline-block rounded-full bg-[#F9E9C8] px-3 py-1 text-xs font-bold text-[#75541F]">خدماتنا</p><h1 id="service-title" className={innerPageHero.title}>{service.titleAr}</h1></div></div>
           {service.summaryAr ? <p className="mt-3 max-w-xl text-sm leading-7 text-[#455C75] sm:text-base sm:leading-8">{service.summaryAr}</p> : null}
           <div className="mt-4 flex flex-wrap items-center gap-3"><WhatsappLink href={whatsapp}>استشر فريق طريق</WhatsappLink><ServiceAboutLink /></div>
         </div>
-        <div className="relative h-32 min-w-0 sm:h-40 md:h-auto md:min-h-60"><ServiceDetailMedia key={service.slug} media={serviceDetailMedia(service)} kind={kind} title={service.titleAr} hero />{kind !== "admissions" ? <span className="pointer-events-none absolute -right-8 -top-24 h-96 w-16 -rotate-12 rounded-full border-s-4 border-[#D6B46E]/50" aria-hidden="true" /> : null}</div>
+        <div className="relative h-32 min-w-0 sm:h-40 md:h-auto"><ServiceDetailMedia key={service.slug} media={serviceDetailMedia(service)} kind={kind} title={service.titleAr} hero />{kind !== "admissions" ? <span className="pointer-events-none absolute -right-8 -top-24 h-96 w-16 -rotate-12 rounded-full border-s-4 border-[#D6B46E]/50" aria-hidden="true" /> : null}</div>
       </section>
 
       <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_17rem]">
@@ -46,14 +49,13 @@ export function ServiceDetails({ service, extras, related, relatedFailed, demo }
           {extras.benefits.length ? <section data-service-benefits aria-labelledby="service-benefits-title" className={panel}><SectionHeading id="service-benefits-title" title={`مميزات خدمة ${service.titleAr}`} icon={Star} /><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">{extras.benefits.map((benefit, index) => { const Icon = benefitIcons[index % benefitIcons.length]; return <article key={benefit.title} className="flex min-w-0 items-start gap-2 rounded-xl border bg-white p-3 shadow-sm"><Icon className="mt-1 size-7 shrink-0 text-[#B48B42]" strokeWidth={1.5} aria-hidden="true" /><div className="min-w-0"><h3 className="text-sm font-bold leading-7">{benefit.title}</h3><p className="mt-1 text-xs leading-6 text-muted-foreground">{benefit.description}</p></div></article>; })}</div></section> : null}
           {extras.faqs.length ? <section data-service-faq aria-labelledby="service-faq-title" className={`${panel} bg-[#FFFDF9]`}><SectionHeading id="service-faq-title" title={`الأسئلة الشائعة عن ${service.titleAr}`} icon={CircleHelp} /><div className="mt-4"><FaqAccordion items={extras.faqs} name={`service-faq-${service.id}`} /></div></section> : null}
         </div>
-        <aside aria-labelledby="service-consultation-title" className="relative min-w-0 overflow-hidden rounded-2xl bg-[#082B50] p-5 text-white shadow-sm xl:sticky xl:top-24">
-          <MessageCircle className="mx-auto size-10 text-[#D3AD60]" strokeWidth={1.5} aria-hidden="true" /><h2 id="service-consultation-title" className="mt-3 text-center text-lg font-bold leading-8">لديك استفسار عن هذه الخدمة؟</h2><p className="mt-3 text-center text-sm leading-8 text-white/90">تواصل مع فريق طريق للحصول على إرشاد مناسب وإجابات عن استفساراتك.</p><div className="relative z-10 mt-4 flex justify-start"><WhatsappLink href={whatsapp} className="px-3 focus-visible:outline-white">استفسر عبر واتساب</WhatsappLink></div><div className="pointer-events-none -mx-5 -mb-5 mt-5 h-16 bg-cover bg-bottom opacity-40" style={{ backgroundImage: "url('/images/footer/footer-skyline.png')" }} aria-hidden="true" />
-        </aside>
+        <ConsultationCta as="aside" variant="contextual" titleId="service-consultation-title" className="xl:sticky xl:top-24" title={<>لديك استفسار عن {service.titleAr}؟</>} description="تواصل مع فريق طريق للحصول على إرشاد مناسب وإجابات عن استفساراتك." backgroundImage="/images/footer/footer-skyline.png" action={
+          <WhatsappLink href={whatsapp} className={consultationActionClass}>استفسر عبر واتساب</WhatsappLink>
+        } />
       </div>
 
       <section aria-labelledby="service-related-title" className="mt-7"><SectionHeading id="service-related-title" title="خدمات أخرى قد تهمك" icon={LayoutGrid} />{related.length ? <div data-other-services className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{related.map((item) => <Link key={item.id} href={serviceDetailHref(item)} className="group flex min-w-0 overflow-hidden rounded-xl border bg-white shadow-sm transition-[translate,box-shadow] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none"><div className="w-24 shrink-0"><ServiceDetailMedia media={serviceDetailMedia(item)} kind={serviceKind(item)} title={item.titleAr} /></div><div className="flex min-w-0 flex-1 items-center gap-2 p-3"><div className="min-w-0 flex-1"><h3 className="text-sm font-bold leading-7 text-[#082B50]">{item.titleAr}</h3>{item.summaryAr ? <p className="mt-1 line-clamp-2 text-xs leading-6 text-muted-foreground">{item.summaryAr}</p> : null}</div><ArrowLeft className="size-5 shrink-0 text-[#B48B42] transition-transform group-hover:-translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" /></div></Link>)}</div> : <p className="mt-3 rounded-xl border bg-white p-4 text-sm leading-7 text-muted-foreground">{relatedFailed ? "يتعذر تحميل الخدمات الأخرى حاليًا." : "لا توجد خدمات أخرى منشورة حاليًا."} <Link href="/services" className="inline-flex min-h-11 items-center font-bold text-primary underline focus-visible:outline-2 focus-visible:outline-accent">عرض خدماتنا</Link></p>}</section>
 
-      <section aria-labelledby="service-closing-title" className="relative mt-6 overflow-hidden rounded-2xl bg-[#082B50] p-5 text-white sm:p-6"><div className="pointer-events-none absolute inset-0 bg-cover bg-left opacity-15" style={{ backgroundImage: "url('/images/footer/footer-skyline.png')" }} aria-hidden="true" /><div className="relative flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between"><div className="min-w-0"><h2 id="service-closing-title" className="text-xl font-bold leading-9">جاهز تبدأ رحلتك الدراسية؟</h2><p className="mt-1 text-sm leading-7 text-white/90">تواصل مع فريق طريق واحصل على إرشاد مناسب حول الخدمة التي تحتاجها.</p></div><WhatsappLink href={whatsapp} className="shrink-0 focus-visible:outline-white md:me-16">تواصل عبر واتساب</WhatsappLink></div></section>
     </Container>
   </main>;
 }

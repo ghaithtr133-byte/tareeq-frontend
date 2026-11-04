@@ -44,6 +44,13 @@ function text(params: RouteSearchParams, key: string) {
   return candidate || undefined;
 }
 
+// Canonical country slugs may be localized; reject separators/control characters,
+// not non-Latin names. University/article slugs keep their existing validation.
+function countrySlug(params: RouteSearchParams) {
+  const candidate = value(params, "country");
+  return /^[\p{L}\p{M}\p{N}]+(?:-[\p{L}\p{M}\p{N}]+)*$/u.test(candidate) ? candidate : undefined;
+}
+
 export function countriesParams(params: RouteSearchParams): CountryListParams {
   const sort = value(params, "sort");
   return { ...common(params), sort: sort === "newest" || sort === "manual" ? sort : undefined };
@@ -51,7 +58,7 @@ export function countriesParams(params: RouteSearchParams): CountryListParams {
 
 export function universitiesParams(params: RouteSearchParams): UniversityListParams {
   const sort = value(params, "sort");
-  return { ...common(params), country: slug(params, "country"), sort: sort === "name" || sort === "newest" ? sort : undefined };
+  return { ...common(params), country: countrySlug(params), sort: sort === "name" || sort === "newest" ? sort : undefined };
 }
 
 export function scholarshipsParams(params: RouteSearchParams): ScholarshipListParams {
@@ -59,7 +66,7 @@ export function scholarshipsParams(params: RouteSearchParams): ScholarshipListPa
   const status = value(params, "applicationStatus");
   return {
     ...common(params),
-    country: slug(params, "country"),
+    country: countrySlug(params),
     university: slug(params, "university"),
     studyLevel: text(params, "studyLevel"),
     fundingType: text(params, "fundingType"),

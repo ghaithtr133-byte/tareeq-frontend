@@ -1,8 +1,10 @@
 import Image from "next/image";
+import { innerPageHero } from "@/lib/inner-page-hero";
 import Link from "next/link";
 import { ChevronLeft, FileText, GraduationCap, Headset, MessageCircle, Plane, Target } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { ServiceOverviewCard } from "@/components/public/service-overview-card";
+import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
 import { publicServices, serviceProcess } from "@/lib/public-services";
 import { createPageMetadata } from "@/lib/seo";
 import { createWhatsappUrl } from "@/lib/whatsapp";
@@ -19,9 +21,9 @@ export default async function ServicesPage() {
   return <main className="bg-[#F8FAFD] pb-8 text-primary">
     <section aria-labelledby="services-title" className="relative isolate overflow-hidden border-b border-[#E2E9F0] bg-gradient-to-l from-white to-[#EDF4F9]">
       <div data-services-hero-art className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-1/2 opacity-35 md:w-[42%] md:opacity-100"><Image src="/images/services/services-hero.png" alt="قبعة تخرج وكتب وكرة أرضية" fill loading="eager" sizes="(min-width: 768px) 42vw, 50vw" className="object-contain object-bottom md:object-cover md:object-center" /><span aria-hidden="true" className="absolute inset-0 bg-gradient-to-l from-[#F8FAFD] via-transparent to-transparent" /></div>
-      <Container className="py-4 sm:py-5">
-        <nav aria-label="مسار التنقل" className="mb-4 text-xs leading-6 text-muted-foreground"><ol className="flex gap-2"><li><Link href="/" className="rounded-sm hover:underline">الرئيسية</Link><span className="ms-2" aria-hidden="true">/</span></li><li aria-current="page">خدماتنا</li></ol></nav>
-        <div className="pb-2 md:w-[58%] md:pb-4"><p className="mb-1 text-sm font-bold text-[#A57B34]">خدماتنا</p><h1 id="services-title" className="text-2xl font-bold leading-[1.6] text-[#082B50] sm:text-3xl lg:text-[2rem]">خدمات متكاملة لدعم رحلتك الدراسية</h1><p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">نقدم لك مجموعة من الخدمات المتخصصة التي تساعدك على التخطيط للدراسة في الخارج بثقة وسهولة، من اختيار التخصص والجامعة وحتى الوصول إلى مقعدك الدراسي.</p></div>
+      <Container className={innerPageHero.content}>
+        <nav aria-label="مسار التنقل" className={innerPageHero.breadcrumb}><ol className="flex gap-2"><li><Link href="/" className="rounded-sm hover:underline">الرئيسية</Link><span className="ms-2" aria-hidden="true">/</span></li><li aria-current="page">خدماتنا</li></ol></nav>
+        <div className="md:w-[58%]"><p className="mb-1 text-sm font-bold text-[#A57B34]">خدماتنا</p><h1 id="services-title" className={innerPageHero.title}>خدمات متكاملة لدعم رحلتك الدراسية</h1><p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">نقدم لك مجموعة من الخدمات المتخصصة التي تساعدك على التخطيط للدراسة في الخارج بثقة وسهولة، من اختيار التخصص والجامعة وحتى الوصول إلى مقعدك الدراسي.</p></div>
       </Container>
     </section>
 
@@ -39,11 +41,9 @@ export default async function ServicesPage() {
         <p className="mt-4 text-center text-xs leading-6 text-muted-foreground">تختلف متطلبات وقرارات القبول حسب الجامعة؛ ولا تضمن الخدمة القبول أو الحصول على منحة.</p>
       </section>
 
-      <section aria-labelledby="services-contact-title" className="relative flex flex-col items-start gap-4 overflow-hidden rounded-2xl border border-[#23496E] bg-gradient-to-l from-[#082B50] via-[#103655] to-[#082B50] p-5 text-white sm:flex-row sm:items-center sm:gap-6 sm:p-6">
-        <div className="min-w-0 flex-1 sm:order-2"><h2 id="services-contact-title" className="text-xl font-bold leading-9 sm:text-2xl">جاهز تبدأ رحلتك الدراسية؟</h2><p className="mt-1 text-sm leading-7 text-white/85">تواصل معنا الآن واحصل على استشارة من فريقنا المتخصص.</p></div>
-        <a data-services-whatsapp href={createWhatsappUrl()} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#D5AD60] px-5 py-2.5 text-sm font-bold text-[#082B50] transition-colors hover:bg-[#E1C282] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:order-1"><MessageCircle className="size-5" aria-hidden="true" />تواصل عبر واتساب<span className="sr-only">(يفتح في نافذة جديدة)</span></a>
-        <GraduationCap className="hidden size-20 shrink-0 text-[#D2AD64] lg:order-3 lg:block" strokeWidth={1} aria-hidden="true" />
-      </section>
+      <ConsultationCta titleId="services-contact-title" title="جاهز تبدأ رحلتك الدراسية؟" description="تواصل معنا الآن واحصل على استشارة من فريقنا المتخصص." decoration={<GraduationCap strokeWidth={1} />} action={
+        <a data-services-whatsapp href={createWhatsappUrl()} target="_blank" rel="noopener noreferrer" className={consultationActionClass}><MessageCircle className="size-5" aria-hidden="true" />تواصل عبر واتساب<span className="sr-only">(يفتح في نافذة جديدة)</span></a>
+      } />
     </Container>
   </main>;
 }

@@ -115,3 +115,51 @@ test("Live adapter requests only selected API page and propagates errors without
   assert.equal(calls[0][1].params.page, 3);
   assert.equal(calls[0][1].params.limit, 12);
 });
+
+test("directory-only card styling emphasizes the CTA and fixes RTL cell padding without changing shared defaults", () => {
+  const componentLoad = loader({ "next/link": ({ children, ...props }) => React.createElement("a", props, children) });
+  const { ScholarshipDirectoryCard } = componentLoad("components/public/scholarship-directory-card.tsx");
+  const scholarship = demo.publicDemoContent.scholarships[0];
+  const render = (variant) => renderToStaticMarkup(React.createElement(ScholarshipDirectoryCard, { scholarship, variant }));
+  const refined = render("directory");
+  const shared = render(undefined);
+  assert.ok(refined.includes("bg-[#082B50] text-white"));
+  assert.ok(refined.includes("hover:border-[#C8A253] hover:bg-[#123D6A]"));
+  assert.ok(refined.includes("focus-visible:outline-offset-2"));
+  assert.ok(refined.includes(`href="/scholarships/${scholarship.slug}"`));
+  assert.ok(refined.includes(`aria-label="التفاصيل والتقديم: ${scholarship.titleAr}"`));
+  const metadata = refined.match(/<dl[^>]*>[\s\S]*?<\/dl>/)[0];
+  assert.equal((metadata.match(/class="relative[^\"]*px-2/g) ?? []).length, 3);
+  assert.equal(metadata.includes("divide-x-reverse"), false);
+  assert.ok(shared.includes("divide-x-reverse"));
+  assert.ok(shared.includes("border-[#D9BF8E] text-[#123D6A] hover:bg-[#F9F4EA]"));
+  for (const field of ["titleAr", "studyLevel", "fundingType"]) assert.ok(refined.includes(scholarship[field]));
+});
+
+test("Scholarships route uses the approved real hero image, compact toolbar, and scoped card variant with unchanged fetching", async () => {
+  const calls = [];
+  const methods = { getScholarships: demo.getDemoScholarships, getCountries: demo.getDemoCountries, getUniversities: demo.getDemoUniversities };
+  const pageLoad = loader({
+    "next/link": ({ children, ...props }) => React.createElement("a", props, children),
+    "next/image": ({ src, alt, className }) => React.createElement("img", { src, alt, className }),
+    "next/navigation": { useRouter: () => ({ push() {} }), redirect: () => { throw Error("unexpected redirect"); } },
+    "@/lib/public-content-mode": { isPublicDemoMode: () => true },
+    "@/api/public-content": Object.fromEntries(Object.entries(methods).map(([name, method]) => [name, (...args) => { calls.push({ name, args }); return method(...args); }])),
+  });
+  const html = renderToStaticMarkup(await pageLoad("app/scholarships/page.tsx").default({ searchParams: Promise.resolve({}) }));
+  const hero = html.match(/<section aria-labelledby="scholarships-title"[\s\S]*?<\/section>/)[0];
+  assert.ok(fs.existsSync(path.resolve(__dirname, "../public/images/scholarships/scholarships-hero.png")));
+  assert.ok(hero.includes('src="/images/scholarships/scholarships-hero.png"'));
+  assert.ok(hero.includes('alt="قبعة تخرج وكتب وكرة أرضية ترمز إلى فرص المنح الدراسية"'));
+  assert.ok(hero.includes("md:w-[58%]"));
+  assert.equal(hero.includes("<svg"), false);
+  for (const text of ["الرئيسية", "اكتشف فرصتك", "المنح الدراسية", "تصفح أحدث المنح الدراسية المتوفرة من جامعات وحكومات حول العالم وابدأ رحلتك الأكاديمية الآن."]) assert.ok(hero.includes(text));
+  assert.equal((html.match(/<article\b/g) ?? []).length, 12);
+  assert.equal((html.match(/bg-\[#082B50\] text-white hover:border/g) ?? []).length, 12);
+  assert.ok(html.includes('aria-expanded="false" aria-controls="scholarship-advanced"'));
+  assert.ok(html.includes('id="scholarship-advanced" hidden=""'));
+  assert.ok(html.includes("lg:w-80 lg:shrink-0"));
+  assert.equal(calls.length, 3);
+  assert.equal(calls.find((call) => call.name === "getScholarships").args[0].limit, 12);
+  assert.equal(calls.find((call) => call.name === "getScholarships").args[0].page, 1);
+});

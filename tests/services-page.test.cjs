@@ -128,4 +128,39 @@ test("the closing CTA uses only the configured official WhatsApp destination wit
   assert.ok(html.includes('target="_blank" rel="noopener noreferrer"'));
   assert.ok(html.includes("تواصل عبر واتساب"));
   assert.equal((html.match(/data-services-whatsapp/g) ?? []).length, 1);
+  const closing = html.match(/<section[^>]*data-consultation-cta="closing"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(closing);
+  assert.ok(closing.indexOf("services-contact-title") < closing.indexOf("data-services-whatsapp"));
+  assert.ok(closing.includes('class="mt-3 flex min-w-0 flex-wrap gap-2"'));
+  assert.equal(closing.includes("justify-between"), false, "Action stays with the message, not on the opposite side");
+  assert.equal(closing.includes("min-h-["), false, "Banner height follows its content");
+});
+
+test("compact consultation variant retains semantic labeling, scoped actions and reduced-motion focus styles", () => {
+  const { ConsultationCta, consultationActionClass } = viewLoad("components/public/consultation-cta.tsx");
+  const html = renderToStaticMarkup(React.createElement(ConsultationCta, {
+    as: "aside", variant: "contextual", titleId: "context-test", title: "استشارة", description: "إرشاد مناسب للطالب",
+    action: React.createElement("a", { href: "/contact", className: consultationActionClass }, "تواصل معنا"),
+  }));
+  assert.ok(html.startsWith('<aside data-consultation-cta="contextual" aria-labelledby="context-test"'));
+  assert.ok(html.includes('id="context-test"'));
+  for (const token of ["min-h-12", "bg-[#C8A253]", "bg-none", "focus-visible:outline-white", "motion-reduce:transition-none"]) assert.ok(html.includes(token), token);
+  assert.equal(html.includes('md:w-[72%]'), false, "Sidebar content uses its available column");
+  assert.equal((html.match(/<a /g) ?? []).length, 1);
+});
+
+test("all five published service CTAs use scoped navy/gold interactions and retain full-width bottom alignment", async () => {
+  const published = (await demo.getDemoServices({ limit: 5, sort: "manual" })).items;
+  const { publishedServiceHref } = viewLoad("lib/service-details.ts");
+  for (const service of config.publicServices) {
+    const href = publishedServiceHref(service.title, published);
+    assert.ok(href);
+    const html = renderToStaticMarkup(React.createElement(ServiceOverviewCard, { service, publishedHref: href }));
+    assert.ok(html.includes(`href="${href}"`));
+    assert.equal((html.match(/<a\b/g) ?? []).length, 1);
+    assert.ok(html.includes('class="mt-auto pt-1"'));
+    for (const style of ["min-h-11 w-full", "rounded-lg", "border-primary bg-primary", "text-white", "hover:bg-accent hover:text-primary", "active:bg-[#B68A3E] active:text-primary", "transition-colors duration-200", "focus-visible:outline-offset-4 focus-visible:outline-primary", "motion-reduce:transition-none", "size-4 shrink-0"]) assert.ok(html.includes(style), style);
+    assert.ok(html.includes("اعرف المزيد"));
+    assert.equal(html.includes("disabled="), false);
+  }
 });

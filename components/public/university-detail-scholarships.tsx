@@ -5,6 +5,7 @@ import type { PublicList, Scholarship } from "@/api/public-content";
 import { loadUniversityScholarships } from "@/api/university-detail-actions";
 import { ScholarshipDirectoryCard } from "@/components/public/scholarship-directory-card";
 import { nextScholarshipPage, uniqueUniversityScholarships } from "@/lib/university-details";
+import { SkeletonResults } from "@/components/public/content-skeletons";
 
 export function UniversityDetailScholarships({ id, slug, demo, initial }: {
   id: string; slug: string; demo: boolean; initial: PublicList<Scholarship> | null;
@@ -27,7 +28,7 @@ export function UniversityDetailScholarships({ id, slug, demo, initial }: {
   return <section data-university-scholarships aria-labelledby="university-scholarships-title" className="mt-6 rounded-2xl border bg-white p-4 sm:p-5">
     <h2 id="university-scholarships-title" className="text-xl font-bold leading-8 text-primary sm:text-2xl">المنح المرتبطة بهذه الجامعة</h2>
     <p className="mt-2 text-sm leading-7 text-muted-foreground">تختلف شروط الأهلية حسب المنحة؛ ارتباطها بالجامعة لا يعني شمول جميع تخصصاتها.</p>
-    {query.isPending ? <p role="status" className="mt-4 animate-pulse rounded-xl bg-muted p-5 motion-reduce:animate-none">جارٍ تحميل المنح المرتبطة…</p> : null}
+    {query.isPending && !items.length ? <SkeletonResults kind="scholarship" count={3} label="جارٍ تحميل المنح المرتبطة…" /> : null}
     {items.length ? <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((scholarship) => <ScholarshipDirectoryCard key={scholarship.id} scholarship={scholarship} />)}</div> : null}
     {query.isError || query.isFetchNextPageError ? <div role="alert" className="mt-4 text-sm leading-7 text-primary"><p>يتعذر تحميل المنح المرتبطة حاليًا. هذا لا يعني عدم توفر منح.</p><button type="button" onClick={() => query.isFetchNextPageError ? query.fetchNextPage() : query.refetch()} className="mt-2 min-h-11 rounded-lg border px-4 font-bold focus-visible:outline-2 focus-visible:outline-accent">إعادة المحاولة</button></div> : null}
     {query.hasNextPage && !query.isFetchNextPageError ? <div className="mt-5 text-center"><button type="button" disabled={query.isFetching} onClick={() => query.fetchNextPage()} className="min-h-11 rounded-lg border border-accent px-5 text-sm font-bold text-primary hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60">{query.isFetchingNextPage ? "جارٍ التحميل…" : "عرض المزيد من المنح"}</button></div> : null}

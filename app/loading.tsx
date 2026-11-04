@@ -1,13 +1,15 @@
-import { Container } from "@/components/layout/container";
+"use client";
+
+import { usePathname } from "next/navigation";
+import { HomeHero } from "@/components/home/home-hero";
+import { PublicPageSkeleton, HomeContentSkeleton } from "@/components/public/content-skeletons";
 
 export default function Loading() {
-  return (
-    <main className="bg-background py-16 sm:py-24" aria-busy="true" aria-label="جارٍ تحميل المحتوى">
-      <Container className="max-w-4xl">
-        <div className="h-3 w-28 animate-pulse bg-secondary" />
-        <div className="mt-6 h-14 max-w-2xl animate-pulse bg-secondary" />
-        <div className="mt-4 h-6 max-w-xl animate-pulse bg-secondary" />
-      </Container>
-    </main>
-  );
+  const pathname = usePathname();
+  // Other routes have their own geometry; unknown public routes use the neutral shell.
+  if (pathname !== "/") return <PublicPageSkeleton />;
+  return <main className="overflow-x-clip bg-[#FAF9F6]" aria-busy="true">
+    <HomeHero pending />
+    <HomeContentSkeleton />
+  </main>;
 }

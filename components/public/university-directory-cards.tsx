@@ -42,15 +42,15 @@ export function DirectoryScholarshipCard({ scholarship, university }: { scholars
   const status = scholarship.effectiveApplicationStatus ?? scholarship.applicationStatus;
   return <Link href={`/scholarships/${scholarship.slug}`} className={cardClass}>
     <div className="relative p-2 pb-0">
-      <UniversityDirectoryImage src={university?.imageUrl ?? null} alt={university ? `صورة مرتبطة بـ ${university.nameAr}` : ""} className="aspect-[2/1] rounded-lg" />
+      <UniversityDirectoryImage src={university?.imageUrl ?? null} alt={university ? `صورة مرتبطة بـ ${university.nameAr}` : ""} className="aspect-[3/1] rounded-lg lg:aspect-[4/1]" />
       <span className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-bold ${status === "OPEN" ? "bg-[#F4D889] text-[#082B50]" : "bg-[#E5EAF0] text-[#394E63]"}`}>{status === "OPEN" ? "التقديم مفتوح" : "التقديم مغلق"}</span>
     </div>
-    <div className="flex flex-1 flex-col items-center px-4 pb-5 pt-4 text-center">
-      <h3 className="min-h-14 font-extrabold leading-7 text-[#082B50]">{scholarship.titleAr}</h3>
-      {scholarship.university?.nameAr ? <p className="mt-2 min-h-6 text-sm font-normal leading-6 text-[#52647A]">{scholarship.university.nameAr}</p> : <span className="mt-2 min-h-6" aria-hidden="true" />}
-      {[scholarship.studyLevel, scholarship.fundingType].some(Boolean) ? <p className="mt-2 min-h-6 text-sm leading-6 text-[#607185]">{[scholarship.studyLevel, scholarship.fundingType].filter(Boolean).join(" • ")}</p> : <span className="mt-2 min-h-6" aria-hidden="true" />}
-      {scholarship.country?.nameAr ? <p className="mt-2 inline-flex min-h-6 items-center gap-1.5 text-sm text-[#52647A]"><CountryFlag slug={scholarship.country.slug} />{scholarship.country.nameAr}</p> : <span className="mt-2 min-h-6" aria-hidden="true" />}
-      <span className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-bold text-[#17669C] transition-colors group-hover:text-[#A47B2D]">عرض التفاصيل <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" /></span>
+    <div className="flex flex-1 flex-col items-center px-4 pb-3 pt-3 text-center">
+      <h3 className="font-bold leading-6 text-[#082B50]">{scholarship.titleAr}</h3>
+      {scholarship.university?.nameAr ? <p className="mt-1 text-sm font-normal leading-6 text-[#52647A]">{scholarship.university.nameAr}</p> : null}
+      {[scholarship.studyLevel, scholarship.fundingType].some(Boolean) ? <p className="mt-1 flex flex-wrap items-center justify-center gap-x-1.5 text-sm leading-6 text-[#607185]">{scholarship.studyLevel ? <span>{scholarship.studyLevel}</span> : null}{scholarship.studyLevel && scholarship.fundingType ? <span aria-hidden="true">·</span> : null}{scholarship.fundingType ? <span>{scholarship.fundingType}</span> : null}</p> : null}
+      {scholarship.country?.nameAr ? <p className="mt-1 inline-flex items-center gap-1.5 text-sm leading-6 text-[#52647A]"><CountryFlag slug={scholarship.country.slug} />{scholarship.country.nameAr}</p> : null}
+      <span className="mt-auto inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#17669C] transition-colors group-hover:text-[#A47B2D]">عرض التفاصيل <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" /></span>
     </div>
   </Link>;
 }

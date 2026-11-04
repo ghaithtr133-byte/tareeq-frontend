@@ -62,7 +62,7 @@ test("page URLs preserve filters and sorting, and parse on return", () => {
 test("the actual load-more component reveals four at a time and hides its button", () => {
   let count = 4;
   const mockedReact = { ...React, useState: () => [count, (update) => { count = update(count); }] };
-  const { UniversityRelatedScholarships } = loadTypeScript("components/public/university-related-scholarships.tsx", { react: mockedReact });
+  const { UniversityRelatedScholarships } = loadTypeScript("components/public/university-related-scholarships.tsx", { react: mockedReact, "@/components/ui/balanced-card-grid": { BalancedCardGrid: "div" } });
   const cards = Array.from({ length: 10 }, (_, index) => React.createElement("span", { key: index }, index));
   const render = () => UniversityRelatedScholarships({ cards }).props.children;
   let view = render();

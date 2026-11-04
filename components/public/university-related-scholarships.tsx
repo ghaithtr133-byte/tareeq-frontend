@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 
 const BATCH_SIZE = 4;
 
@@ -9,9 +10,9 @@ export function UniversityRelatedScholarships({ cards }: { cards: ReactNode[] })
 
   return (
     <>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <BalancedCardGrid className="mt-6" columns={{ sm: 2 }} gap={4}>
         {cards.slice(0, visibleCount)}
-      </div>
+      </BalancedCardGrid>
       {visibleCount < cards.length ? (
         <div className="mt-6 flex justify-center">
           <button

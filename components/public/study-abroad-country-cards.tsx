@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { Country } from "@/api/public-content";
 import { StudyAbroadImage } from "@/components/public/study-abroad-image";
+import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 
 function CountryFlag({ slug }: { slug: string }) {
   if (!['romania', 'turkey', 'poland', 'hungary', 'malaysia', 'cyprus', 'united-kingdom'].includes(slug)) return null;
@@ -17,26 +18,28 @@ function CountryFlag({ slug }: { slug: string }) {
 }
 
 export function StudyAbroadCountryCards({ countries }: { countries: Country[] }) {
-  return <div className="mt-7 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+  return <BalancedCardGrid className="mt-3" columns={{ md: 2, lg: 3 }}>
     {countries.map((country) => (
       <article key={country.id} className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_12px_30px_-25px_rgba(8,43,80,0.42)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-[#C8A253] hover:shadow-[0_20px_42px_-24px_rgba(8,43,80,0.48)] focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#C8A253] motion-reduce:transform-none motion-reduce:transition-none">
-        <Link href={`/study-abroad/${country.slug}`} className="relative block aspect-[16/9] overflow-hidden bg-[#EAF0F6] focus-visible:outline-none" aria-label={`تفاصيل الدراسة في ${country.nameAr}`}>
+        <Link href={`/study-abroad/${encodeURIComponent(country.slug)}`} draggable={false} className="flex h-full flex-1 flex-col focus-visible:outline-none" aria-label={`تفاصيل الدراسة في ${country.nameAr}`}>
+        <div className="relative block aspect-[16/9] overflow-hidden bg-[#EAF0F6]">
           <StudyAbroadImage src={country.imageUrl} alt={country.imageAltAr || `مشهد من ${country.nameAr}`} />
           {country.featured ? <span className="absolute right-4 top-4 rounded-full bg-[#C8A253] px-3 py-1 text-xs font-bold text-[#082B50] shadow-sm">وجهة مميزة</span> : null}
-        </Link>
+        </div>
         <div className="flex flex-1 flex-col p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <Link href={`/study-abroad/${country.slug}`} className="min-w-0 text-xl font-extrabold text-[#082B50] transition-colors hover:text-[#A47B2D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#C8A253]">
+            <h2 className="min-w-0 text-xl font-extrabold text-[#082B50] transition-colors group-hover:text-[#A47B2D]">
               {country.nameAr}
-            </Link>
+            </h2>
             <CountryFlag slug={country.slug} />
           </div>
           <p className="mt-3 min-h-14 line-clamp-2 text-sm leading-7 text-[#607185]">{country.introductionAr}</p>
-          <Link href={`/universities?country=${encodeURIComponent(country.slug)}`} className="mt-auto inline-flex min-h-11 items-center gap-2 pt-5 text-sm font-bold text-[#17669C] transition-colors hover:text-[#A47B2D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253]">
-            عرض الجامعات <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" />
-          </Link>
+          <span className="mt-auto inline-flex min-h-11 items-center gap-2 pt-5 text-sm font-bold text-[#17669C] transition-colors group-hover:text-[#A47B2D]">
+            استكشف الوجهة <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" />
+          </span>
         </div>
+        </Link>
       </article>
     ))}
-  </div>;
+  </BalancedCardGrid>;
 }

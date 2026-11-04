@@ -150,15 +150,17 @@ test("metadata uses authoritative SEO fields and canonical slug without inventin
   assert.equal(args[1], service.seoDescriptionAr);
   assert.equal(args[2].pathname, "/services/source-slug");
 });
-test("all three WhatsApp CTAs use the official helper and current service, and FAQ reuses Homepage disclosure styling", async () => {
+test("hero and compact consultation keep contextual WhatsApp without a duplicate closing banner", async () => {
   const service = await demo.getDemoService("university-admissions");
   const local = loader(ui);
   const { ServiceDetails } = local("components/public/service-details.tsx");
   const html = renderToStaticMarkup(React.createElement(ServiceDetails, { service, extras: demoServiceDetails(service), related: [], relatedFailed: true, demo: true }));
   const { createWhatsappUrl } = local("lib/whatsapp.ts");
   const url = createWhatsappUrl(`مرحبًا، أود الاستفسار عن خدمة ${service.titleAr}.`);
-  assert.equal(html.split(`href="${url}"`).length - 1, 3);
-  assert.equal((html.match(/target="_blank" rel="noopener noreferrer"/g) ?? []).length, 3);
+  assert.equal(html.split(`href="${url}"`).length - 1, 2);
+  assert.equal((html.match(/target="_blank" rel="noopener noreferrer"/g) ?? []).length, 2);
+  assert.ok(html.includes('data-consultation-cta="contextual"'));
+  assert.equal(html.includes('id="service-closing-title"'), false);
   assert.ok(html.includes('href="#about-service"'));
   assert.ok(html.includes('id="about-service" tabindex="-1"'));
   assert.ok(html.includes("يتعذر تحميل الخدمات الأخرى حاليًا"));

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { HomeLink as Link } from "@/components/home/home-primitives";
 import { ChevronLeft, ChevronRight, GraduationCap, MapPin } from "lucide-react";
 
 import styles from "./featured-universities-carousel.module.css";
@@ -40,7 +40,7 @@ function UniversityFlag({ slug, countryName }: { slug?: string; countryName?: st
       <path fill="#E30A17" d="M0 0h30v20H0z" /><circle fill="#fff" cx="12" cy="10" r="5.5" /><circle fill="#E30A17" cx="13.7" cy="10" r="4.4" /><path fill="#fff" d="m17.7 6.5.8 2.4H21l-2 1.5.8 2.4-2.1-1.5-2 1.5.8-2.4-2-1.5H17z" />
     </svg>
   );
-  return <span role="img" aria-label="علم غير متاح" className="text-[#7890A8]"><MapPin className="size-5" aria-hidden="true" /></span>;
+  return <MapPin className={styles.flagImage} aria-label="العلم غير متوفر حالياً" />;
 }
 
 export function FeaturedUniversitiesCarousel({ items }: { items: FeaturedUniversity[] }) {
@@ -104,19 +104,13 @@ export function FeaturedUniversitiesCarousel({ items }: { items: FeaturedUnivers
                 <UniversityFlag slug={item.countrySlug} countryName={item.countryName} />
               </span>
               <span className={styles.logoArea}>
-                {item.logo ? (
-                  <Image src={item.logo} alt={`شعار ${item.title}`} width={145} height={90} className={styles.logo} />
-                ) : (
-                  <span className={styles.logoFallback} aria-label={`شعار ${item.title} غير متاح`}>
-                    <GraduationCap className="size-8 stroke-[1.5]" aria-hidden="true" />
-                  </span>
-                )}
+                {item.logo ? <Image src={item.logo} alt={`شعار ${item.title}`} draggable={false} width={145} height={90} className={styles.logo} /> : <span className={styles.logoFallback} aria-label="الشعار غير متوفر حالياً"><GraduationCap aria-hidden="true" /></span>}
               </span>
               <span className={styles.name}>{item.title}</span>
-              <span className={styles.country}>{item.countryName ?? "البلد غير متاح"}</span>
+              <span className={styles.country}>{item.countryName || "غير متوفر حالياً"}</span>
               <span className={styles.badges}>
-                {item.universityType ? <span className={styles.badge}>{item.universityType}</span> : null}
-                {item.city ? <span className={styles.badge}>{item.city}</span> : null}
+                <span className={styles.badge}>{item.universityType || "غير متوفر حالياً"}</span>
+                <span className={styles.badge}>{item.city || "غير متوفر حالياً"}</span>
               </span>
             </Link>
           ))}

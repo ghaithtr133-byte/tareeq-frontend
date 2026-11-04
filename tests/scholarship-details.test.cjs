@@ -121,6 +121,9 @@ test("open Demo renders three triggers and one associated form with clearly fict
   for (const text of ["نبذة عن المنحة", "مزايا المنحة", "شروط التقديم", "خطوات التقديم", "أمثلة خيالية", "الموعد غير محدد", scholarship.titleAr]) assert.ok(html.includes(text), text);
   assert.ok(html.includes('/images/trust/library-globe.jpg'));
   assert.ok(html.indexOf('id="scholarship-primary-assistance"') < html.indexOf('id="scholarship-about"'));
+  for (const id of ["scholarship-context-cta", "scholarship-closing-cta"]) assert.ok(html.includes(`id="${id}"`), "Sticky assistance visibility targets remain intact");
+  assert.ok(html.includes('data-consultation-cta="contextual"'));
+  assert.equal(html.includes("تحتاج إلى استفسار سريع؟"), false, "General WhatsApp support remains global rather than competing with assistance");
 });
 
 test("Live ignores Demo extras/media, preserves paragraphs, and renders only verified data", () => {
@@ -129,6 +132,18 @@ test("Live ignores Demo extras/media, preserves paragraphs, and renders only ver
   assert.ok(html.includes("شروط منشورة\nوليست قائمة"));
   for (const text of ["مزايا المنحة", "خطوات التقديم", "demo-only.jpg", "مثال توضيحي:"]) assert.equal(html.includes(text), false, text);
   assert.ok(html.includes("رسم أكاديمي بديل"));
+});
+
+test("scholarship information appears only in the preserved summary, not above the main image", () => {
+  const html = render(scholarship, false);
+  const summary = html.match(/<aside aria-labelledby="scholarship-summary-title"[\s\S]*?<\/aside>/)?.[0];
+  assert.ok(summary);
+  assert.ok(summary.includes("ملخص المنحة"));
+  for (const label of ["الدولة", "المرحلة الدراسية", "نوع التمويل", "الموعد النهائي", "حالة التقديم"]) assert.ok(summary.includes(label), label);
+  assert.equal((html.match(/<dl\b/g) ?? []).length, 1);
+  assert.equal((summary.match(/<dl\b/g) ?? []).length, 1);
+  assert.equal(html.slice(0, html.indexOf("data-scholarship-media")).includes("<dl"), false);
+  assert.ok(summary.includes('id="scholarship-primary-assistance"'));
 });
 
 test("closed and missing-field fixtures retain details without assistance or fabricated organization", () => {

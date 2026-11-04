@@ -24,15 +24,15 @@ function ServiceArtwork({ service }: { service: PublicService }) {
 export function ServiceOverviewCard({ service, publishedHref }: { service: PublicService; publishedHref?: string | null }) {
   const Icon = icons[service.icon];
   const href = publishedHref ?? availableServiceHref(service);
-  const actionClass = "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border bg-[#FFFCF6] px-3 py-2 text-sm font-bold text-primary";
+  const actionClass = "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary px-3 py-2 text-sm font-bold text-white";
   return <article data-service-card={service.slug} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E1E8EF] bg-white shadow-[0_4px_16px_-10px_rgba(8,43,80,0.18)] transition-[translate,box-shadow] duration-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none">
     <div className="relative aspect-[2/1] overflow-hidden bg-[#EAF0F6]">{service.image ? <Image src={service.image.src} alt={service.image.alt} fill sizes="(min-width: 1280px) 19vw, (min-width: 1024px) 31vw, (min-width: 768px) 47vw, 100vw" className="object-cover" /> : <ServiceArtwork service={service} />}</div>
     <div className="relative flex flex-1 flex-col px-4 pb-4 pt-9 text-center">
       <span className="absolute -top-6 left-1/2 grid h-12 w-14 -translate-x-1/2 place-items-center rounded-xl border border-[#E4E9F0] bg-white text-[#B88B3E] shadow-sm"><Icon className="size-7" strokeWidth={1.6} aria-hidden="true" /></span>
       <h2 className="text-lg font-bold leading-8 text-primary">{service.title}</h2>
       <p className="mb-4 mt-2 text-sm leading-7 text-muted-foreground">{service.description}</p>
-      <div className="mt-auto pt-1">{href ? <Link href={href} className={`${actionClass} transition-colors hover:bg-[#F8F0DF] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`} style={{ borderColor: "var(--accent)" }}>اعرف المزيد<ArrowLeft className="size-4" aria-hidden="true" /></Link> : <>
-        <button type="button" disabled aria-describedby={`service-pending-${service.slug}`} className={`${actionClass} cursor-not-allowed`} style={{ borderColor: "var(--accent)" }}>اعرف المزيد<ArrowLeft className="size-4" aria-hidden="true" /></button>
+      <div className="mt-auto pt-1">{href ? <Link href={href} className={`${actionClass} transition-colors duration-200 hover:border-accent hover:bg-accent hover:text-primary active:border-[#B68A3E] active:bg-[#B68A3E] active:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary motion-reduce:transition-none`}>اعرف المزيد<ArrowLeft className="size-4 shrink-0" aria-hidden="true" /></Link> : <>
+        <button type="button" disabled aria-describedby={`service-pending-${service.slug}`} className={`${actionClass} cursor-not-allowed opacity-60`}>اعرف المزيد<ArrowLeft className="size-4 shrink-0" aria-hidden="true" /></button>
         <p id={`service-pending-${service.slug}`} className="mt-1.5 text-xs leading-6 text-muted-foreground">التفاصيل غير متاحة بعد</p>
       </>}</div>
     </div>

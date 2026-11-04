@@ -1,6 +1,5 @@
-/* eslint-disable @next/next/no-img-element -- public API content may provide remote image URLs. */
-import Link from "next/link";
-import NextImage from "next/image";
+import { HomeHero } from "@/components/home/home-hero";
+import { HomeImage as Image } from "@/components/home/home-image";
 import {
   BookOpenText,
   CircleDollarSign,
@@ -12,27 +11,27 @@ import {
   MapPinned,
 } from "lucide-react";
 import {
-  getArticles,
-  getCountries,
-  getScholarships,
-  getServices,
-  getUniversities,
   type Article,
   type Country,
   type Scholarship,
   type Service,
-  type University,
 } from "@/api/public-content";
-import { Container } from "@/components/layout/container";
+import { HomeContainer as Container, HomeLink as Link } from "@/components/home/home-primitives";
 import { FeaturedUniversitiesCarousel } from "@/components/home/featured-universities-carousel";
 import { HomeFaq } from "@/components/home/home-faq";
 import { TrustExperience } from "@/components/home/trust-experience";
-import { ApiUnavailable } from "@/components/public/public-content";
-import { Button } from "@/components/ui/button";
+import { loadHomeSection } from "@/api/homepage";
+import { HomeSectionError } from "@/components/home/home-section-error";
+import { EmptyState } from "@/components/ui/content-state";
+import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
+import { getHomeJourney } from "@/lib/homepage-journey";
+import { homeMetadataLabel, type HomeResult, type HomeUniversity } from "@/lib/homepage-data";
+import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
 import { createWhatsappUrl } from "@/lib/whatsapp";
+import { publishedServiceHref } from "@/lib/service-details";
 export const metadata = createPageMetadata(
   "طريق الأكاديمية",
   "استشارات تعليمية وتوجيه للدراسة في الخارج.",
@@ -51,22 +50,9 @@ type Card = {
   date?: string;
   location?: string;
   countrySlug?: string;
+  universityType?: string;
+  applicationStatus?: string;
 };
-const demoUniversityLogos: Record<string, string> = {
-  "university-bucharest": "/images/universities/university-of-bucharest.svg",
-};
-const demoUniversityTypes: Record<string, string> = {
-  "university-bucharest": "حكومية",
-  "istanbul-university": "حكومية",
-  "polytechnic-university-bucharest": "حكومية",
-  "university-of-warsaw": "حكومية",
-};
-const journey = [
-  ["01", "اختيار الوجهة", "حدّد ما يناسب خطتك الدراسية."],
-  ["02", "اختيار الجامعة", "اقرأ الخيارات المنشورة بوضوح."],
-  ["03", "تقديم الطلب", "رتّب وثائقك وخطوتك التالية."],
-  ["04", "بدء الرحلة", "تابع مسارك بمعلومات موثوقة."],
-] as const;
 const serviceIcons: Record<string, typeof GraduationCap> = {
   "university-admissions": GraduationCap,
   "major-selection": Compass,
@@ -78,32 +64,6 @@ const serviceIcons: Record<string, typeof GraduationCap> = {
   "application-preparation": ClipboardList,
   "visa-guidance": FileText,
 };
-const demoDestinationLines: Record<string, string> = {
-  turkey: "استكشف الدراسة والجامعات في تركيا",
-  malaysia: "تعرّف على خيارات الدراسة في ماليزيا",
-  cyprus: "اطّلع على خيارات الدراسة في قبرص",
-  "united-kingdom": "قارن خيارات الدراسة في بريطانيا",
-};
-function Image({
-  src,
-  alt,
-  className = "",
-}: {
-  src?: string;
-  alt?: string;
-  className?: string;
-}) {
-  return src ? (
-    <img
-      src={src}
-      alt={alt ?? ""}
-      className={`h-full w-full object-cover ${className}`}
-      loading="lazy"
-    />
-  ) : (
-    <div className={`bg-[#EAF0F6] ${className}`} aria-hidden="true" />
-  );
-}
 function Eyebrow({
   children,
   light = false,
@@ -265,144 +225,36 @@ function DestinationFlag({ slug }: { slug?: string }) {
   );
 }
 export default async function Home() {
-  const content = await Promise.allSettled([
-    getCountries({ limit: 4, sort: "manual" }),
-    getUniversities({ featured: "true", limit: 12, sort: "newest" }),
-    getScholarships({ featured: "true", limit: 4, sort: "newest" }),
-    getServices({ limit: 5, sort: "manual" }),
-    getArticles({ limit: 6, sort: "newest" }),
-  ]);
-  const countries =
-    content[0].status === "fulfilled"
-      ? content[0].value.items.map(countryCard)
-      : [];
-  const universities =
-    content[1].status === "fulfilled"
-      ? content[1].value.items.map(universityCard)
-      : [];
-  const scholarships =
-    content[2].status === "fulfilled"
-      ? content[2].value.items.map(scholarshipCard)
-      : [];
-  const services =
-    content[3].status === "fulfilled"
-      ? content[3].value.items.map(serviceCard)
-      : [];
-  const articles =
-    content[4].status === "fulfilled"
-      ? content[4].value.items.map(articleCard)
-      : [];
-  const failed = content.some((entry) => entry.status === "rejected");
   const demoMode = isPublicDemoMode();
+  const journey = getHomeJourney(demoMode);
+  const [countryResult, universityResult, scholarshipResult, serviceResult, articleResult, faqResult] = await Promise.all([
+    loadHomeSection("countries", demoMode), loadHomeSection("universities", demoMode),
+    loadHomeSection("scholarships", demoMode), loadHomeSection("services", demoMode),
+    loadHomeSection("articles", demoMode), loadHomeSection("faqs", demoMode),
+  ]);
+  // Collection projections expose countryId, not joined country metadata. Reuse only
+  // the bounded destination response; never fetch every country or infer a relation.
+  const withCountry = <T extends { countryId?: string | null }>(item: T) => ({ ...item, country: countryResult.items.find((country) => country.id === item.countryId) });
+  const countries = countryResult.items.map(countryCard);
+  const universities = universityResult.items.map((item) => universityCard(item.country ? item : withCountry(item)));
+  const scholarships = scholarshipResult.items.map((item) => scholarshipCard(item.country ? item : withCountry(item)));
+  const services = serviceResult.items.map(serviceCard);
+  const articles = articleResult.items.map((item) => articleCard(item.country ? item : withCountry(item)));
+  // The public /services contract returns only published entries but omits status.
+  const admissionHref = serviceResult.kind === "partial" ? "/services" : publishedServiceHref("القبول الجامعي", serviceResult.items.map((item) => ({ ...item, status: "PUBLISHED" as const }))) ?? "/services";
   const heroCards = [
-    { label: "وجهات دراسية", count: countries.length, Icon: MapPinned },
-    { label: "جامعات منشورة", count: universities.length, Icon: GraduationCap },
-    { label: "منح وبرامج", count: scholarships.length, Icon: CircleDollarSign },
-    { label: "خدمات تعليمية", count: services.length, Icon: FileText },
+    { label: "وجهات دراسية", Icon: MapPinned },
+    { label: "جامعات منشورة", Icon: GraduationCap },
+    { label: "منح وبرامج", Icon: CircleDollarSign },
+    { label: "خدمات تعليمية", Icon: FileText },
   ];
   return (
     <main className="overflow-x-clip bg-[#FAF9F6]">
-      <section
-        id="intro"
-        aria-labelledby="hero-title"
-        className="isolate bg-white"
-      >
-        <div className="relative">
-          <div className="relative h-[17rem] min-w-0 overflow-hidden bg-[#17669C] sm:h-[23rem] lg:absolute lg:inset-0 lg:h-auto">
-            <NextImage
-              src="/images/hero/study-abroad-student-landmarks.png"
-              alt="طالب يحمل حاسوبًا أمام معالم عالمية للدراسة في الخارج"
-              fill
-              loading="eager"
-              fetchPriority="high"
-              sizes="100vw"
-              className="object-cover object-[left_22%] lg:object-[left_18%]"
-            />
-            <span
-              className="pointer-events-none absolute inset-y-0 right-0 hidden w-[47%] bg-gradient-to-r from-transparent via-white/85 to-white lg:block"
-              aria-hidden="true"
-            />
-          </div>
-          <Container className="relative z-10 grid min-w-0 grid-cols-1 lg:min-h-[29rem] lg:grid-cols-[minmax(0,43%)_minmax(0,57%)] xl:min-h-[31rem] 2xl:min-h-[34rem]">
-            <div className="row-start-1 min-w-0 pb-9 pt-8 text-right sm:pb-12 lg:col-start-1 lg:flex lg:items-center lg:py-10">
-              <div className="min-w-0">
-                <p className="text-base font-bold text-[#A47B2D]">
-                  أكاديمية طريق
-                </p>
-                <h1
-                  id="hero-title"
-                  className="mt-3 max-w-[34rem] text-[2.2rem] font-extrabold leading-[1.16] tracking-[-0.04em] text-[#082B50] sm:text-5xl xl:max-w-[38rem] xl:text-[clamp(3.6rem,3.4vw,4rem)]"
-                >
-                  طريقك نحو جامعة أحلامك يبدأ من هنا
-                </h1>
-                <p className="mt-5 max-w-[32rem] text-base leading-8 text-[#435A73] sm:text-[1.0625rem] 2xl:max-w-[36rem] 2xl:text-lg 2xl:leading-9">
-                  اكتشف فرص الدراسة في أفضل الجامعات حول العالم، مع دعم كامل من
-                  اختيار التخصص وحتى الوصول إلى مقعدك الجامعي.
-                </p>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                  <Button
-                    type="button"
-                    size="lg"
-                    disabled
-                    aria-disabled="true"
-                    className="h-13 w-full rounded-lg bg-[#082B50] px-8 text-base font-bold text-white shadow-[0_12px_24px_-14px_rgba(8,43,80,0.75)] hover:bg-[#0D3E70] disabled:cursor-not-allowed disabled:opacity-100 sm:w-auto"
-                  >
-                    ابدأ رحلتك <ArrowLeftIcon className="size-4" />
-                  </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="h-13 w-full rounded-lg border-2 border-[#17669C] bg-white/95 px-7 text-base font-bold text-[#082B50] hover:bg-[#F1F5F9] sm:w-auto"
-                  >
-                    <Link href="/study-abroad">استكشف الوجهات</Link>
-                  </Button>
-                </div>
-                <p className="mt-4 text-[0.9375rem] font-normal leading-7 text-[#52647A]">
-                  محتوى منشور يساعدك على المقارنة واتخاذ قرار واعٍ.
-                </p>
-              </div>
-            </div>
-            <div className="row-start-2 grid min-w-0 grid-cols-2 gap-3 pb-7 md:grid-cols-4 lg:col-span-2 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:gap-5 2xl:pb-7">
-              {heroCards.map(({ label, count, Icon }) => (
-                <div
-                  key={label}
-                  className="flex min-h-[5.25rem] min-w-0 items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-[#082B50] shadow-[0_12px_30px_-15px_rgba(8,43,80,0.45)] sm:gap-3 sm:px-4 2xl:min-h-[6rem] 2xl:px-5"
-                >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#FAF4E7] 2xl:size-11">
-                    <Icon
-                      className="size-5 text-[#A47B2D] 2xl:size-7"
-                      aria-hidden="true"
-                    />
-                  </span>
-                  <span className="min-w-0 leading-6">
-                    {demoMode ? (
-                      <strong
-                        className="block text-right text-xl font-extrabold tabular-nums 2xl:text-2xl"
-                        dir="ltr"
-                      >
-                        {count}
-                      </strong>
-                    ) : null}
-                    <span className="block text-sm font-bold leading-6 2xl:text-[0.9375rem]">
-                      {label}
-                    </span>
-                  </span>
-                </div>
-              ))}
-              {demoMode ? (
-                <span className="w-fit rounded bg-[#082B50]/90 px-2 py-1 text-xs font-bold text-white col-span-2 md:col-span-4">
-                  أرقام للعرض التجريبي فقط
-                </span>
-              ) : null}
-            </div>
-          </Container>
-        </div>
-      </section>
+      <HomeHero admissionHref={admissionHref} heroCards={heroCards} />
 
-      {countries.length ? (
+      {(
         <section
-          className="bg-white py-16 sm:py-20"
+          className="bg-white py-12 sm:py-14"
           aria-labelledby="destinations-title"
         >
           <Container>
@@ -414,7 +266,7 @@ export default async function Home() {
                 id="destinations-title"
                 className="min-w-0 text-3xl font-extrabold leading-[1.3] text-[#082B50] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-self-center lg:text-center lg:text-[2rem] xl:text-4xl"
               >
-                الوجهات الدراسية الأكثر طلباً
+                الوجهات الدراسية
               </h2>
               <p className="text-base leading-7 text-[#52647A] lg:col-start-1 lg:row-start-2 lg:self-start">
                 وجهات مميزة لدراستك الجامعية
@@ -425,7 +277,8 @@ export default async function Home() {
                 </MoreLink>
               </div>
             </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4 2xl:gap-6">
+            {countries.length ? (<>
+            <BalancedCardGrid className="mt-8" columns={{ sm: 2, xl: 4 }} gap={5}>
               {countries.map((item) => (
                 <Link
                   key={item.id}
@@ -450,9 +303,7 @@ export default async function Home() {
                         </span>
                       </span>
                       <span className="mt-1.5 line-clamp-2 text-sm font-normal leading-5 text-white/95">
-                        {demoMode
-                          ? (demoDestinationLines[item.slug ?? ""] ?? item.body)
-                          : item.body}
+                        {item.body || "المحتوى غير متوفر حالياً"}
                       </span>
                     </span>
                     <span
@@ -464,13 +315,15 @@ export default async function Home() {
                   </span>
                 </Link>
               ))}
-            </div>
+            </BalancedCardGrid>
+          
+            </>) : <HomeCollectionState result={countryResult} section="countries" />}
           </Container>
         </section>
-      ) : null}
-      {universities.length ? (
+      )}
+      {(
         <section
-          className="border-y border-[#E2E8F0] bg-white py-16 sm:py-20"
+          className="border-y border-[#E2E8F0] bg-white py-12 sm:py-14"
           aria-labelledby="universities-title"
         >
           <Container>
@@ -490,6 +343,7 @@ export default async function Home() {
                 </MoreLink>
               </div>
             </div>
+            {universities.length ? (<>
             <FeaturedUniversitiesCarousel
               items={universities.map((item) => ({
                 id: item.id,
@@ -498,20 +352,17 @@ export default async function Home() {
                 countryName: item.meta,
                 countrySlug: item.countrySlug,
                 city: item.location,
-                universityType: demoMode
-                  ? demoUniversityTypes[item.slug ?? ""]
-                  : undefined,
-                logo: demoMode
-                  ? demoUniversityLogos[item.slug ?? ""]
-                  : undefined,
+                universityType: item.universityType,
               }))}
             />
+          
+            </>) : <HomeCollectionState result={universityResult} section="universities" />}
           </Container>
         </section>
-      ) : null}
-      {services.length ? (
+      )}
+      {(
         <section
-          className="bg-white py-16 sm:py-20"
+          className="bg-white py-12 sm:py-14"
           aria-labelledby="services-title"
         >
           <Container>
@@ -526,9 +377,8 @@ export default async function Home() {
                 نرافقك في كل خطوة من رحلتك الدراسية.
               </p>
             </div>
-            <div
-              className={`mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ${services.length >= 5 ? "xl:grid-cols-5" : "xl:grid-cols-4"}`}
-            >
+            {services.length ? (<>
+            <BalancedCardGrid className="mt-8" columns={{ sm: 2, lg: 3, xl: 5 }} gap={4}>
               {services.map((item) => {
                 const Icon = serviceIcons[item.slug ?? ""] ?? BookOpenText;
                 return (
@@ -547,55 +397,47 @@ export default async function Home() {
                       {item.title}
                     </h3>
                     <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[#52647A] 2xl:text-[0.9375rem]">
-                      {item.body}
+                      {item.body || "المحتوى غير متوفر حالياً"}
                     </p>
                   </Link>
                 );
               })}
-            </div>
+            </BalancedCardGrid>
+          
+            </>) : <HomeCollectionState result={serviceResult} section="services" />}
           </Container>
         </section>
-      ) : null}
+      )}
       <section
         className="relative isolate overflow-hidden rounded-[1.5rem] bg-[#082B50] text-white"
         aria-labelledby="journey-title"
       >
         <span
-          className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[url('/images/journey/journey-background.png')] bg-cover bg-left sm:h-48 md:inset-0 md:h-auto"
+          className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[url('/images/journey/journey-background.png')] bg-cover bg-left sm:h-36 md:inset-0 md:h-auto"
           aria-hidden="true"
         />
         <span
-          className="pointer-events-none absolute inset-x-0 top-20 h-32 bg-gradient-to-b from-transparent to-[#082B50] md:inset-0 md:h-auto md:bg-gradient-to-l md:from-[#082B50]/95 md:via-[#082B50]/85 md:to-[#082B50]/40"
+          className="pointer-events-none absolute inset-x-0 top-16 h-32 bg-gradient-to-b from-transparent to-[#082B50] md:inset-0 md:h-auto md:bg-gradient-to-l md:from-[#082B50]/95 md:via-[#082B50]/85 md:to-[#082B50]/40"
           aria-hidden="true"
         />
-        <Container className="relative pt-48 pb-9 sm:pt-52 md:py-12">
+        <Container className="relative pb-7 pt-36 sm:pt-40 md:py-8">
           <div className="max-w-md text-right">
-            <p className="text-sm font-bold text-[#F5D98E]">خطوات الرحلة</p>
+            <p className="text-sm font-bold text-[#F5D98E]">{journey.eyebrow}</p>
             <h2
               id="journey-title"
               className="mt-2 text-3xl font-bold leading-[1.3] text-white lg:text-4xl"
             >
-              رحلتك الدراسية
+              {journey.title}
             </h2>
             <p className="mt-2 text-base leading-7 text-[#D8E3F0]">
-              من الخطوة الأولى إلى بداية رحلتك، نرتّب الخيارات بوضوح.
+              {journey.description}
             </p>
-            <a
-              href={createWhatsappUrl(
-                "مرحبًا، أود الاستفسار عن خطوات بدء رحلتي الدراسية.",
-              )}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#F5D98E] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253] motion-reduce:transition-none"
-            >
-              ابدأ رحلتك <ArrowLeftIcon className="size-4" />
-            </a>
           </div>
-          <ol className="relative mt-8 grid gap-5 border-s border-[#C8A253]/65 ps-6 md:mt-9 md:grid-cols-2 md:gap-x-0 md:gap-y-8 md:border-s-0 md:ps-0 lg:mt-8 lg:grid-cols-4 lg:gap-y-0">
-            {journey.map(([number, title, body]) => (
+          <ol className="relative mt-6 grid gap-4 border-s border-[#C8A253]/65 ps-6 md:grid-cols-2 md:gap-x-0 md:gap-y-7 md:border-s-0 md:ps-0 lg:grid-cols-4 lg:gap-y-0">
+            {journey.steps.map(({ number, title, description }) => (
               <li
                 key={number}
-                className="group relative min-w-0 ps-10 md:border-t md:border-[#C8A253]/75 md:px-3 md:pt-8 md:text-center"
+                className="group relative min-w-0 ps-10 md:border-t md:border-[#C8A253]/75 md:px-3 md:pt-6 md:text-center"
               >
                 <span className="absolute -start-[1.125rem] top-0 grid size-9 place-items-center rounded-full border-2 border-[#082B50] bg-[#C8A253] text-sm font-extrabold text-[#082B50] transition-transform duration-300 group-hover:scale-105 md:start-1/2 md:-top-[1.125rem] md:translate-x-1/2 motion-reduce:transition-none">
                   {number}
@@ -603,16 +445,16 @@ export default async function Home() {
                 <h3 className="text-lg font-bold leading-8 text-white">
                   {title}
                 </h3>
-                <p className="mt-1 text-sm leading-6 text-[#D8E3F0]">{body}</p>
+                <p className="mt-1 text-sm leading-6 text-[#D8E3F0]">{description}</p>
               </li>
             ))}
           </ol>
         </Container>
       </section>
-      <TrustExperience demoMode={demoMode} />
-      {articles.length ? (
+      <TrustExperience />
+      {(
         <section
-          className="bg-white py-20 sm:py-24"
+          className="bg-white py-12 sm:py-16"
           aria-labelledby="articles-title"
         >
           <Container>
@@ -625,36 +467,37 @@ export default async function Home() {
               />
               <MoreLink href="/articles" blue>عرض جميع المقالات</MoreLink>
             </div>
-            <div className="mt-10 grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+            {articles.length ? (<>
+            <div className={`mt-8 grid gap-5 ${articles.length === 1 ? "mx-auto max-w-2xl" : "lg:grid-cols-[1.3fr_0.7fr]"}`}>
               {articles[0] ? (
                 <Link
                   href={articles[0].href}
-                  className="group relative min-h-[25rem] overflow-hidden rounded-2xl bg-[#082B50] text-white shadow-[0_20px_40px_-30px_rgba(8,43,80,0.65)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253] lg:min-h-[29rem]"
+                  className="group relative flex min-h-[22rem] flex-col justify-end overflow-hidden rounded-2xl bg-[#082B50] text-white shadow-[0_20px_40px_-30px_rgba(8,43,80,0.65)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253] lg:min-h-[25.5rem] 2xl:min-h-[27rem]"
                 >
                   <Image
                     src={articles[0].image}
                     alt={articles[0].alt}
                     className="absolute inset-0 object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
                   />
-                  <span className="absolute inset-0 bg-gradient-to-t from-[#082B50]/95 via-[#082B50]/40 to-[#082B50]/5" />
-                  <span className="absolute inset-x-0 bottom-0 p-6 sm:p-7">
+                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#082B50]/95 via-[#082B50]/40 to-[#082B50]/5" />
+                  <span className="relative p-6 sm:p-7">
                     <span className="inline-block rounded bg-[#17669C] px-3 py-1 text-xs font-bold">
-                      {articles[0].meta}
+                      {articles[0].meta || "غير متوفر حالياً"}
                     </span>
                     <h3 className="mt-3 max-w-xl text-2xl font-bold leading-9 sm:text-[1.75rem] sm:leading-10">
                       {articles[0].title}
                     </h3>
                     <p className="mt-3 max-w-xl line-clamp-2 text-base leading-8 text-white/85">
-                      {articles[0].body}
+                      {articles[0].body || "المحتوى غير متوفر حالياً"}
                     </p>
-                    {articles[0].date ? <time className="mt-2 block text-sm text-white/80">{articles[0].date}</time> : null}
+                    <span className="mt-2 block text-sm text-white/80">{articles[0].date ? <time>{articles[0].date}</time> : "غير متوفر حالياً"}</span>
                     <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#F5D98E]">
                       اقرأ المقال <ArrowLeftIcon className="size-4" />
                     </span>
                   </span>
                 </Link>
               ) : null}
-              <div className="grid gap-5 lg:grid-rows-2">
+              {articles.length > 1 ? <div className={`grid gap-5 ${articles.length >= 3 ? "lg:grid-rows-2" : "lg:content-center"}`}>
                 {articles.slice(1, 3).map((item) => (
                   <Link
                     key={item.id}
@@ -668,36 +511,28 @@ export default async function Home() {
                         className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
                       />
                     </div>
-                    <div className="min-w-0 p-4 sm:p-5">
+                    <div className="min-w-0 p-3 sm:p-4">
                       <span className="text-xs font-bold text-[#A47B2D]">
-                        {item.meta}
+                        {item.meta || "غير متوفر حالياً"}
                       </span>
-                      <h3 className="mt-2 line-clamp-3 text-lg font-bold leading-8 text-[#082B50]">
+                      <h3 className="mt-1.5 line-clamp-3 text-lg font-bold leading-7 text-[#082B50]">
                         {item.title}
                       </h3>
-                      {item.date ? (
-                        <time className="mt-3 block text-xs text-[#52647A]">
-                          {item.date}
-                        </time>
-                      ) : null}
-                      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#17669C]">
+                      <span className="mt-2 block text-xs text-[#52647A]">{item.date ? <time>{item.date}</time> : "غير متوفر حالياً"}</span>
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#17669C]">
                         اقرأ المقال <ArrowLeftIcon className="size-3.5" />
                       </span>
                     </div>
                   </Link>
                 ))}
-              </div>
+              </div> : null}
             </div>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {articles.slice(3).map((item, index, supportingArticles) => (
+            {articles.length > 3 ? <BalancedCardGrid className="mt-5" columns={{ sm: 2, xl: 3 }} gap={4}>
+              {articles.slice(3).map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`group flex min-w-0 items-center gap-4 rounded-xl border border-[#E2E8F0] bg-white p-4 transition-colors hover:bg-[#F8FAFC] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253] ${
-                    index === supportingArticles.length - 1 && supportingArticles.length % 2
-                      ? "sm:col-span-2 xl:col-span-1"
-                      : ""
-                  }`}
+                  className={`group flex min-w-0 items-center gap-4 rounded-xl border border-[#E2E8F0] bg-white p-4 transition-colors hover:bg-[#F8FAFC] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253]`}
                 >
                   <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-[#EAF0F6]">
                     <Image
@@ -707,21 +542,23 @@ export default async function Home() {
                     />
                   </div>
                   <span className="min-w-0">
-                    <span className="block text-xs font-bold text-[#A47B2D]">{item.meta}</span>
+                    <span className="block text-xs font-bold text-[#A47B2D]">{item.meta || "غير متوفر حالياً"}</span>
                     <span className="line-clamp-2 block font-bold leading-7 text-[#082B50]">
                       {item.title}
                     </span>
-                    {item.date ? <time className="mt-1 block text-xs text-[#52647A]">{item.date}</time> : null}
+                    <span className="mt-1 block text-xs text-[#52647A]">{item.date ? <time>{item.date}</time> : "غير متوفر حالياً"}</span>
                   </span>
                 </Link>
               ))}
-            </div>
+            </BalancedCardGrid> : null}
+          
+            </>) : <HomeCollectionState result={articleResult} section="articles" />}
           </Container>
         </section>
-      ) : null}
-      {scholarships.length ? (
+      )}
+      {(
         <section
-          className="bg-[#F1F5F9] py-20 sm:py-24"
+          className="bg-[#F1F5F9] py-12 sm:py-16"
           aria-labelledby="scholarships-title"
         >
           <Container>
@@ -734,89 +571,52 @@ export default async function Home() {
               />
               <MoreLink href="/scholarships" blue>عرض جميع المنح</MoreLink>
             </div>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {scholarships.length ? (<>
+            <BalancedCardGrid className="mt-8" columns={{ sm: 2, xl: 4 }}>
               {scholarships.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
                   className="group flex min-h-[11.5rem] flex-col rounded-[10px] border border-[#E7ECF2] bg-white p-5 shadow-[0_14px_28px_-26px_rgba(8,43,80,0.42)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-0.5 hover:border-[#C8A253] hover:shadow-[0_18px_32px_-24px_rgba(8,43,80,0.45)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#A47B2D] motion-reduce:transform-none motion-reduce:transition-none"
                 >
-                  {item.location ? (
-                    <span className="inline-flex items-center gap-2 text-sm font-bold text-[#52647A]">
+                  <span className="inline-flex items-center gap-2 text-sm font-bold text-[#52647A]">
                       <DestinationFlag slug={item.countrySlug} />
-                      {item.location}
-                    </span>
-                  ) : null}
-                  <h3 className={`${item.location ? "mt-4" : ""} text-[1.0625rem] font-bold leading-7 text-[#082B50] sm:text-lg`}>
+                      {item.location || "غير متوفر حالياً"}
+                  </span>
+                  <h3 className="mt-4 text-[1.0625rem] font-bold leading-7 text-[#082B50] sm:text-lg">
                     {item.title}
                   </h3>
-                  {item.meta ? <span className="mt-2 text-sm text-[#52647A]">{item.meta}</span> : null}
-                  {item.body ? (
-                    <span className="mt-auto inline-flex w-fit rounded-md bg-[#F9E5B0] px-3 py-1.5 text-xs font-bold leading-5 text-[#082B50]">
-                      {item.body}
-                    </span>
-                  ) : null}
+                  <span className="mt-2 text-xs font-bold text-[#52647A]">{item.applicationStatus || "غير متوفر حالياً"}</span>
+                  <span className="mt-2 text-sm text-[#52647A]">{item.meta || "غير متوفر حالياً"}</span>
+                  <span className="mt-auto inline-flex w-fit rounded-md bg-[#F9E5B0] px-3 py-1.5 text-xs font-bold leading-5 text-[#082B50]">
+                    {item.body || "غير متوفر حالياً"}
+                  </span>
                 </Link>
               ))}
-            </div>
+            </BalancedCardGrid>
+          
+            </>) : <HomeCollectionState result={scholarshipResult} section="scholarships" />}
           </Container>
         </section>
-      ) : null}
-      {failed ? (
-        <section className="bg-[#FFFDF9] pb-12 pt-8 sm:pb-16">
-          <Container>
-            <ApiUnavailable />
-          </Container>
-        </section>
-      ) : null}
-      <HomeFaq />
-      <section
-        className="bg-[#FFFDF9] pb-0 pt-4 sm:pt-6"
-        aria-labelledby="consultation-title"
-      >
+      )}
+      <HomeFaq questions={faqResult.items.map((item) => ({ question: item.questionAr, answer: item.answerAr }))} state={!faqResult.items.length ? <HomeCollectionState result={faqResult} section="faqs" /> : undefined} />
+      <div className="bg-[#FFFDF9] pb-0 pt-4 sm:pt-6">
         <Container>
-          <div className="relative isolate overflow-hidden rounded-[1.5rem] border border-[#2E6591]/45 bg-[#082B50] px-6 py-9 text-white shadow-[0_24px_50px_-34px_rgba(8,43,80,0.8)] sm:px-10 sm:py-12 lg:px-12 lg:py-14">
-            <span
-              className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-[center_40%] bg-no-repeat"
-              style={{ backgroundImage: "url('/images/footer/footer-skyline.png')" }}
-              aria-hidden="true"
-            />
-            <span
-              className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(8,43,80,0.38),rgba(8,43,80,0.82)_56%,rgba(8,43,80,0.96))]"
-              aria-hidden="true"
-            />
-            <div className="flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
-                <Eyebrow light>خطوتك التالية</Eyebrow>
-                <h2
-                  id="consultation-title"
-                  className="mt-3 text-3xl font-bold leading-[1.3] sm:text-4xl"
-                >
-                  مستعد لبدء رحلتك الدراسية؟
-                </h2>
-                <p className="mt-3 max-w-2xl text-base leading-8 text-white/85 2xl:text-lg 2xl:leading-9">
-                  ابدأ رحلتك نحو الدراسة في الخارج، وتواصل معنا لنساعدك في اتخاذ الخطوة التالية.
-                </p>
-              </div>
-              <Button
-                asChild
-                size="lg"
-                className="min-h-12 shrink-0 bg-[#C8A253] text-[#082B50] hover:bg-[#D8B96E]"
-              >
+          <ConsultationCta titleId="consultation-title" eyebrow="خطوتك التالية" title="مستعد لبدء رحلتك الدراسية؟" description="ابدأ رحلتك نحو الدراسة في الخارج، وتواصل معنا لنساعدك في اتخاذ الخطوة التالية." backgroundImage="/images/footer/footer-skyline.png" action={
                 <a
+                  draggable={false}
                   href={createWhatsappUrl(
                     "مرحبًا، أود الاستفسار عن خيارات الدراسة المتاحة.",
                   )}
                   target="_blank"
                   rel="noreferrer"
+                  className={consultationActionClass}
                 >
                   تواصل معنا عبر واتساب
                 </a>
-              </Button>
-            </div>
-          </div>
+          } />
         </Container>
-      </section>
+      </div>
     </main>
   );
 }
@@ -831,7 +631,7 @@ function countryCard(item: Country): Card {
     alt: item.imageAltAr ?? undefined,
   };
 }
-function universityCard(item: University): Card {
+function universityCard(item: HomeUniversity): Card {
   return {
     id: item.id,
     slug: item.slug,
@@ -839,7 +639,8 @@ function universityCard(item: University): Card {
     href: `/universities/${item.slug}`,
     meta: item.country?.nameAr,
     countrySlug: item.country?.slug,
-    location: item.cityAr,
+    location: item.city?.nameAr || item.cityAr,
+    universityType: item.universityType === "PUBLIC" ? "حكومية" : item.universityType === "PRIVATE" ? "خاصة" : undefined,
   };
 }
 function scholarshipCard(item: Scholarship): Card {
@@ -847,10 +648,11 @@ function scholarshipCard(item: Scholarship): Card {
     id: item.id,
     title: item.titleAr,
     href: `/scholarships/${item.slug}`,
-    body: item.fundingType?.trim() || undefined,
-    meta: item.studyLevel || undefined,
+    body: homeMetadataLabel(item.fundingType),
+    meta: homeMetadataLabel(item.studyLevel),
     location: item.country?.nameAr,
     countrySlug: item.country?.slug,
+    applicationStatus: (item.effectiveApplicationStatus ?? item.applicationStatus) === "OPEN" ? "التقديم مفتوح" : (item.effectiveApplicationStatus ?? item.applicationStatus) === "CLOSED" ? "التقديم مغلق" : undefined,
   };
 }
 function serviceCard(item: Service): Card {
@@ -868,7 +670,7 @@ function articleCard(item: Article): Card {
     title: item.titleAr,
     href: `/articles/${item.slug}`,
     body: item.summaryAr,
-    meta: item.country?.nameAr ?? item.university?.nameAr ?? (item.featured ? "مقال مميز" : "مقال تعليمي"),
+    meta: item.country?.nameAr ?? item.university?.nameAr ?? (item.featured ? "مقال مميز" : undefined),
     image: item.coverImageUrl ?? undefined,
     alt: item.coverImageAltAr ?? undefined,
     date: item.publishedAt
@@ -879,4 +681,21 @@ function articleCard(item: Article): Card {
         }).format(new Date(item.publishedAt))
       : undefined,
   };
+}
+
+const homeStates = {
+  countries: { name: "الوجهات الدراسية", empty: "لا توجد وجهات منشورة حالياً", description: "يمكنك استكشاف الجامعات المنشورة أو العودة لاحقاً للاطلاع على الوجهات الجديدة.", href: "/universities", action: "استكشف الجامعات" },
+  universities: { name: "الجامعات المميزة", empty: "لا توجد جامعات مميزة حالياً", description: "يمكنك تصفح دليل الجامعات للاطلاع على الخيارات المنشورة.", href: "/universities", action: "استكشف الجامعات" },
+  scholarships: { name: "المنح المميزة", empty: "لا توجد منح مميزة حالياً", description: "يمكنك استكشاف الوجهات الدراسية أو مراجعة دليل المنح لمعرفة الفرص المنشورة.", href: "/scholarships", action: "استكشف المنح" },
+  articles: { name: "المقالات", empty: "لا توجد مقالات منشورة حالياً", description: "يمكنك استكشاف الوجهات الدراسية والعودة لاحقاً لقراءة المقالات الجديدة.", href: "/study-abroad", action: "استكشف الوجهات الدراسية" },
+  faqs: { name: "الأسئلة الشائعة", empty: "لا توجد أسئلة شائعة منشورة حالياً", description: "يمكنك التواصل مع فريق طريق لطرح سؤالك.", href: "/contact", action: "تواصل معنا" },
+  services: { name: "الخدمات", empty: "لا توجد خدمات منشورة حالياً", description: "يمكنك التواصل مع فريق طريق للاستفسار عن الخطوة الدراسية المناسبة لك.", href: "/contact", action: "تواصل معنا" },
+} as const;
+
+function HomeCollectionState({ result, section }: { result: HomeResult<unknown>; section: keyof typeof homeStates }) {
+  const config = homeStates[section];
+  const failed = result.kind === "error" || (result.kind === "partial" && !result.items.length);
+  return <div className="mt-6">
+    {failed ? <HomeSectionError title={`تعذّر تحميل ${config.name}`} description="المعلومات غير متاحة حالياً. يرجى المحاولة مجدداً؛ بقية أقسام الصفحة ما زالت متاحة." /> : <EmptyState title={config.empty} description={config.description} icon={section === "countries" ? <MapPinned /> : <BookOpenText />} action={<Link href={config.href} className="focus-visible:outline-2 focus-visible:outline-accent">{config.action}</Link>} />}
+  </div>;
 }

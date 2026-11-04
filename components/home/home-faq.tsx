@@ -1,41 +1,15 @@
 import Image from "next/image";
-import Link from "next/link";
+import type { ReactNode } from "react";
+import { EmptyState } from "@/components/ui/content-state";
 import { ArrowLeft, MessageCircle, MessageCircleQuestion } from "lucide-react";
 
-import { Container } from "@/components/layout/container";
+import { HomeContainer as Container, HomeLink as Link } from "@/components/home/home-primitives";
 import { createWhatsappUrl } from "@/lib/whatsapp";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 
-const questions = [
-  {
-    question: "كيف أختار الجامعة المناسبة؟",
-    answer: "ابدأ بمقارنة التخصص ولغة الدراسة والمتطلبات المنشورة من الجامعة، ثم رتّب الخيارات وفق أهدافك وميزانيتك.",
-  },
-  {
-    question: "ما الأوراق المطلوبة للتقديم؟",
-    answer: "تختلف الوثائق بحسب الجامعة والبرنامج. راجع صفحة القبول الرسمية، ثم جهّز المستندات التي تطلبها الجهة قبل إرسال الطلب.",
-  },
-  {
-    question: "هل توجد منح دراسية متاحة؟",
-    answer: "يمكنك تصفح المنح المنشورة، مع التحقق من حالة كل منحة وشروطها ومواعيدها من مصدرها الرسمي قبل التقديم.",
-  },
-  {
-    question: "كم تستغرق إجراءات القبول؟",
-    answer: "تختلف المدة بحسب الجامعة والبرنامج واكتمال الملف. راجع الجدول المعلن من الجهة التعليمية واترك وقتًا لاستكمال أي نواقص.",
-  },
-  {
-    question: "هل يمكنني التقديم على أكثر من جامعة؟",
-    answer: "قد تسمح بعض الجامعات بذلك وفق سياساتها. تحقّق من شروط ورسوم كل طلب قبل التقديم إلى أكثر من جهة.",
-  },
-  {
-    question: "كيف أتواصل مع أكاديمية طريق؟",
-    answer: "يمكنك مراسلتنا عبر واتساب وذكر الوجهة والتخصص والمرحلة الدراسية التي تفكر بها، لنساعدك في ترتيب أسئلتك.",
-  },
-] as const;
-
-export function HomeFaq() {
+export function HomeFaq({ questions, state }: { questions: readonly { question: string; answer: string }[]; state?: ReactNode }) {
   return (
-    <section className="relative isolate overflow-hidden bg-[#FFFDF9] py-16 sm:py-20" aria-labelledby="home-faq-title">
+    <section className="relative isolate overflow-hidden bg-[#FFFDF9] py-12 sm:py-14" aria-labelledby="home-faq-title">
       <div className="pointer-events-none absolute -start-32 -top-52 size-[34rem] rounded-full border-[3rem] border-[#C8A253]/5" aria-hidden="true" />
       <Container className="relative">
         <div className="text-right">
@@ -48,10 +22,11 @@ export function HomeFaq() {
           </h2>
         </div>
 
-        <div className="mt-9 flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
+        <div className="mt-7 flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
           <aside className="order-2 flex min-w-0 flex-col items-center justify-center rounded-[20px] border border-[#F0E5D4] bg-white p-6 text-center shadow-[0_18px_40px_-32px_rgba(8,43,80,0.28)] sm:p-8 lg:order-1 lg:basis-[40%]">
             <Image
               src="/images/faq/faq-help.png"
+              draggable={false}
               alt=""
               width={210}
               height={210}
@@ -64,6 +39,7 @@ export function HomeFaq() {
             </p>
             <div className="mt-6 grid w-full max-w-sm gap-3">
               <a
+                draggable={false}
                 href={createWhatsappUrl("مرحبًا، لدي سؤال عن خيارات الدراسة والخطوات المناسبة لي.")}
                 target="_blank"
                 rel="noreferrer"
@@ -81,7 +57,7 @@ export function HomeFaq() {
           </aside>
 
           <div className="order-1 min-w-0 space-y-3 lg:order-2 lg:flex-1">
-            <FaqAccordion items={questions} name="home-faq" />
+            {questions.length ? <FaqAccordion items={questions} name="home-faq" /> : state ?? <EmptyState title="لا توجد أسئلة شائعة منشورة حالياً" description="يمكنك التواصل مع فريق طريق لطرح سؤالك." />}
           </div>
         </div>
       </Container>

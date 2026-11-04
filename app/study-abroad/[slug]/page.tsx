@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getCountry, getScholarships, getUniversities } from "@/api/public-content";
+import { getCountry } from "@/api/public-content";
 import { ApiError } from "@/api/error";
 import { Container } from "@/components/layout/container";
-import { Breadcrumbs, ContentSection, PageIntro } from "@/components/public/page-components";
-import { ApiUnavailable, ScholarshipCards, UniversityCards } from "@/components/public/public-content";
+import { ApiUnavailable } from "@/components/public/public-content";
+import { CountryDetails } from "@/components/public/country-details";
+import { getCountryOverviewImage } from "@/lib/country-overview-images";
+import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -16,16 +17,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   try {
     const country = await getCountry(slug);
-    return createPageMetadata(country.seoTitleAr ?? `الدراسة في ${country.nameAr}`, country.seoDescriptionAr ?? country.introductionAr, { index: true, pathname: `/study-abroad/${country.slug}`, imageUrl: country.imageUrl, publishedAt: country.publishedAt });
+    return createPageMetadata(country.seoTitleAr ?? `الدراسة في ${country.nameAr}`, country.seoDescriptionAr ?? country.introductionAr, { index: true, pathname: `/study-abroad/${encodeURIComponent(country.slug)}`, imageUrl: country.imageUrl, publishedAt: country.publishedAt });
   } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); return createPageMetadata("وجهة الدراسة", "معلومات وجهة الدراسة المنشورة لدى طريق الأكاديمية."); }
 }
 
 export default async function DestinationPage({ params }: Props) {
   const { slug } = await params;
   let country;
-  let unavailable = false;
-  try { country = await getCountry(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); unavailable = true; }
-  if (unavailable || !country) return <main><ContentSection><Container className="max-w-5xl"><ApiUnavailable /></Container></ContentSection></main>;
-  const [universities, scholarships] = await Promise.allSettled([getUniversities({ country: country.slug, limit: 3 }), getScholarships({ country: country.slug, limit: 3 })]);
-  return <main><Breadcrumbs items={[{ href: "/", label: "الرئيسية" }, { href: "/study-abroad", label: "الوجهات الدراسية" }, { label: country.nameAr }]} /><PageIntro eyebrow="الوجهات الدراسية" title={`الدراسة في ${country.nameAr}`} intro={country.introductionAr} /><ContentSection><Container className="max-w-5xl"><div className="whitespace-pre-line text-base leading-8 text-muted-foreground">{country.detailsAr}</div></Container></ContentSection><ContentSection className="bg-background"><Container><h2 className="text-2xl font-bold text-primary">جامعات مرتبطة</h2>{universities.status === "fulfilled" ? universities.value.items.length ? <UniversityCards universities={universities.value.items} /> : <p className="mt-4 text-muted-foreground">لا توجد جامعات مرتبطة منشورة حاليًا.</p> : <p className="mt-4 text-muted-foreground">يتعذر تحميل الجامعات المرتبطة حاليًا.</p>}<h2 className="mt-14 text-2xl font-bold text-primary">منح مرتبطة</h2>{scholarships.status === "fulfilled" ? scholarships.value.items.length ? <ScholarshipCards scholarships={scholarships.value.items} /> : <p className="mt-4 text-muted-foreground">لا توجد منح مرتبطة منشورة حاليًا.</p> : <p className="mt-4 text-muted-foreground">يتعذر تحميل المنح المرتبطة حاليًا.</p>}<Link href="/study-abroad" className="mt-10 inline-flex text-sm font-bold text-primary hover:text-accent">العودة إلى الوجهات الدراسية</Link></Container></ContentSection></main>;
+  try { country = await getCountry(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); }
+  if (!country) return <main className="bg-[#F8FAFC] py-10"><Container><ApiUnavailable /></Container></main>;
+  // The API has no structured facts, study guide, secondary image or country FAQ association.
+  // Demo overview/facts/guide/FAQs stay isolated; Live may use only explicitly mapped local imagery.
+  const demoDetails = isPublicDemoMode() ? (await import("@/lib/mocks/country-details-fixtures")).getDemoCountryDetails(country) : null;
+  const overviewImage = demoDetails?.overviewImage ?? getCountryOverviewImage(country.slug);
+  return <CountryDetails country={country} demoDetails={demoDetails} overviewImage={overviewImage} />;
 }

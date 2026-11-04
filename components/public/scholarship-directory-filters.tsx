@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { SkeletonResults } from "@/components/public/content-skeletons";
 import {
   ChevronDown,
   RotateCcw,
@@ -140,7 +141,7 @@ export function ScholarshipDirectoryFilters({
         aria-label="البحث وتصفية المنح الدراسية"
         className="rounded-xl border border-[#E2E8F0] bg-white p-3 shadow-[0_8px_24px_-20px_rgba(8,43,80,0.4)] sm:p-4"
       >
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:flex lg:items-center">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:flex lg:flex-wrap lg:items-center">
           <label className="relative col-span-2 block min-w-0 lg:w-80 lg:shrink-0">
             <span className="sr-only">ابحث عن منحة دراسية</span>
             <Search
@@ -165,7 +166,7 @@ export function ScholarshipDirectoryFilters({
             aria-expanded={advanced}
             aria-controls="scholarship-advanced"
             onClick={() => setAdvanced(!advanced)}
-            className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#DCE4EC] bg-[#F5F8FB] px-3 text-sm font-bold text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent lg:w-48"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#DCE4EC] bg-[#F8FAFC] px-3 text-sm font-normal text-[#52647A] transition-colors hover:border-[#BAC8D5] hover:bg-[#EEF4F8] hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent lg:shrink-0"
           >
             <SlidersHorizontal className="size-4 shrink-0" aria-hidden="true" />
             تصفية متقدمة
@@ -307,9 +308,7 @@ export function ScholarshipDirectoryFilters({
       ) : null}
       <div aria-busy={pending} aria-live="polite">
         {pending ? (
-          <div role="status" className="py-6 text-sm text-muted-foreground">
-            جارٍ تحديث المنح الدراسية…
-          </div>
+          <SkeletonResults kind="scholarship" label="جارٍ تحديث المنح الدراسية…" />
         ) : (
           children
         )}

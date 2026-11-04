@@ -44,6 +44,11 @@
 
 * { border-color: var(--border); }
 
+/* Native drag affordances only: leave text selection and touch/pointer scrolling alone. */
+[data-public-site] :is(a[href], img, svg, button) {
+  -webkit-user-drag: none;
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 6rem;

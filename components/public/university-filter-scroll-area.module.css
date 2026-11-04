@@ -1,0 +1,19 @@
+@media (min-width: 64rem) {
+  .viewportFrame {
+    max-height: min(calc(100dvh - 7rem), var(--university-filter-available-height, 100dvh));
+  }
+}
+
+.indicatorIcon {
+  animation: filter-discovery-nudge 3.6s ease-in-out infinite;
+}
+
+@keyframes filter-discovery-nudge {
+  0%, 65%, 100% { transform: translateY(0); }
+  78% { transform: translateY(2px); }
+  90% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicatorIcon { animation: none; }
+}

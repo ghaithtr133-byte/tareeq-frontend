@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 import { ArrowLeft } from "lucide-react";
 import { getCountries, getUniversities } from "@/api/public-content";
 import { Container } from "@/components/layout/container";
@@ -13,6 +14,7 @@ import {
   DirectoryUniversityCard,
 } from "@/components/public/university-directory-cards";
 import { UniversityRelatedScholarships } from "@/components/public/university-related-scholarships";
+import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import {
   type RouteSearchParams,
@@ -68,9 +70,9 @@ export default async function UniversitiesPage({
     }
   const hasMeaningfulCriteria = Boolean(
     params.search ||
-      params.country ||
-      params.featured ||
-      Object.values(demoFilters).some(Boolean),
+    params.country ||
+    params.featured ||
+    Object.values(demoFilters).some(Boolean),
   );
   const demoResult = demo
     ? getDemoDirectory(params, demoFilters, hasMeaningfulCriteria)
@@ -113,9 +115,9 @@ export default async function UniversitiesPage({
     universityResponse.status === "fulfilled" ? universityResponse.value : null;
   const relatedDirectory =
     demo &&
-      hasMeaningfulCriteria &&
-      universities?.pagination.total &&
-      demoResult
+    hasMeaningfulCriteria &&
+    universities?.pagination.total &&
+    demoResult
       ? demoResult
       : null;
   const retryQuery = new URLSearchParams(
@@ -185,8 +187,12 @@ export default async function UniversitiesPage({
                   الجامعات
                 </h2>
                 {universities ? (
-                  <p className="mt-2 text-sm text-[#52647A]" aria-live="polite">
-                    {universities.pagination.total} جامعة في النتائج
+                  <p className="py-4 text-sm text-muted-foreground">
+                    تم العثور على{" "}
+                    <strong className="font-bold text-[#17669C]">
+                      {universities.pagination.total}
+                    </strong>{" "}
+                    جامعات
                   </p>
                 ) : null}
               </div>
@@ -213,7 +219,7 @@ export default async function UniversitiesPage({
                 </a>
               </div>
             ) : universities.items.length ? (
-              <div className="mt-7 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <BalancedCardGrid className="mt-7" columns={{ sm: 2, xl: 3 }}>
                 {universities.items.map((item) => (
                   <DirectoryUniversityCard
                     key={item.id}
@@ -221,7 +227,7 @@ export default async function UniversitiesPage({
                     demo={demo}
                   />
                 ))}
-              </div>
+              </BalancedCardGrid>
             ) : (
               <div className="mt-7 rounded-xl border border-[#E2E8F0] bg-white p-7">
                 <h3 className="text-lg font-bold text-[#082B50]">
@@ -294,12 +300,18 @@ export default async function UniversitiesPage({
                 href="/scholarships"
                 className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#17669C]"
               >
-                عرض جميع المنح <ArrowLeft className="size-4" aria-hidden="true" />
+                عرض جميع المنح{" "}
+                <ArrowLeft className="size-4" aria-hidden="true" />
               </Link>
             </div>
             {relatedDirectory.scholarships.length ? (
               <UniversityRelatedScholarships
-                key={JSON.stringify({ search: params.search, country: params.country, featured: params.featured, ...demoFilters })}
+                key={JSON.stringify({
+                  search: params.search,
+                  country: params.country,
+                  featured: params.featured,
+                  ...demoFilters,
+                })}
                 cards={relatedDirectory.scholarships.map((item) => (
                   <DirectoryScholarshipCard
                     key={item.id}
@@ -325,42 +337,18 @@ export default async function UniversitiesPage({
             )}
           </section>
         ) : null}
-        <section
-          className="relative mt-12 overflow-hidden rounded-2xl bg-[#082B50] px-6 py-9 text-white sm:px-10"
-          aria-labelledby="directory-contact-title"
-        >
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-25"
-            style={{
-              backgroundImage: "url('/images/footer/footer-skyline.png')",
-            }}
-            aria-hidden="true"
-          />
-          <div className="relative flex flex-wrap items-center justify-between gap-5">
-            <div>
-              <p className="text-sm font-bold text-[#F5D98E]">خطوتك التالية</p>
-              <h2
-                id="directory-contact-title"
-                className="mt-2 text-2xl font-bold"
-              >
-                هل تحتاج مساعدة في اختيار الجامعة؟
-              </h2>
-              <p className="mt-2 text-sm leading-7 text-white/85">
-                تواصل معنا لترتيب خياراتك الأكاديمية.
-              </p>
-            </div>
+        <ConsultationCta className="mt-8" titleId="directory-contact-title" eyebrow="خطوتك التالية" title="هل تحتاج مساعدة في اختيار الجامعة؟" description="تواصل معنا لترتيب خياراتك الأكاديمية." backgroundImage="/images/footer/footer-skyline.png" action={
             <a
               href={createWhatsappUrl(
                 "مرحبًا، أود المساعدة في اختيار الجامعة المناسبة.",
               )}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#C8A253] px-6 text-sm font-bold text-[#082B50] hover:bg-[#D8B96E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className={consultationActionClass}
             >
-              تواصل معنا <ArrowLeft className="size-4" aria-hidden="true" />
+              تواصل عبر واتساب <ArrowLeft className="size-4" aria-hidden="true" />
             </a>
-          </div>
-        </section>
+        } />
       </Container>
     </main>
   );

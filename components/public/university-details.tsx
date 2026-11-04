@@ -11,6 +11,7 @@ import { UniversityDetailScholarships } from "@/components/public/university-det
 import { UniversityPrograms } from "@/components/public/university-programs";
 import { universityTab, universityTabs, type UniversityDetailContent, type UniversityTab } from "@/lib/university-details";
 import { createWhatsappUrl } from "@/lib/whatsapp";
+import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
 
 const icons = { overview: Info, programs: BookOpen, admissions: ClipboardList, gallery: Images };
 
@@ -69,10 +70,9 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
         <UniversityDetailScholarships key={`${demo}-${university.id}`} id={university.id} slug={university.slug} demo={demo} initial={initialScholarships} />
         {content.faqs.length ? <section data-university-faq className="relative mt-6 overflow-hidden rounded-2xl bg-[#FFFDF9] p-4 sm:p-6" aria-labelledby="university-faq-title"><p className="inline-flex items-center gap-2 rounded-full bg-[#FBF5E9] px-4 py-2 text-sm font-bold text-[#A47B2D]"><MessageCircleQuestion className="size-5" aria-hidden="true" />الأسئلة الشائعة</p><h2 id="university-faq-title" className="mb-6 mt-4 text-2xl font-bold leading-[1.35] text-[#082B50]">الأسئلة الشائعة عن الجامعة</h2><FaqAccordion items={content.faqs} name={`university-faq-${university.id}`} /></section> : null}
       </div>
-      <aside aria-labelledby="university-contact-title" className="min-w-0 rounded-2xl bg-primary p-5 text-white shadow-sm xl:sticky xl:top-[var(--university-header-offset)]">
-        <MessageCircle className="size-9 text-accent" aria-hidden="true" /><h2 id="university-contact-title" className="mt-3 text-xl font-bold leading-8">لديك استفسار عن الجامعة؟</h2><p className="mt-3 text-sm leading-8 text-white/85">تواصل مع فريق طريق للحصول على إرشاد مناسب حول الجامعة والتخصصات وشروط القبول.</p><a data-university-whatsapp href={whatsapp} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-primary hover:bg-[#D8B96E] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white"><MessageCircle className="size-5 shrink-0" aria-hidden="true" />استفسر عبر واتساب<span className="sr-only">(يفتح في نافذة جديدة)</span></a><p className="mt-3 text-xs leading-6 text-white/75">استشارة إرشادية وليست طلب قبول رسميًا.</p>
-        <GraduationCap className="ms-auto mt-5 size-14 text-accent/50" strokeWidth={1} aria-hidden="true" />
-      </aside>
+      <ConsultationCta as="aside" variant="contextual" titleId="university-contact-title" className="xl:sticky xl:top-[var(--university-header-offset)]" title="لديك استفسار عن الجامعة؟" description="تواصل مع فريق طريق للحصول على إرشاد مناسب حول الجامعة والتخصصات وشروط القبول." note="استشارة إرشادية وليست طلب قبول رسميًا." action={
+        <a data-university-whatsapp href={whatsapp} target="_blank" rel="noopener noreferrer" className={consultationActionClass}><MessageCircle className="size-5" aria-hidden="true" />استفسر عبر واتساب<span className="sr-only">(يفتح في نافذة جديدة)</span></a>
+      } />
     </div>
   </div>;
 }

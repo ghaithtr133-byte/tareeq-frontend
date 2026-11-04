@@ -128,7 +128,7 @@ test("recommendation cards omit unpublished scholarships and preserve closed sta
 test("all consultation links use the configured WhatsApp destination and have no application form", () => {
   const { ArticleConsultation } = viewLoad("components/public/article-consultation.tsx");
   const { createWhatsappUrl } = viewLoad("lib/whatsapp.ts");
-  const html = renderToStaticMarkup(React.createElement(ArticleConsultation));
+  const html = renderToStaticMarkup(React.createElement(ArticleConsultation, { titleId: "article-test-consultation" }));
   assert.ok(html.includes(createWhatsappUrl()));
   assert.ok(html.includes("تواصل عبر واتساب"));
   assert.equal(html.includes("قدّم الآن"), false);

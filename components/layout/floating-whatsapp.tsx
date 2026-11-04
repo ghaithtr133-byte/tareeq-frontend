@@ -1,21 +1,27 @@
 import { createWhatsappUrl } from "@/lib/whatsapp";
+import styles from "./floating-whatsapp.module.css";
 
 /** Uses the same approved destination already published in the site header and footer. */
 export function FloatingWhatsapp() {
   return (
     <a
       href={createWhatsappUrl()}
+      data-floating-whatsapp=""
+      draggable={false}
       target="_blank"
-      rel="noreferrer"
-      className="group fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] end-5 z-40 size-14 rounded-full focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#D4B57A] motion-safe:animate-[whatsapp-float_4.8s_ease-in-out_infinite] motion-reduce:animate-none sm:end-8 sm:size-[3.75rem]"
+      rel="noopener noreferrer"
+      className={`${styles.button} group rounded-full focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#D4B57A]`}
       aria-label="تواصل معنا عبر واتساب"
     >
-      <span className="relative grid size-full place-items-center overflow-hidden rounded-full bg-[#25D366] text-white shadow-[0_14px_28px_-12px_rgba(37,211,102,0.8),0_0_0_6px_rgba(37,211,102,0.12)] transition-[transform,box-shadow] duration-300 ease-out group-hover:scale-[1.05] group-hover:shadow-[0_18px_34px_-12px_rgba(37,211,102,0.9),0_0_0_8px_rgba(37,211,102,0.16)] group-focus-visible:scale-[1.05] motion-reduce:transition-none">
+      <span className="block size-full motion-safe:animate-[whatsapp-float_4.8s_ease-in-out_infinite] motion-reduce:animate-none">
+      <span className="relative grid size-full place-items-center overflow-hidden rounded-full bg-[#25D366] text-white shadow-[0_10px_22px_-12px_rgba(37,211,102,0.65),0_0_0_3px_rgba(37,211,102,0.1)] transition-[transform,box-shadow] duration-200 ease-out group-hover:scale-[1.05] group-hover:shadow-[0_14px_26px_-12px_rgba(37,211,102,0.8),0_0_0_4px_rgba(37,211,102,0.12)] group-focus-visible:scale-[1.05] motion-reduce:transition-none">
         <span
-          className="pointer-events-none absolute -inset-y-3 -left-10 w-5 -skew-x-12 bg-white/30 opacity-0 motion-safe:animate-[whatsapp-shine_8.8s_ease-in-out_infinite] motion-reduce:animate-none"
+          className={styles.shine}
+          data-whatsapp-shine=""
           aria-hidden="true"
         />
         <WhatsappIcon className="relative size-7 sm:size-8" />
+      </span>
       </span>
     </a>
   );

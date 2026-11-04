@@ -35,6 +35,8 @@ npm run start      # Serve a production build
 
 ## Environment configuration
 
+Public page migrations must follow the [Public Website data-state design policy](docs/public-data-state-policy.md): preserve approved components and static artwork; change only data/state content, without silent Demo fallbacks or disappearing sections.
+
 `NEXT_PUBLIC_API_BASE_URL` is the public browser origin of the separately deployed Backend REST API, for example `https://api.example.com`. `API_BASE_URL` is the server-side origin. Do **not** add `/api/v1` to either value: the Axios clients append that namespace.
 
 `NEXT_PUBLIC_SITE_URL` is the approved public website origin used to generate canonical and Open Graph URLs, for example `https://www.example.com`. Leave it empty until the production domain is approved; the frontend deliberately emits no canonical URL when it is unset or invalid.

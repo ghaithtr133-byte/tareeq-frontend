@@ -1,0 +1,48 @@
+.button {
+  position: fixed;
+  left: calc(1rem + env(safe-area-inset-left, 0px));
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  width: 3.25rem;
+  height: 3.25rem;
+  z-index: 30;
+}
+
+/* A 0.8s sweep inside an 8s cycle; the stable anchor and its offsets never move. */
+.shine {
+  pointer-events: none;
+  position: absolute;
+  inset-block: -0.75rem;
+  left: -1.5rem;
+  width: 1.25rem;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 32%), transparent);
+  opacity: 0;
+  transform: translateX(0) skewX(-18deg);
+  animation: whatsapp-sweep 8s ease-in-out infinite;
+}
+
+@keyframes whatsapp-sweep {
+  0%, 78%, 100% { opacity: 0; transform: translateX(0) skewX(-18deg); }
+  80% { opacity: 0.7; }
+  88% { opacity: 0; transform: translateX(6rem) skewX(-18deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shine { animation: none; }
+}
+
+@media (min-width: 64rem) {
+  .button {
+    left: calc(1.5rem + env(safe-area-inset-left, 0px));
+    bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
+/* Existing public overlays: no scroll listeners or parallel modal state. Native
+   dialogs are top-layer elements; hiding also removes this background link
+   from the tab order. The menu's existing aria-hidden state is authoritative. */
+:global(body:has(#mobile-navigation[aria-hidden="false"])) .button,
+:global(body:has(dialog[open])) .button {
+  display: none;
+}

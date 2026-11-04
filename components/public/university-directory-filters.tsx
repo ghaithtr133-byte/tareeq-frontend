@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import { UniversityFilterScrollArea } from "@/components/public/university-filter-scroll-area";
 
 type Option = readonly [string, string];
 type FilterValues = Record<string, string>;
@@ -34,6 +35,9 @@ export function UniversityDirectoryFilters({
     },
     [],
   );
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+  }, [signature]);
 
   function navigate(next: FilterValues) {
     if (timer.current) clearTimeout(timer.current);
@@ -91,6 +95,7 @@ export function UniversityDirectoryFilters({
               className={inputClass}
             >
               <option value="">الكل</option>
+              {draft[group.key] && !group.options.some(([value]) => value === draft[group.key]) ? <option value={draft[group.key]}>{draft[group.key]}</option> : null}
               {group.options.map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -113,7 +118,12 @@ export function UniversityDirectoryFilters({
     );
   }
   return (
-    <div className="space-y-4 self-start lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-1 lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
+    <UniversityFilterScrollArea
+      className="self-start lg:sticky lg:top-24"
+      contentClassName="space-y-4 lg:pb-1"
+      hideScrollbar
+      fitViewport
+    >
       <aside
         className="hidden self-start rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-[0_12px_35px_-30px_rgba(8,43,80,0.4)] lg:block"
         aria-label="تصفية الجامعات"
@@ -139,33 +149,35 @@ export function UniversityDirectoryFilters({
       <dialog
         ref={dialog}
         aria-labelledby="university-filter-dialog-title"
-        className="fixed inset-y-0 right-0 m-0 h-dvh max-h-none w-[min(24rem,100vw)] max-w-none overflow-y-auto bg-white p-6 text-right shadow-xl backdrop:bg-[#041F3C]/60"
+        className="fixed inset-y-0 right-0 m-0 h-dvh max-h-none w-[min(24rem,100vw)] max-w-none overflow-hidden bg-white text-right shadow-xl backdrop:bg-[#041F3C]/60"
         dir="rtl"
       >
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h2
-            id="university-filter-dialog-title"
-            className="text-xl font-bold text-[#082B50]"
-          >
-            تصفية النتائج
-          </h2>
+        <UniversityFilterScrollArea className="h-full" contentClassName="p-6">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h2
+              id="university-filter-dialog-title"
+              className="text-xl font-bold text-[#082B50]"
+            >
+              تصفية النتائج
+            </h2>
+            <button
+              type="button"
+              onClick={() => dialog.current?.close()}
+              aria-label="إغلاق التصفية"
+              className="grid size-11 place-items-center rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C8A253]"
+            >
+              <X className="size-5" />
+            </button>
+          </div>
+          {fields("mobile")}
           <button
             type="button"
             onClick={() => dialog.current?.close()}
-            aria-label="إغلاق التصفية"
-            className="grid size-11 place-items-center rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C8A253]"
+            className="mt-5 min-h-12 w-full rounded-lg bg-[#C8A253] text-sm font-bold text-[#082B50]"
           >
-            <X className="size-5" />
+            عرض النتائج
           </button>
-        </div>
-        {fields("mobile")}
-        <button
-          type="button"
-          onClick={() => dialog.current?.close()}
-          className="mt-5 min-h-12 w-full rounded-lg bg-[#C8A253] text-sm font-bold text-[#082B50]"
-        >
-          عرض النتائج
-        </button>
+        </UniversityFilterScrollArea>
       </dialog>
       <div
         className="flex flex-wrap items-center gap-2"
@@ -198,7 +210,7 @@ export function UniversityDirectoryFilters({
           );
         })}
       </div>
-    </div>
+    </UniversityFilterScrollArea>
   );
 }
 

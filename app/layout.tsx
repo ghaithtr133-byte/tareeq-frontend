@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Almarai } from "next/font/google";
+import { Suspense } from "react";
 
-import { ArticlesTicker } from "@/components/layout/articles-ticker";
-import { getArticleTickerPage } from "@/lib/article-ticker-server";
+import { AsyncArticlesTicker } from "@/components/layout/async-articles-ticker";
 import { FloatingWhatsapp } from "@/components/layout/floating-whatsapp";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { NativeDragGuard } from "@/components/layout/native-drag-guard";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { getSiteOrigin } from "@/lib/seo";
 import { QueryProvider } from "@/providers/query-provider";
@@ -35,19 +36,19 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const isDemo = isPublicDemoMode();
-  const articleTicker = await getArticleTickerPage().catch(() => undefined);
 
   return (
     <html lang="ar" dir="rtl" className={almarai.variable}>
-      <body className="font-sans antialiased">
+      <body data-public-site="" className="font-sans antialiased">
+        <NativeDragGuard />
         <QueryProvider>
-          {articleTicker?.items.length ? <ArticlesTicker initialPage={articleTicker} /> : null}
+          <Suspense fallback={<div aria-hidden="true" className="h-9 bg-[#082B50]" />}><AsyncArticlesTicker /></Suspense>
           <SiteHeader />
-          {isDemo ? (
-            <p className="border-b border-[#8A6428]/25 bg-[#F7F1E5] px-5 py-2 text-center text-xs font-bold leading-5 text-[#6D4D1F]" role="status">
-              محتوى تجريبي لأغراض العرض — سيتم تحديثه عند نشر البيانات الرسمية.
-            </p>
-          ) : null}
+            {/* {isDemo ? (
+                <p className="border-b border-[#8A6428]/25 bg-[#F7F1E5] px-5 py-2 text-center text-xs font-bold leading-5 text-[#6D4D1F]" role="status">
+                  محتوى تجريبي لأغراض العرض — سيتم تحديثه عند نشر البيانات الرسمية.
+                </p>
+            ) : null} */}
           {children}
           <SiteFooter />
           <FloatingWhatsapp />
