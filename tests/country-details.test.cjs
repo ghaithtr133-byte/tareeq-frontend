@@ -38,10 +38,11 @@ const boundary = {
 const data = loader()("lib/mocks/public-demo-content.ts");
 const fixtures = loader()("lib/mocks/country-details-fixtures.ts");
 const apiError = loader()("api/error.ts");
-function route(demo, country = data.publicDemoContent.countries[1], fail) {
+function route(demo, country = data.publicDemoContent.countries[1], fail, faqPayload = { items: [], pagination: { total: 0 } }, calls = []) {
   return loader({ ...boundary,
     "@/lib/public-content-mode": { isPublicDemoMode: () => demo },
     "@/api/error": apiError,
+    "@/api/server-client": { serverApiClient: { get: async (path, config) => { calls.push({ path, config }); if (faqPayload instanceof Error) throw faqPayload; return { data: { success: true, data: faqPayload } }; } } },
     "@/api/public-content": { getCountry: async () => { if (fail) throw fail; return country; } },
   })("app/study-abroad/[slug]/page.tsx");
 }
@@ -69,9 +70,11 @@ test("Live renders only real fields, never Demo facts/FAQ; duplicated overview a
   const country = { ...data.publicDemoContent.countries[1], slug: "تركيا-الدراسة", introductionAr: "نص واحد", detailsAr: "نص واحد", imageUrl: null };
   const html = renderToStaticMarkup(await route(false, country).default(props));
   assert.equal((html.match(/نص واحد/g) ?? []).length, 1);
-  assert.equal(html.includes('id="country-information-title"'), false);
-  assert.equal(html.includes('id="country-faq-title"'), false);
-  assert.equal(html.includes('id="country-guide-title"'), false);
+  assert.equal(html.includes('id="country-information-title"'), true);
+  assert.equal(html.includes('id="country-faq-title"'), true);
+  assert.equal(html.includes('id="country-guide-title"'), true);
+  assert.equal((html.match(/data-country-fact/g) ?? []).length, 4);
+  assert.equal((html.match(/data-country-guide-panel/g) ?? []).length, 3);
   assert.equal(html.includes("خطة بحث توضيحية"), false);
   assert.equal(html.includes("التركية أو الإنجليزية"), false);
   assert.ok(html.includes(`/universities?${new URLSearchParams({ country: country.slug })}`));
@@ -166,18 +169,42 @@ test("overview imagery is explicitly mapped to an existing country asset, with n
   assert.equal(fixtures.getDemoCountryDetails(data.publicDemoContent.countries[0]).overviewImage, null);
 });
 
-test("Live Turkey uses only the explicit local image, credits its creator/license, and never acquires Demo facts or FAQs", async () => {
-  const html = renderToStaticMarkup(await route(false).default(props));
+test("Demo retains approved overview artwork and credits; Live never substitutes it for a missing Admin image", async () => {
+  const html = renderToStaticMarkup(await route(true).default(props));
   assert.ok(html.includes('src="/images/study-abroad/overview/turkey-overview.webp"'));
   assert.ok(html.includes('alt="بوابة جامعة إسطنبول التاريخية في تركيا"'));
   assert.ok(html.includes("Yair Haklai"));
   assert.ok(html.includes("https://creativecommons.org/licenses/by-sa/4.0/"));
   assert.ok(html.includes("تحويل واقتصاص للعرض"));
-  assert.equal(html.includes('id="country-information-title"'), false);
-  assert.equal(html.includes('id="country-faq-title"'), false);
-  const unmapped = renderToStaticMarkup(await route(false, data.publicDemoContent.countries[0]).default(props));
+  const unmapped = renderToStaticMarkup(await route(false).default(props));
   assert.ok(unmapped.includes('id="country-overview-title"'));
   assert.equal(unmapped.includes("turkey-overview.webp"), false);
+  assert.equal(unmapped.includes("صورة توضيحية (غير متوفر حالياً)"), false);
+});
+
+test("Optional overview media controls only its column; required Hero media always retains its container", async () => {
+  const { CountryDetails } = loader(boundary)("components/public/country-details.tsx");
+  const country = { ...data.publicDemoContent.countries[0], imageUrl: null };
+  const missing = renderToStaticMarkup(React.createElement(CountryDetails, { country, demoDetails: null, overviewImage: null }));
+  const overview = missing.match(/<section aria-labelledby="country-overview-title"[\s\S]*?<\/section>/)[0];
+  assert.equal(overview.includes("<figure"), false);
+  assert.equal(overview.includes("aspect-[2/1]"), false);
+  assert.equal(overview.includes("غير متوفر حالياً"), false);
+  assert.equal(overview.includes("md:grid-cols-"), false);
+  assert.ok(overview.includes("max-w-4xl"));
+  const hero = missing.match(/<section aria-labelledby="country-title"[\s\S]*?<\/section>/)[0];
+  assert.ok(hero.includes("صورة الدولة (غير متوفر حالياً)"));
+  assert.ok(hero.includes("md:w-[54%]"));
+  const image = { src: "https://example.test/romania-overview.jpg", alt: "صورة رومانيا", source: "https://example.test/source", author: "المصدر", license: "ترخيص", licenseUrl: "https://example.test/license" };
+  const populated = renderToStaticMarkup(React.createElement(CountryDetails, { country: { ...country, imageUrl: "https://example.test/romania-hero.jpg", imageAltAr: "صورة Hero الحقيقية" }, demoDetails: null, overviewImage: image }));
+  const withImage = populated.match(/<section aria-labelledby="country-overview-title"[\s\S]*?<\/section>/)[0];
+  assert.ok(withImage.includes("<figure"));
+  assert.ok(withImage.includes("md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"));
+  assert.ok(withImage.includes(image.src));
+  assert.ok(populated.includes('src="https://example.test/romania-hero.jpg"'));
+  assert.equal(populated.includes("صورة الدولة (غير متوفر حالياً)"), false);
+  const unknownField = renderToStaticMarkup(await route(false, { ...country, overviewImageUrl: image.src }).default(props));
+  assert.equal(unknownField.includes(image.src), false, "Do not consume an unapproved response field");
 });
 
 test("country CTA reuses the readable shared overlay and keeps the secondary action border", () => {
@@ -189,10 +216,11 @@ test("country CTA reuses the readable shared overlay and keeps the secondary act
   assert.ok(source.includes('aspect-[2/1] overflow-hidden rounded-2xl'));
 });
 
-test("Study guide omits empty panels and exposes independent native keyboard-accessible disclosures", () => {
+test("Study guide preserves its section on empty data and exposes independent native keyboard-accessible disclosures", () => {
   const { CountryStudyGuide } = loader(boundary)("components/public/country-study-guide.tsx");
   const empty = renderToStaticMarkup(React.createElement(CountryStudyGuide, { countryName: "تركيا", panels: [{ title: "غير متاح", introduction: " ", steps: [" "] }] }));
-  assert.equal(empty, "");
+  assert.ok(empty.includes('id="country-guide-title"'));
+  assert.ok(empty.includes("محتوى الدليل غير متاح حالياً"));
   const panels = fixtures.getDemoCountryDetails(data.publicDemoContent.countries[1]).guide;
   const html = renderToStaticMarkup(React.createElement(CountryStudyGuide, { countryName: "تركيا", panels }));
   assert.equal((html.match(/<details\b/g) ?? []).length, 3);
@@ -202,7 +230,7 @@ test("Study guide omits empty panels and exposes independent native keyboard-acc
   assert.ok(html.includes("motion-reduce:transition-none"));
 });
 
-test("Country information adapts from zero to four meaningful facts, showing one only inside the overview", () => {
+test("Country information keeps all four original slots for zero to four available facts", () => {
   const local = loader(boundary);
   const { CountryDetails } = local("components/public/country-details.tsx");
   const { meaningfulCountryInformation } = local("components/public/country-information.tsx");
@@ -210,19 +238,87 @@ test("Country information adapts from zero to four meaningful facts, showing one
   const facts = fixtures.getDemoCountryDetails(country).facts;
   for (const count of [0, 1, 2, 3, 4]) {
     const html = renderToStaticMarkup(React.createElement(CountryDetails, { country, demoDetails: null, overviewImage: null, information: facts.slice(0, count) }));
-    assert.equal((html.match(/data-country-fact/g) ?? []).length, count);
-    assert.equal(html.includes('id="country-information-title"'), count >= 2);
-    if (count === 1) {
-      const overview = html.match(/<section aria-labelledby="country-overview-title"[\s\S]*?<\/section>/)[0];
-      assert.ok(overview.includes("data-country-fact"));
-      assert.ok(overview.includes("w-fit max-w-full"));
-    }
-    if (count === 2) assert.ok(html.includes("max-w-3xl sm:grid-cols-2"));
-    if (count === 3) assert.ok(html.includes("lg:grid-cols-3"));
-    if (count === 4) assert.ok(html.includes("xl:grid-cols-4"));
+    assert.equal((html.match(/data-country-fact/g) ?? []).length, 4);
+    assert.equal(html.includes('id="country-information-title"'), true);
+    assert.ok(html.includes("sm:grid-cols-2 xl:grid-cols-4"));
   }
   assert.equal(meaningfulCountryInformation([{ title: "", value: "x" }, { title: "x", value: " " }]).length, 0);
   assert.equal(meaningfulCountryInformation([facts[0], facts[0]]).length, 1);
+});
+
+test("Student facts and guide have distinct content, never extract unsupported facts from detailsAr", async () => {
+  for (const country of data.publicDemoContent.countries) {
+    const details = fixtures.getDemoCountryDetails(country);
+    const guideText = details.guide.map((panel) => [panel.introduction, ...panel.steps].join(" ")).join(" ");
+    for (const fact of details.facts) {
+      assert.ok(fact.value.length < 110);
+      assert.equal(guideText.includes(fact.value), false);
+    }
+  }
+  const country = { ...data.publicDemoContent.countries[0], id: "live-country", imageUrl: null, introductionAr: null, detailsAr: "رسوم مزعومة 99999 ومواعيد مزعومة 2030-09-01" };
+  const html = renderToStaticMarkup(await route(false, country).default(props));
+  const facts = html.match(/<section aria-labelledby="country-information-title"[\s\S]*?<\/section>/)[0];
+  const guide = html.match(/<section aria-labelledby="country-guide-title"[\s\S]*?<\/section>/)[0];
+  for (const title of ["لغة الدراسة", "التكاليف الدراسية", "متطلبات القبول", "مواعيد التقديم"]) assert.ok(facts.includes(`${title} (غير متوفر حالياً)`));
+  for (const fragment of [facts, guide]) {
+    assert.equal(fragment.includes("99999"), false);
+    assert.equal(fragment.includes("2030-09-01"), false);
+    assert.equal(fragment.includes("٤٬٠٠٠"), false);
+    assert.equal(fragment.includes("مارس ٢٠٢٧"), false);
+    assert.equal(fragment.includes("الرومانية أو الإنجليزية بحسب التخصص التجريبي"), false);
+  }
+  assert.ok(guide.includes("غير متوفر حالياً"));
+  assert.ok(html.includes("مقدمة الدولة (غير متوفر حالياً)"));
+  assert.ok(html.includes("صورة الدولة (غير متوفر حالياً)"));
+  const { completeCountryFacts, unavailableCountryGuide } = loader()("lib/country-detail-content.ts");
+  const mapped = completeCountryFacts([{ title: "لغة الدراسة", value: "لغة موثقة" }]);
+  assert.equal(mapped[0].value, "لغة موثقة");
+  assert.equal(mapped.length, 4);
+  assert.equal(unavailableCountryGuide("romania", "دولة مختلفة")[0].introduction, "إرشادات الدراسة (غير متوفر حالياً)");
+});
+
+test("Country FAQs use only the canonical current-country endpoint; empty, invalid scopes and failures are isolated", async () => {
+  const country = { ...data.publicDemoContent.countries[0], id: "live-romania" };
+  const faq = { id: "faq-1", scope: "COUNTRY", questionAr: "سؤال رومانيا المنشور؟", answerAr: "جواب موثق لرومانيا." };
+  const calls = [];
+  const html = renderToStaticMarkup(await route(false, country, undefined, { items: [faq], pagination: { total: 1 } }, calls).default(props));
+  assert.deepEqual(calls, [{ path: "/countries/romania/faqs", config: { params: { limit: 6 }, timeout: 12000 } }]);
+  assert.ok(html.includes(faq.questionAr));
+  assert.ok(html.includes(faq.answerAr));
+  assert.equal(html.includes("كيف أبدأ البحث عن جامعة"), false);
+  const empty = renderToStaticMarkup(await route(false, country).default(props));
+  assert.ok(empty.includes("لا توجد أسئلة منشورة لهذه الدولة حالياً"));
+  assert.equal(empty.includes('role="alert"'), false);
+  for (const bad of [Error("offline"), { items: [null], pagination: { total: 1 } }, { items: [{ ...faq, scope: "GLOBAL" }], pagination: { total: 1 } }, { items: [{ ...faq, countryId: "another-country" }], pagination: { total: 1 } }, { items: [], pagination: { total: 2 } }]) {
+    const failed = renderToStaticMarkup(await route(false, country, undefined, bad).default(props));
+    assert.ok(failed.includes("تعذر تحميل أسئلة هذه الدولة"));
+    assert.ok(failed.includes("إعادة المحاولة"));
+    assert.ok(failed.includes('id="country-overview-title"'));
+    assert.ok(failed.includes('id="country-contact-title"'));
+    assert.equal(failed.includes("لا توجد أسئلة منشورة لهذه الدولة حالياً"), false);
+  }
+});
+
+test("Malformed essential data is an error; invalid/unknown/unpublished countries remain not-found", async () => {
+  const draft = { ...data.publicDemoContent.countries[0], status: "DRAFT" };
+  await assert.rejects(() => route(false, draft).default(props), /not-found/);
+  await assert.rejects(() => route(false).default({ params: Promise.resolve({ slug: "../turkey" }) }), /not-found/);
+  for (const country of [null, {}, { nameAr: "اسم فقط" }]) {
+    const html = renderToStaticMarkup(await route(false, country).default(props));
+    assert.ok(html.includes('role="alert"'));
+    assert.ok(html.includes("إعادة المحاولة"));
+    assert.equal(html.includes("data-country-fact"), false);
+  }
+});
+
+test("Country loading reuses the shared skeleton with four facts, three guide panels and scoped FAQ geometry", () => {
+  const { PublicPageSkeleton } = loader(boundary)("components/public/content-skeletons.tsx");
+  const html = renderToStaticMarkup(React.createElement(PublicPageSkeleton, { page: "country" }));
+  assert.ok(html.includes("data-country-guide-skeleton"));
+  assert.ok(html.includes("data-country-faq-skeleton"));
+  assert.ok(html.includes("xl:grid-cols-4"));
+  assert.ok(html.includes("lg:grid-cols-3"));
+  assert.ok(html.includes('aria-busy="true"'));
 });
 
 test("Inner-page hero tokens are opt-in and preserve the Homepage hero and disabled university intro", () => {

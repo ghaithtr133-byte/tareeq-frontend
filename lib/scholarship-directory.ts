@@ -7,7 +7,11 @@ export type ScholarshipFilterValues = Record<ScholarshipFilterKey, string>;
 
 export function directoryScholarshipParams(raw: RouteSearchParams): ScholarshipListParams {
   const parsed = scholarshipsParams(raw);
-  return { ...parsed, search: parsed.search?.slice(0, 200), page: parsed.page ?? 1, limit: 12, sort: parsed.sort ?? "newest" };
+  return { ...parsed, search: parsed.search?.slice(0, 200),
+    country: parsed.country && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parsed.country) && parsed.country.length >= 2 && parsed.country.length <= 120 ? parsed.country : undefined,
+    university: parsed.university && parsed.university.length >= 2 && parsed.university.length <= 120 ? parsed.university : undefined,
+    studyLevel: parsed.studyLevel?.slice(0, 120), fundingType: parsed.fundingType?.slice(0, 120),
+    page: parsed.page ?? 1, limit: 12, sort: parsed.sort ?? "newest" };
 }
 
 export function scholarshipFilterValues(params: ScholarshipListParams): ScholarshipFilterValues {

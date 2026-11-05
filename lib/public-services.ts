@@ -3,7 +3,7 @@ export type PublicService = {
   title: string;
   homepageSummary: string;
   description: string;
-  icon: "admissions" | "major" | "scholarships" | "documents" | "follow-up";
+  icon: "admissions" | "major" | "scholarships" | "documents" | "follow-up" | "general";
   image: { src: string; alt: string } | null;
   detailAvailable: boolean;
 };

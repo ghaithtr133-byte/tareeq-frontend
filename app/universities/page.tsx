@@ -3,6 +3,10 @@ import Link from "next/link";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 import { ArrowLeft } from "lucide-react";
 import { getCountries, getUniversities } from "@/api/public-content";
+import { redirect } from "next/navigation";
+import { EmptyState, ErrorState } from "@/components/ui/content-state";
+import { getUniversityFilterOptions } from "@/api/university-directory";
+import { joinDirectoryCountries, liveUniversityFilters, parseDirectoryCountries, parseDirectoryUniversities, type DirectoryFilterGroup } from "@/lib/university-directory-data";
 import { Container } from "@/components/layout/container";
 import { PaginationLinks } from "@/components/public/public-content";
 import {
@@ -14,6 +18,9 @@ import {
   DirectoryUniversityCard,
 } from "@/components/public/university-directory-cards";
 import { UniversityRelatedScholarships } from "@/components/public/university-related-scholarships";
+import { LiveUniversityRelatedScholarships } from "@/components/public/live-university-related-scholarships";
+import { loadRelatedUniversityScholarships } from "@/api/university-related-scholarships";
+import { universityScholarshipParams } from "@/lib/university-related-scholarships";
 import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import {
@@ -21,11 +28,7 @@ import {
   universitiesParams,
 } from "@/lib/public-search-params";
 import { createPageMetadata } from "@/lib/seo";
-import {
-  demoFilterOptions,
-  getDemoDirectory,
-  type DemoDirectoryFilters,
-} from "@/lib/university-directory-demo";
+import type { DemoDirectoryFilters } from "@/lib/university-directory-demo";
 import { createWhatsappUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +53,8 @@ export default async function UniversitiesPage({
 }) {
   const raw = await searchParams;
   const parsed = universitiesParams(raw);
+  const demo = isPublicDemoMode();
+  const demoApi = demo ? await import("@/lib/university-directory-demo") : null;
   const params = {
     search: parsed.search,
     country: parsed.country,
@@ -57,51 +62,54 @@ export default async function UniversitiesPage({
     sort: parsed.sort ?? "newest",
     page: parsed.page,
     limit: 6,
+    ...(!demo ? liveUniversityFilters(raw) : {}),
   } as const;
-  const demo = isPublicDemoMode();
   const demoFilters: DemoDirectoryFilters = {};
   if (demo)
     for (const key of Object.keys(
       demoLabels,
     ) as (keyof DemoDirectoryFilters)[]) {
       const value = typeof raw[key] === "string" ? raw[key] : "";
-      if (demoFilterOptions[key].some(([option]) => option === value))
+      if (demoApi?.demoFilterOptions[key].some(([option]) => option === value))
         demoFilters[key] = value;
     }
   const hasMeaningfulCriteria = Boolean(
     params.search ||
     params.country ||
     params.featured ||
+    (!demo && Object.values(liveUniversityFilters(raw)).some(Boolean)) ||
     Object.values(demoFilters).some(Boolean),
   );
   const demoResult = demo
-    ? getDemoDirectory(params, demoFilters, hasMeaningfulCriteria)
+    ? demoApi!.getDemoDirectory(params, demoFilters, hasMeaningfulCriteria)
     : null;
-  const [universityResponse, countryResponse] = await Promise.allSettled([
+  const [universityResponse, countryResponse, facetResponse] = await Promise.allSettled([
     demoResult
       ? Promise.resolve(demoResult.universities)
-      : getUniversities(params),
-    getCountries({ limit: 50, sort: "manual" }),
+      : getUniversities(params).then(parseDirectoryUniversities),
+    getCountries({ limit: 50, sort: "manual" }).then(parseDirectoryCountries),
+    demo ? Promise.resolve([] as DirectoryFilterGroup[]) : getUniversityFilterOptions(params),
   ]);
   const countries =
     countryResponse.status === "fulfilled" ? countryResponse.value.items : [];
-  const groups = [
+  const groups: DirectoryFilterGroup[] = [
     {
       key: "country",
       label: "الدولة",
       options: countries.map(
         (country) => [country.slug, country.nameAr] as const,
       ),
+      unavailable: countryResponse.status === "rejected" ? "تعذر تحميل الدول حالياً" : countries.length ? undefined : "لا توجد دول منشورة حالياً",
     },
     ...(demo
       ? (Object.keys(demoLabels) as (keyof DemoDirectoryFilters)[]).map(
           (key) => ({
             key,
             label: demoLabels[key],
-            options: demoFilterOptions[key],
+            options: demoApi!.demoFilterOptions[key],
           }),
         )
-      : []),
+      : facetResponse.status === "fulfilled" ? facetResponse.value : Object.entries(demoLabels).map(([key, label]) => ({ key: key === "level" ? "studyLevel" : key === "type" ? "universityType" : key, label, options: [], unavailable: "تعذر تحميل خيارات التصفية حالياً" }))),
   ];
   const values: Record<string, string> = {
     search: params.search ?? "",
@@ -109,10 +117,11 @@ export default async function UniversitiesPage({
     featured: params.featured ?? "",
     sort: params.sort,
     ...demoFilters,
+    ...(!demo ? Object.fromEntries(Object.entries(liveUniversityFilters(raw)).map(([key, value]) => [key, value ?? ""])) : {}),
   };
   const paginationParams: RouteSearchParams = { ...values };
   const universities =
-    universityResponse.status === "fulfilled" ? universityResponse.value : null;
+    universityResponse.status === "fulfilled" ? joinDirectoryCountries(universityResponse.value, countries) : null;
   const relatedDirectory =
     demo &&
     hasMeaningfulCriteria &&
@@ -121,8 +130,14 @@ export default async function UniversitiesPage({
       ? demoResult
       : null;
   const retryQuery = new URLSearchParams(
-    Object.entries(values).filter(([, value]) => value),
+    Object.entries({ ...values, ...(params.page ? { page: String(params.page) } : {}) }).filter(([, value]) => value),
   ).toString();
+  if (universities && universities.pagination.totalPages > 0 && (params.page ?? 1) > universities.pagination.totalPages) {
+    const query = new URLSearchParams(Object.entries({ ...values, page: String(universities.pagination.totalPages) }).filter(([, value]) => value));
+    redirect(`/universities?${query}`);
+  }
+  const showLiveRelated = !demo && hasMeaningfulCriteria && !!universities?.pagination.total;
+  const liveRelated = showLiveRelated ? await loadRelatedUniversityScholarships(params, 1) : null;
 
   return (
     <main className="bg-[#F8FAFC]">
@@ -173,7 +188,7 @@ export default async function UniversitiesPage({
       </section> */}
       <Container className="py-10 sm:py-14">
         <div className="grid gap-7 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[19rem_minmax(0,1fr)]">
-          <UniversityDirectoryFilters values={values} groups={groups} />
+          <UniversityDirectoryFilters values={values} groups={groups} filterError={countryResponse.status === "rejected" || facetResponse.status === "rejected"} />
           <section
             aria-labelledby="university-results-title"
             className="min-w-0"
@@ -199,25 +214,14 @@ export default async function UniversitiesPage({
               <UniversitySort value={values.sort} values={values} />
             </div>
             {!universities ? (
-              <div
-                role="alert"
-                className="mt-8 rounded-xl border border-[#E2E8F0] bg-white p-6 text-[#082B50]"
-              >
-                <h3 className="text-lg font-bold">
-                  يتعذر تحميل الجامعات حاليًا
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-[#52647A]">
-                  تعذر الاتصال بمصدر المحتوى. حاول مرة أخرى.
-                </p>
-                <a
+              <ErrorState className="mt-8" variant="section" title="يتعذر تحميل الجامعات حاليًا" description="تعذر الاتصال بمصدر المحتوى. حاول مرة أخرى." action={<a
                   href={
                     retryQuery ? `/universities?${retryQuery}` : "/universities"
                   }
                   className="mt-4 inline-flex min-h-11 items-center font-bold text-[#17669C]"
                 >
                   إعادة المحاولة
-                </a>
-              </div>
+                </a>} />
             ) : universities.items.length ? (
               <BalancedCardGrid className="mt-7" columns={{ sm: 2, xl: 3 }}>
                 {universities.items.map((item) => (
@@ -229,20 +233,12 @@ export default async function UniversitiesPage({
                 ))}
               </BalancedCardGrid>
             ) : (
-              <div className="mt-7 rounded-xl border border-[#E2E8F0] bg-white p-7">
-                <h3 className="text-lg font-bold text-[#082B50]">
-                  لا توجد جامعات تطابق البحث
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-[#52647A]">
-                  جرّب تغيير معايير البحث أو مسح الفلاتر.
-                </p>
-                <Link
+              <EmptyState className="mt-7" variant="section" title={hasMeaningfulCriteria ? "لا توجد جامعات تطابق البحث" : "لا توجد جامعات منشورة حالياً"} description={hasMeaningfulCriteria ? "جرّب تغيير معايير البحث أو مسح الفلاتر." : "ستظهر الجامعات هنا عند نشرها."} action={hasMeaningfulCriteria ? <Link
                   href="/universities"
                   className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-[#17669C]"
                 >
                   مسح الفلاتر
-                </Link>
-              </div>
+                </Link> : undefined} />
             )}
             {demo &&
             universities?.items.some(
@@ -279,7 +275,7 @@ export default async function UniversitiesPage({
             ) : null}
           </section>
         </div>
-        {relatedDirectory ? (
+        {relatedDirectory || showLiveRelated ? (
           <section
             aria-labelledby="related-scholarships-title"
             className="mt-14 border-t border-[#DFE6ED] pt-10"
@@ -293,7 +289,7 @@ export default async function UniversitiesPage({
                   المنح المرتبطة بالجامعات
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[#52647A]">
-                  أمثلة تجريبية مرتبطة بالجامعات المطابقة للبحث.
+                  {demo ? "أمثلة تجريبية مرتبطة بالجامعات المطابقة للبحث." : "المنح المرتبطة بالجامعات المطابقة للبحث."}
                 </p>
               </div>
               <Link
@@ -304,7 +300,7 @@ export default async function UniversitiesPage({
                 <ArrowLeft className="size-4" aria-hidden="true" />
               </Link>
             </div>
-            {relatedDirectory.scholarships.length ? (
+            {!relatedDirectory ? <LiveUniversityRelatedScholarships key={JSON.stringify(universityScholarshipParams(params, 1))} criteria={params} initial={liveRelated?.ok ? liveRelated.data : null} countries={countries} universities={universities?.items ?? []} /> : relatedDirectory.scholarships.length ? (
               <UniversityRelatedScholarships
                 key={JSON.stringify({
                   search: params.search,

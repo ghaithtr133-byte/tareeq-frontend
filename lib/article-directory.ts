@@ -5,7 +5,7 @@ export type ArticleFilterValues = { search: string; country: string; featured: s
 
 export function directoryArticleParams(raw: RouteSearchParams): ArticleListParams {
   const parsed = articlesParams(raw);
-  return { ...parsed, page: parsed.page ?? 1, limit: 12, search: parsed.search?.slice(0, 200), featured: parsed.featured === "true" ? "true" : undefined, sort: "newest" };
+  return { ...parsed, country: parsed.country && parsed.country.length >= 2 && parsed.country.length <= 120 ? parsed.country : undefined, page: parsed.page ?? 1, limit: 12, search: parsed.search?.slice(0, 200), featured: parsed.featured === "true" ? "true" : undefined, sort: "newest" };
 }
 
 export function articleFilterValues(params: ArticleListParams): ArticleFilterValues {
@@ -23,9 +23,9 @@ export function articleDirectoryHref(values: ArticleFilterValues, page = 1) {
 }
 
 /** Editorial placement is confined to this API page; no second dataset or duplicates. */
-export function editorialArticles(articles: Article[]) {
+export function editorialArticles(articles: Article[], allowSingleFeatured = false) {
   const candidates = articles.filter((article) => article.featured).slice(0, 2);
-  const featured = candidates.length === 2 ? candidates : [];
+  const featured = candidates.length === 2 || allowSingleFeatured ? candidates : [];
   const selected = new Set(featured.map((article) => article.id));
   return { featured, regular: articles.filter((article) => !selected.has(article.id)) };
 }

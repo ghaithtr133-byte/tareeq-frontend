@@ -14,6 +14,8 @@ import {
 } from "@/lib/public-search-params";
 import { createPageMetadata } from "@/lib/seo";
 import { innerPageHero } from "@/lib/inner-page-hero";
+import { parseDestinationDirectory } from "@/lib/study-abroad-directory-data";
+import { EmptyState, ErrorState } from "@/components/ui/content-state";
 
 export const dynamic = "force-dynamic";
 const pageContainerClass = "2xl:max-w-[112rem]";
@@ -43,7 +45,7 @@ export default async function StudyAbroadPage({
     featured: params.featured === "true",
     sort: params.sort,
   } as const;
-  const countries = await getCountries(params).catch(() => undefined);
+  const countries = await getCountries(params).then(parseDestinationDirectory).catch(() => undefined);
   const paginationParams: RouteSearchParams = {
     ...(params.search ? { search: params.search } : {}),
     ...(params.featured ? { featured: params.featured } : {}),
@@ -132,42 +134,35 @@ export default async function StudyAbroadPage({
               </p>
             ) : null}
             {!countries ? (
-              <div
-                role="alert"
-                className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-6 text-[#082B50]"
-              >
-                <h3 className="text-lg font-bold">
-                  يتعذر تحميل الوجهات حاليًا
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-[#52647A]">
-                  تعذر الاتصال بمصدر الوجهات المنشورة. حاول مرة أخرى.
-                </p>
-                <a
+              <ErrorState
+                className="mt-3"
+                variant="section"
+                title="يتعذر تحميل الوجهات حاليًا"
+                description="تعذر تحميل الوجهات المنشورة. يرجى المحاولة مجدداً."
+                action={<a
                   href={
                     retryQuery ? `/study-abroad?${retryQuery}` : "/study-abroad"
                   }
                   className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-[#17669C] hover:text-[#A47B2D]"
                 >
                   إعادة المحاولة
-                </a>
-              </div>
+                </a>}
+              />
             ) : countries.items.length ? (
               <StudyAbroadCountryCards countries={countries.items} />
             ) : (
-              <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-7">
-                <h3 className="text-lg font-bold text-[#082B50]">
-                  لا توجد وجهات تطابق البحث
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-[#52647A]">
-                  جرّب تغيير كلمات البحث أو إزالة التصفية.
-                </p>
-                <Link
+              <EmptyState
+                className="mt-3"
+                variant="section"
+                title={params.search || params.featured ? "لا توجد وجهات تطابق البحث" : "لا توجد وجهات منشورة حالياً"}
+                description={params.search || params.featured ? "جرّب تغيير كلمات البحث أو إزالة التصفية." : "يمكنك العودة لاحقاً للاطلاع على الوجهات المنشورة الجديدة."}
+                action={<Link
                   href="/study-abroad"
                   className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-[#17669C] hover:text-[#A47B2D]"
                 >
                   مسح التصفية
-                </Link>
-              </div>
+                </Link>}
+              />
             )}
             {countries ? (
               <StudyAbroadPagination

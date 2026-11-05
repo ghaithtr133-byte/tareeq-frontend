@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation";
 import { RotateCcw, Search, X } from "lucide-react";
 import { articleDirectoryHref, type ArticleFilterValues } from "@/lib/article-directory";
 import { SkeletonResults } from "@/components/public/content-skeletons";
+import { ErrorState } from "@/components/ui/content-state";
 
 type CountryOption = { value: string; label: string };
 const blank: ArticleFilterValues = { search: "", country: "", featured: "" };
 const control = "h-11 w-full min-w-0 rounded-lg border border-[#DEE6EF] bg-white px-3 text-sm text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
-export function ArticleDirectoryFilters({ values, countries, optionError, children }: {
+export function ArticleDirectoryFilters({ values, countries, optionError, optionLimited = false, children }: {
   values: ArticleFilterValues;
   countries: CountryOption[];
   optionError: boolean;
+  optionLimited?: boolean;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -53,7 +55,8 @@ export function ArticleDirectoryFilters({ values, countries, optionError, childr
         {countries.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
       </select></label>
       <label className="flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#E2E8EF] bg-white px-2 text-xs font-bold leading-5 text-primary md:px-3 md:text-sm"><input name="featured" type="checkbox" checked={draft.featured === "true"} onChange={(event) => change("featured", event.target.checked ? "true" : "")} className="size-4 shrink-0 accent-primary" />المقالات المميزة</label>
-      {optionError ? <p className="col-span-2 w-full text-xs leading-6 text-muted-foreground">تعذّر تحميل خيارات الدول. يمكنك البحث أو إعادة تحميل الصفحة.</p> : null}
+      {optionLimited ? <p className="col-span-2 w-full text-xs leading-6 text-muted-foreground">قائمة الدول محدودة بأول 50 دولة منشورة؛ قد لا تظهر بعض الخيارات.</p> : null}
+      {optionError ? <ErrorState className="col-span-2 w-full" title="تعذّر تحميل خيارات الدول" description="يمكنك متابعة البحث أو إعادة محاولة تحميل الخيارات؛ المقالات المتاحة محفوظة." onRetry={() => startTransition(() => router.refresh())} retrying={pending} /> : null}
     </form>
     {active.length ? <div aria-label="الفلاتر النشطة" className="mt-3 flex flex-wrap items-center gap-2">
       {active.map((key) => <button key={key} type="button" aria-label={`إزالة ${labels[key]}: ${key === "country" ? countryLabel(values[key]) : key === "featured" ? "مفعلة" : values[key]}`} onClick={() => { const next = { ...draft, [key]: "" }; setDraft(next); navigate(next); }} className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-[#DAE4EF] bg-white px-3 text-xs text-primary"><span className="min-w-0 [overflow-wrap:anywhere]">{labels[key]}{key === "featured" ? "" : `: ${key === "country" ? countryLabel(values[key]) : values[key]}`}</span><X className="size-3.5 shrink-0" aria-hidden="true" /></button>)}

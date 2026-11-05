@@ -32,8 +32,8 @@ export function demoUniversityDetails(university: University): UniversityDetailC
     gallery: [],
     logo: university.id === "demo-university-bucharest" ? "/images/universities/university-of-bucharest.svg" : null,
     faqs: [
-      { question: `هل الرسوم المعروضة تخص ${university.nameAr} فعلياً؟`, answer: "لا. البرامج والأسعار في هذا العرض أمثلة خيالية لا تمثل رسوماً رسمية أو عرضاً للتقديم." },
-      { question: `ما لغات البرامج في نموذج ${university.nameAr}؟`, answer: `يتضمن هذا النموذج: ${[...new Set(programs.map((program) => program.language))].join("، ")}. هذه بيانات تجريبية وليست تأكيداً للغات البرامج الفعلية.` },
+      { question: `هل الرسوم المعروضة تخص ${university.nameAr} فعلياً؟`, answer: "لا. التخصصات والأسعار في هذا العرض أمثلة خيالية لا تمثل رسوماً رسمية أو عرضاً للتقديم." },
+      { question: `ما لغات التخصصات في نموذج ${university.nameAr}؟`, answer: `يتضمن هذا النموذج: ${[...new Set(programs.map((program) => program.language))].join("، ")}. هذه بيانات تجريبية وليست تأكيداً للغات التخصصات الفعلية.` },
       { question: `كيف أستفسر عن الدراسة في ${university.nameAr}؟`, answer: `استخدم زر الاستفسار عبر واتساب واذكر ${university.nameAr} والتخصص المطلوب. الاستفسار ليس طلب قبول رسمياً ولا يضمن القبول.` },
     ],
   };

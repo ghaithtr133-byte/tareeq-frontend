@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { SkeletonResults } from "@/components/public/content-skeletons";
+import { ErrorState } from "@/components/ui/content-state";
 import {
   ChevronDown,
   RotateCcw,
@@ -43,6 +44,7 @@ export function ScholarshipDirectoryFilters({
   universities,
   demoOptions,
   optionError,
+  lookupNotices = [],
   children,
 }: {
   values: ScholarshipFilterValues;
@@ -50,6 +52,7 @@ export function ScholarshipDirectoryFilters({
   universities: Option[];
   demoOptions?: { studyLevel: Option[]; fundingType: Option[] };
   optionError: boolean;
+  lookupNotices?: string[];
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -125,6 +128,7 @@ export function ScholarshipDirectoryFilters({
             {item.label}
           </option>
         ))}
+        {!items.length && (key === "country" || key === "university") ? <option value="" disabled>{optionError ? "تعذّر تحميل الخيارات" : "لا توجد خيارات منشورة ضمن القائمة المحملة"}</option> : null}
       </select>
     );
   }
@@ -198,8 +202,9 @@ export function ScholarshipDirectoryFilters({
                     id={`scholarships-${key}`}
                     value={draft[key]}
                     onChange={(event) => change(key, event.target.value, true)}
+                    maxLength={120}
                     className={controlClass}
-                    placeholder="اكتب القيمة المطلوبة"
+                    placeholder="القيمة الأصلية في المصدر"
                   />
                 )}
               </label>
@@ -248,11 +253,10 @@ export function ScholarshipDirectoryFilters({
             </div>
           </div>
         </div>
+        {!demoOptions && advanced ? <p className="mt-2 text-xs leading-6 text-muted-foreground">لا تتوفر قائمة خيارات شاملة للمرحلة والتمويل حالياً. أدخل القيمة الأصلية في المصدر، وليست ترجمتها العربية.</p> : null}
+        {lookupNotices.map((notice) => <p key={notice} className="mt-2 text-xs leading-6 text-muted-foreground">{notice}</p>)}
         {optionError ? (
-          <p className="mt-2 text-xs leading-6 text-muted-foreground">
-            تعذر تحميل بعض خيارات التصفية. يمكنك البحث بكلمة مفتاحية أو إعادة
-            تحميل الصفحة.
-          </p>
+          <ErrorState className="mt-3" title="تعذّر تحميل بعض خيارات التصفية" description="يمكنك متابعة البحث أو إعادة محاولة تحميل الخيارات؛ النتائج المتاحة محفوظة." onRetry={() => startTransition(() => router.refresh())} retrying={pending} />
         ) : null}
       </form>
       {active.length ? (

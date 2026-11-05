@@ -22,8 +22,8 @@ function SocialIcon({ kind }: { kind: string }) {
   </svg>;
 }
 
-export function ContactInformationCard({ settings }: { settings: ContactSettings }) {
-  const information = contactInformation(settings);
+export function ContactInformationCard({ settings, demo = false }: { settings: ContactSettings; demo?: boolean }) {
+  const information = contactInformation(settings, demo);
   const socials = [["facebookUrl", "فيسبوك"], ["instagramUrl", "إنستغرام"], ["linkedinUrl", "لينكدإن"], ["youtubeUrl", "يوتيوب"]] as const;
   const items = [
     { label: "البريد الإلكتروني", ...information.email, icon: Mail },
@@ -33,7 +33,7 @@ export function ContactInformationCard({ settings }: { settings: ContactSettings
   return <section aria-labelledby="contact-information-title" className="min-w-0 rounded-2xl border border-[#E0E7EF] bg-white p-4 shadow-sm sm:p-5">
     <h2 id="contact-information-title" className="text-lg font-bold leading-8">معلومات التواصل الأخرى</h2>
     {settings.academyNameAr ? <p className="mt-1 text-sm leading-7 text-muted-foreground">{settings.academyNameAr}</p> : null}
-    <dl className="mt-2 divide-y divide-[#E0E7EF]">{items.map(({ label, value, href, placeholder, icon: Icon }) => <div key={label} className="flex min-w-0 items-center gap-3 py-3"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#FAF4E7] text-[#B48B36]"><Icon className="size-6" aria-hidden="true" /></span><div className="min-w-0"><dt className="flex flex-wrap items-center gap-x-2 text-sm font-bold">{label}{placeholder ? <span className="text-xs font-normal text-muted-foreground">بيانات تجريبية</span> : null}</dt><dd className="whitespace-pre-line text-sm leading-7 text-muted-foreground [overflow-wrap:anywhere]">{href ? <a href={href} className={`inline-flex min-h-11 max-w-full items-center rounded-sm hover:underline ${focus}`}><bdi>{value}</bdi></a> : <span className="inline-flex min-h-11 max-w-full items-center"><bdi>{value}</bdi></span>}</dd></div></div>)}</dl>
+    <dl className="mt-2 divide-y divide-[#E0E7EF]">{items.map(({ label, value, href, placeholder, icon: Icon }) => <div key={label} className="flex min-w-0 items-center gap-3 py-3"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#FAF4E7] text-[#B48B36]"><Icon className="size-6" aria-hidden="true" /></span><div className="min-w-0"><dt className="flex flex-wrap items-center gap-x-2 text-sm font-bold">{label}{placeholder ? <span className="text-xs font-normal text-muted-foreground">{demo ? "بيانات تجريبية" : "غير محدد بعد"}</span> : null}</dt><dd className="whitespace-pre-line text-sm leading-7 text-muted-foreground [overflow-wrap:anywhere]">{href ? <a href={href} className={`inline-flex min-h-11 max-w-full items-center rounded-sm hover:underline ${focus}`}><bdi>{value}</bdi></a> : <span className="inline-flex min-h-11 max-w-full items-center"><bdi>{value}</bdi></span>}</dd></div></div>)}</dl>
     <nav aria-label="تابعنا على مواقع التواصل" className="mt-3 border-t border-[#E0E7EF] pt-4"><h3 className="text-sm font-bold">تابعنا على مواقع التواصل</h3><div className="mt-3 flex flex-wrap gap-3">{socials.map(([key, label]) => information.settings[key] ? <a key={key} href={information.settings[key]} target="_blank" rel="noopener noreferrer" aria-label={`${label} (يفتح في نافذة جديدة)`} className={`grid size-11 place-items-center rounded-lg border border-[#D7DFE8] bg-[#FAFCFE] transition-colors hover:bg-[#FAF4E7] motion-reduce:transition-none ${focus}`}><SocialIcon kind={key} /></a> : <button key={key} type="button" disabled aria-disabled="true" aria-label={`${label} — غير محدد بعد`} title="غير محدد بعد" className="grid size-11 place-items-center rounded-lg border border-[#E0E7EF] bg-[#F5F7FA] text-[#7A8796]"><SocialIcon kind={key} /></button>)}</div></nav>
   </section>;
 }

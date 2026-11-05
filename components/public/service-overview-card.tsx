@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Check, ClipboardList, Compass, FileText, GraduationCap, HandCoins } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, Check, ClipboardList, Compass, FileText, GraduationCap, HandCoins } from "lucide-react";
 import { availableServiceHref, type PublicService } from "@/lib/public-services";
+import { ServiceCardMedia } from "@/components/public/service-card-media";
 
-const icons = { admissions: GraduationCap, major: Compass, scholarships: HandCoins, documents: FileText, "follow-up": ClipboardList };
+const icons = { admissions: GraduationCap, major: Compass, scholarships: HandCoins, documents: FileText, "follow-up": ClipboardList, general: BriefcaseBusiness };
 
 /** Thematic branded artwork when no approved service-specific photograph exists. */
 function ServiceArtwork({ service }: { service: PublicService }) {
@@ -21,12 +22,12 @@ function ServiceArtwork({ service }: { service: PublicService }) {
   </svg>;
 }
 
-export function ServiceOverviewCard({ service, publishedHref }: { service: PublicService; publishedHref?: string | null }) {
+export function ServiceOverviewCard({ service, publishedHref, live = false }: { service: PublicService; publishedHref?: string | null; live?: boolean }) {
   const Icon = icons[service.icon];
   const href = publishedHref ?? availableServiceHref(service);
   const actionClass = "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary px-3 py-2 text-sm font-bold text-white";
   return <article data-service-card={service.slug} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E1E8EF] bg-white shadow-[0_4px_16px_-10px_rgba(8,43,80,0.18)] transition-[translate,box-shadow] duration-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none">
-    <div className="relative aspect-[2/1] overflow-hidden bg-[#EAF0F6]">{service.image ? <Image src={service.image.src} alt={service.image.alt} fill sizes="(min-width: 1280px) 19vw, (min-width: 1024px) 31vw, (min-width: 768px) 47vw, 100vw" className="object-cover" /> : <ServiceArtwork service={service} />}</div>
+    <div className="relative aspect-[2/1] overflow-hidden bg-[#EAF0F6]">{live ? <ServiceCardMedia src={service.image?.src} alt={service.image?.alt ?? service.title}><ServiceArtwork service={service} /></ServiceCardMedia> : service.image ? <Image src={service.image.src} alt={service.image.alt} fill sizes="(min-width: 1280px) 19vw, (min-width: 1024px) 31vw, (min-width: 768px) 47vw, 100vw" className="object-cover" /> : <ServiceArtwork service={service} />}</div>
     <div className="relative flex flex-1 flex-col px-4 pb-4 pt-9 text-center">
       <span className="absolute -top-6 left-1/2 grid h-12 w-14 -translate-x-1/2 place-items-center rounded-xl border border-[#E4E9F0] bg-white text-[#B88B3E] shadow-sm"><Icon className="size-7" strokeWidth={1.6} aria-hidden="true" /></span>
       <h2 className="text-lg font-bold leading-8 text-primary">{service.title}</h2>

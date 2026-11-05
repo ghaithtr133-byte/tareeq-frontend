@@ -165,6 +165,9 @@ test("Only the discovery icon animates subtly; reduced motion disables its scope
 });
 
 const { DirectoryScholarshipCard } = load("components/public/university-directory-cards.tsx", {
+  "@/lib/homepage-card-content": load("lib/homepage-card-content.ts"),
+  "@/lib/university-directory-data": { directoryUniversityTypes: { PUBLIC: "حكومية", PRIVATE: "خاصة" } },
+  "@/lib/homepage-data": { homeMetadataLabel: (value) => value },
   "next/link": ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children),
   "next/image": () => null,
   "@/components/public/university-directory-image": { UniversityDirectoryImage: ({ src, alt, className }) => React.createElement("div", { "data-image": src, "data-alt": alt, className }) },

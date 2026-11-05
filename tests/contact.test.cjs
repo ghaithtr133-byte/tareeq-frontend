@@ -59,20 +59,25 @@ test("Backend field validation survives the existing normalized API error cause"
   const { normalizeApiError } = load("api/error.ts");
   const original = { isAxiosError: true, response: { status: 422, data: { error: { details: { fields: { fullName: ["اسم غير صالح"], subject: ["موضوع غير صالح"], phone: "صيغة الهاتف غير مقبولة", privacyAccepted: "الموافقة مطلوبة", unknown: "ignore" } } } } } };
   const errors = helpers.inquiryFieldErrors(normalizeApiError(original));
-  assert.deepEqual(errors, { fullName: "اسم غير صالح", phone: "صيغة الهاتف غير مقبولة", subject: "موضوع غير صالح", privacyAccepted: "الموافقة مطلوبة" });
+  assert.deepEqual(errors, { fullName: "يرجى مراجعة الاسم الكامل.", phone: "يرجى مراجعة صيغة رقم الهاتف.", subject: "يرجى مراجعة موضوع الاستفسار.", privacyAccepted: "يرجى الموافقة على سياسة الخصوصية." });
   assert.deepEqual(helpers.inquiryFieldErrors(Error("offline")), {});
 });
 
 test("Live inquiry uses existing endpoint and confirms storage; Demo never calls the client", async () => {
   const calls = [];
   let status = 201;
+  let data = { success: true, data: { message: "Submission received." } };
   let failure;
-  const { submitInquiry } = loader({ "@/api/client": { browserApiClient: { post: async (...args) => { calls.push(args); if (failure) throw failure; return { status }; } } } })("api/contact.ts");
+  const { submitInquiry } = loader({ "@/api/client": { browserApiClient: { post: async (...args) => { calls.push(args); if (failure) throw failure; return { status, data }; } } } })("api/contact.ts");
   const payload = helpers.inquiryPayload(valid);
   await submitInquiry(payload, true);
   assert.equal(calls.length, 0);
   await submitInquiry(payload, false);
-  assert.deepEqual(calls, [["/inquiries", payload]]);
+  assert.deepEqual(calls, [["/inquiries", payload, { withCredentials: false, timeout: 15000 }]]);
+  for (const malformed of [null, {}, { success: false }, { success: true }, { success: true, data: {} }, { success: true, data: { message: "" } }]) {
+    data = malformed;
+    await assert.rejects(submitInquiry(payload, false), /not confirmed/);
+  }
   status = 200;
   await assert.rejects(submitInquiry(payload, false), /not confirmed/);
   failure = Error("offline");
@@ -99,12 +104,18 @@ test("site settings adapter is isolated in Demo, uses one Live GET, and rejects 
   assert.deepEqual(calls, [["/site-settings"]]);
   response = { success: false };
   await assert.rejects(getContactSettings(false), /Invalid site settings/);
+  for (const data of [[], {}, { contactEmail: 123 }, { contactPhone: {} }]) {
+    response = { success: true, data };
+    await assert.rejects(getContactSettings(false), /Invalid site settings/);
+  }
+  response = { success: true, data: { contactEmail: null, contactPhone: null } };
+  assert.deepEqual(await getContactSettings(false), {});
 });
 
 test("contact card stays visible with clearly labeled non-clickable placeholders and four disabled socials", () => {
   const { ContactInformationCard } = loader()("components/public/contact-cards.tsx");
   for (const settings of [{}, { contactEmail: "invalid", contactPhone: "bad", instagramUrl: "javascript:alert(1)" }]) {
-    const html = renderToStaticMarkup(React.createElement(ContactInformationCard, { settings }));
+    const html = renderToStaticMarkup(React.createElement(ContactInformationCard, { settings, demo: true }));
     for (const text of ["معلومات التواصل الأخرى", "example@tareeq-academy.com", "+963 900 000 000", "عنوان تجريبي", "تابعنا على مواقع التواصل"]) assert.ok(html.includes(text), text);
     assert.equal((html.match(/بيانات تجريبية/g) ?? []).length, 3);
     assert.equal((html.match(/aria-disabled="true"/g) ?? []).length, 4);
@@ -125,7 +136,7 @@ test("contact cards replace placeholders with configured values and link only re
   assert.ok(whatsapp.includes('target="_blank" rel="noopener noreferrer"'));
   assert.equal(whatsapp.includes("data-floating-whatsapp"), false);
   const partial = renderToStaticMarkup(React.createElement(ContactInformationCard, { settings: { contactEmail: "info@example.test" } }));
-  assert.equal((partial.match(/بيانات تجريبية/g) ?? []).length, 2);
+  assert.equal((partial.match(/غير متوفر حالياً/g) ?? []).length, 2);
   assert.ok(partial.includes('href="mailto:info@example.test"'));
   assert.equal(partial.includes('href="tel:'), false);
   const placeholdersFromSettings = helpers.contactInformation({ contactEmail: "example@tareeq-academy.com", contactPhone: "+963 900 000 000" });
@@ -136,23 +147,24 @@ test("contact cards replace placeholders with configured values and link only re
 const boundary = {
   "next/link": (props) => React.createElement("a", props),
   "next/image": ({ src, alt, className }) => React.createElement("img", { src, alt, className }),
+  "next/navigation": { useRouter: () => ({ refresh() {} }) },
 };
 test("contact route preserves reference structure, mobile order and settings-error independence", async () => {
   for (const fail of [false, true]) {
     const local = loader({ ...boundary, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/site-settings": { getContactSettings: async (demo) => { assert.equal(demo, true); if (fail) throw Error("offline"); return {}; } }, "@/components/public/contact-inquiry-form": { ContactInquiryForm: () => React.createElement("form", { "data-inquiry": true }) } });
     const html = renderToStaticMarkup(await local("app/contact/page.tsx").default());
-    for (const value of ["contact-title", "contact-whatsapp-title", "data-inquiry", "lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]", "lg:flex-col", "order-1", "order-2", "order-3", "md:min-h-[12.5rem]", "xl:min-h-[14.5rem]"]) assert.ok(html.includes(value), value);
+    for (const value of ["contact-title", "contact-whatsapp-title", "data-inquiry", "lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]", "lg:flex-col", "order-1", "order-2", "order-3", "sm:w-[58%]"]) assert.ok(html.includes(value), value);
     assert.equal(html.includes("data-consultation-cta"), false);
     assert.equal(html.includes("تعذر تحميل معلومات التواصل الإضافية"), fail);
     assert.equal(html.includes("info@tareeq"), false);
   }
 });
 
-function formHarness(demo = false) {
+function formHarness(demo = false, post) {
   const states = [], refs = [];
   let stateIndex = 0, refIndex = 0;
   const mutation = { isPending: false, mutateAsync: async () => {} };
-  const local = loader({ ...boundary, react: { ...React, useState: (initial) => { const index = stateIndex++; if (!(index in states)) states[index] = initial; return [states[index], (next) => { states[index] = next; }]; }, useRef: (initial) => { const index = refIndex++; return refs[index] ?? (refs[index] = { current: initial }); } }, "@tanstack/react-query": { useMutation: () => mutation } });
+  const local = loader({ ...boundary, ...(post ? { "@/api/client": { browserApiClient: { post } } } : {}), react: { ...React, useState: (initial) => { const index = stateIndex++; if (!(index in states)) states[index] = initial; return [states[index], (next) => { states[index] = next; }]; }, useRef: (initial) => { const index = refIndex++; return refs[index] ?? (refs[index] = { current: initial }); } }, "@tanstack/react-query": { useMutation: (options) => { mutation.options = options; if (post) mutation.mutateAsync = options.mutationFn; return mutation; } } });
   const { ContactInquiryForm } = local("components/public/contact-inquiry-form.tsx");
   const render = () => { stateIndex = 0; refIndex = 0; return ContactInquiryForm({ demo }); };
   const findForm = (element) => {
@@ -195,7 +207,8 @@ test("actual form handler validates before submission, locks repeats, resets onl
     h.mutation.mutateAsync = async () => { throw { response: { data: { error: { details: { fields: { email: ["رفض الخادم هذا البريد"] } } } } } }; };
     await h.submit(form);
     const failed = renderToStaticMarkup(h.render());
-    assert.ok(failed.includes("رفض الخادم هذا البريد"));
+    assert.ok(failed.includes("يرجى مراجعة البريد الإلكتروني"));
+    assert.equal(failed.includes("رفض الخادم هذا البريد"), false);
     assert.ok(failed.includes('role="alert"'));
     assert.equal(failed.includes("تم تسجيل استفسارك بنجاح"), false);
     assert.equal(reset, 1, "Errors must not reset user input");
@@ -214,5 +227,94 @@ test("form has required labels, subject strings, hidden honeypot, privacy link a
   assert.ok(html.includes("sm:grid-cols-2"));
   assert.equal(html.includes("<dialog"), false);
   assert.ok(renderToStaticMarkup(formHarness(true).render()).includes("لن تُرسل بياناتك أو تُحفظ"));
+});
+
+test("validation matches documented maxima and optional international phone syntax without adding fields", () => {
+  for (const phone of ["", "  ", "+963 900 000 000", "1234567", "+1 (202) 555-0123"]) assert.equal(helpers.validateInquiry({ ...valid, phone }).phone, undefined, phone);
+  for (const phone of ["123456", "12345678901234567890123456", "+" + "1".repeat(25), "++963900000000", "+963.900.000", "phone", "+1234567-"]) assert.ok(helpers.validateInquiry({ ...valid, phone }).phone, phone);
+  for (const [field, max] of [["fullName", 150], ["subject", 200], ["message", 5000]]) {
+    assert.equal(helpers.validateInquiry({ ...valid, [field]: "أ".repeat(max) })[field], undefined);
+    assert.ok(helpers.validateInquiry({ ...valid, [field]: "أ".repeat(max + 1) })[field]);
+  }
+  assert.ok(helpers.validateInquiry({ ...valid, email: "a".repeat(250) + "@b.test" }).email);
+  const html = renderToStaticMarkup(formHarness().render());
+  for (const value of ['maxLength="150"', 'maxLength="254"', 'maxLength="25"', 'maxLength="5000"', 'dir="ltr"', 'aria-labelledby="inquiry-title"']) assert.ok(html.toLowerCase().includes(value.toLowerCase()), value);
+});
+
+test("Live contact card keeps every slot and disabled social glyph without fake business details", () => {
+  const { ContactInformationCard } = loader()("components/public/contact-cards.tsx");
+  const html = renderToStaticMarkup(React.createElement(ContactInformationCard, { settings: {}, demo: false }));
+  for (const label of ["البريد الإلكتروني", "رقم الهاتف", "العنوان"]) assert.ok(html.includes(`${label} (غير متوفر حالياً)`));
+  assert.equal((html.match(/aria-disabled="true"/g) ?? []).length, 4);
+  for (const forbidden of ["example@tareeq-academy.com", "+963 900 000 000", "عنوان تجريبي", 'href="mailto:', 'href="tel:', "بيانات تجريبية"]) assert.equal(html.includes(forbidden), false);
+});
+
+test("rate limiting and transport failures provide safe Arabic feedback and retain documented retry guidance", () => {
+  const { ApiError, normalizeApiError } = load("api/error.ts");
+  const limited = normalizeApiError({ isAxiosError: true, response: { status: 429, data: { error: { details: { retryAfterSeconds: 600 }, message: "private server details" } } } });
+  assert.ok(helpers.inquiryFailureMessage(limited).includes("600 ثانية"));
+  assert.equal(helpers.inquiryFailureMessage(limited).includes("private server details"), false);
+  assert.ok(helpers.inquiryFailureMessage(new ApiError(429, "internal")).includes("عدد المحاولات"));
+  assert.ok(helpers.inquiryFailureMessage(new ApiError(413, "internal")).includes("حجم الرسالة"));
+  for (const failure of [new ApiError(500, "internal"), new ApiError(503, "internal"), Error("Network Error"), { code: "ECONNABORTED" }]) {
+    const message = helpers.inquiryFailureMessage(failure);
+    assert.ok(message.includes("تعذر إرسال"));
+    assert.equal(message.includes("internal"), false);
+  }
+});
+
+test("real form-to-client path never resets or reports success on malformed acceptance, validation, 429 or server failure", async () => {
+  const originalData = global.FormData, originalFrame = global.requestAnimationFrame;
+  global.FormData = class { get(key) { return key === "privacyAccepted" ? "on" : valid[key]; } };
+  global.requestAnimationFrame = (action) => { action(); return 0; };
+  try {
+    const { normalizeApiError } = load("api/error.ts");
+    const attempts = [];
+    let response = { status: 201, data: {} }, failure;
+    const h = formHarness(false, async (...args) => { attempts.push(args); if (failure) throw failure; return response; });
+    let resets = 0, focused;
+    const form = { reset() { resets++; }, querySelector(selector) { return { focus() { focused = selector; } }; } };
+    for (const error of [undefined, normalizeApiError({ isAxiosError: true, response: { status: 400, data: { error: { details: { fields: { email: ["Invalid input: sensitive diagnostic"] } } } } } }), normalizeApiError({ isAxiosError: true, response: { status: 429, data: { error: { details: { retryAfterSeconds: 600 } } } } }), Error("Network failure"), { status: 503 }]) {
+      failure = error;
+      const before = attempts.length;
+      await h.submit(form);
+      assert.equal(attempts.length, before + 1);
+      const html = renderToStaticMarkup(h.render());
+      assert.equal(resets, 0);
+      assert.ok(html.includes('role="alert"'));
+      assert.equal(html.includes("تم تسجيل استفسارك بنجاح"), false);
+      assert.equal(html.includes("sensitive diagnostic"), false);
+      if (error?.status === 429) assert.ok(html.includes("600 ثانية"));
+    }
+    assert.equal(focused, '[name="email"]');
+    assert.equal(h.mutation.options.retry, 0);
+    assert.deepEqual(attempts[0], ["/inquiries", helpers.inquiryPayload(valid), { withCredentials: false, timeout: 15000 }]);
+    failure = undefined;
+    response = { status: 201, data: { success: true, data: { message: "Submission received." } } };
+    await h.submit(form);
+    assert.equal(resets, 1);
+    assert.ok(renderToStaticMarkup(h.render()).includes("تم تسجيل استفسارك بنجاح"));
+    const demo = formHarness(true, async () => { throw Error("Demo must not submit"); });
+    await demo.submit(form);
+    assert.ok(renderToStaticMarkup(demo.render()).includes("اكتملت محاكاة الاستفسار"));
+  } finally { global.FormData = originalData; global.requestAnimationFrame = originalFrame; }
+});
+
+test("Live route isolates settings errors with retry, preserves form and configured WhatsApp without mode changes", async () => {
+  for (const failed of [false, true]) {
+    const local = loader({ ...boundary,
+      "@/lib/public-content-mode": { isPublicDemoMode: () => false },
+      "@/api/server-client": { serverApiClient: { get: async (path) => { assert.equal(path, "/site-settings"); if (failed) throw Error("offline"); return { data: { success: true, data: { contactEmail: null, contactPhone: null, addressAr: null } } }; } } },
+      "@/components/public/contact-inquiry-form": { ContactInquiryForm: ({ demo }) => { assert.equal(demo, false); return React.createElement("form", { "data-live-inquiry": true }); } },
+    });
+    const html = renderToStaticMarkup(await local("app/contact/page.tsx").default());
+    assert.ok(html.includes("data-live-inquiry"));
+    assert.ok(html.includes(local("lib/whatsapp.ts").createWhatsappUrl()));
+    assert.ok(html.includes("معلومات التواصل الأخرى"));
+    assert.equal(html.includes("تعذر تحميل معلومات التواصل الإضافية"), failed);
+    assert.equal(html.includes("إعادة المحاولة"), failed);
+    assert.equal(html.includes("example@tareeq-academy.com"), false);
+    assert.equal(html.includes("بيانات تجريبية"), false);
+  }
 });
 

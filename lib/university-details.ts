@@ -11,11 +11,12 @@ export function universityTab(value: string | null): UniversityTab {
   return universityTabs.find((tab) => tab.id === value)?.id ?? "overview";
 }
 
-// Presentation model, NOT a new Backend schema. Live has no program/FAQ contract yet.
+// Presentation model, NOT a Backend schema. The Live adapter maps the confirmed public contract.
 export type UniversityProgram = {
   id: string; name: string; level: string; faculty: string | null;
   language: string | null; duration: string | null;
   tuition: { amount: number; currency: string; period?: string; academicYear?: string } | null;
+  tuitionHistory?: NonNullable<UniversityProgram["tuition"]>[];
 };
 export type UniversityDetailContent = {
   programs: UniversityProgram[];
@@ -47,7 +48,7 @@ export function nextScholarshipPage(page: PublicList<Scholarship>) {
 export function uniqueUniversityScholarships(pages: PublicList<Scholarship>[], id: string, slug: string) {
   const seen = new Set<string>();
   return pages.flatMap((page) => page.items).filter((item) => {
-    if (item.status !== "PUBLISHED" || item.universityId !== id || (item.university && item.university.slug !== slug) || seen.has(item.id)) return false;
+    if ((item.status !== undefined && item.status !== "PUBLISHED") || item.universityId !== id || (item.university && item.university.slug !== slug) || seen.has(item.id)) return false;
     seen.add(item.id);
     return true;
   });

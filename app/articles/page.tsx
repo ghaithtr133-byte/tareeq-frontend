@@ -17,6 +17,11 @@ import {
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import type { RouteSearchParams } from "@/lib/public-search-params";
 import { createPageMetadata } from "@/lib/seo";
+import { parseArticleDirectory, parseArticleCountries } from "@/lib/article-directory-live";
+import { EmptyState } from "@/components/ui/content-state";
+import { HomeSectionError } from "@/components/home/home-section-error";
+// Approved same-record editorial text only, visibly marked by the Live parser; never collection/error fallback.
+import { publicDemoContent } from "@/lib/mocks/public-demo-content";
 
 export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata(
@@ -32,9 +37,10 @@ export default async function ArticlesPage({
 }) {
   const params = directoryArticleParams(await searchParams);
   const values = articleFilterValues(params);
+  const demo = isPublicDemoMode();
   const [articles, countries] = await Promise.allSettled([
-    getArticles(params),
-    getCountries({ limit: 50, sort: "manual" }),
+    getArticles(params).then((data) => demo ? data : parseArticleDirectory(data, params.page ?? 1, publicDemoContent.articles)),
+    getCountries({ limit: 50, sort: "manual" }).then((data) => demo ? data : parseArticleCountries(data)),
   ]);
   const result = articles.status === "fulfilled" ? articles.value : null;
   if (result && params.page! > Math.max(1, result.pagination.totalPages))
@@ -42,12 +48,14 @@ export default async function ArticlesPage({
       articleDirectoryHref(values, Math.max(1, result.pagination.totalPages)),
     );
   let items = result?.items ?? [];
-  if (isPublicDemoMode()) {
+  if (demo) {
     const { withDemoArticleDirectoryMedia } =
       await import("@/lib/mocks/article-directory-fixtures");
     items = withDemoArticleDirectoryMedia(items);
   }
-  const editorial = editorialArticles(items);
+  // Original editorial treatment partitions THIS server page, not a second catalog or guessed featured list.
+  const editorial = editorialArticles(items, !demo);
+  const filtered = Object.values(values).some(Boolean);
   return (
     <main className="bg-[#F6F8FB] pb-8 text-primary">
       <section
@@ -109,39 +117,22 @@ export default async function ArticlesPage({
               : []
           }
           optionError={countries.status === "rejected"}
+          optionLimited={countries.status === "fulfilled" && countries.value.pagination.total > countries.value.items.length}
         >
           <section
             id="article-results"
             aria-label="نتائج المقالات"
             className="scroll-mt-28 pt-2"
           >
-            {result ? (
-              <p className="mb-2 text-right text-sm leading-6 text-muted-foreground">
-                تم العثور على{" "}
+              <p className="mb-2 text-right text-sm leading-6 text-muted-foreground" role="status">
+                {result ? <>تم العثور على{" "}
                 <strong className="font-bold text-[#17669C]">
                   {result.pagination.total}
                 </strong>{" "}
-                مقال
+                مقال</> : "نتائج المقالات"}
               </p>
-            ) : null}
             {!result ? (
-              <div
-                role="alert"
-                className="rounded-xl border border-[#DFE6ED] bg-white p-6"
-              >
-                <h2 className="text-lg font-bold">
-                  يتعذر تحميل المقالات حالياً
-                </h2>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  تعذر الاتصال بمصدر المقالات المنشورة. يرجى المحاولة مرة أخرى.
-                </p>
-                <a
-                  href={articleDirectoryHref(values, params.page)}
-                  className="mt-3 inline-flex min-h-11 items-center rounded-sm text-sm font-bold text-[#17669C]"
-                >
-                  إعادة المحاولة
-                </a>
-              </div>
+              <HomeSectionError title="يتعذر تحميل المقالات حالياً" description="حدثت مشكلة أثناء جلب المقالات المنشورة. يرجى المحاولة مجدداً." />
             ) : items.length ? (
               <>
                 {editorial.featured.length ? (
@@ -154,6 +145,7 @@ export default async function ArticlesPage({
                         key={article.id}
                         article={article}
                         prominent
+                        live={!demo}
                       />
                     ))}
                   </BalancedCardGrid>
@@ -168,24 +160,16 @@ export default async function ArticlesPage({
                       <ArticleDirectoryCard
                         key={article.id}
                         article={article}
+                        live={!demo}
                       />
                     ))}
                   </BalancedCardGrid>
                 ) : null}
               </>
             ) : (
-              <div className="rounded-xl border border-[#DFE6ED] bg-white p-6">
-                <h2 className="text-lg font-bold">لا توجد مقالات تطابق بحثك</h2>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  جرّب كلمات بحث أخرى أو أزل بعض الفلاتر.
-                </p>
-                <Link
-                  href="/articles"
-                  className="mt-3 inline-flex min-h-11 items-center rounded-sm text-sm font-bold text-[#17669C]"
-                >
-                  مسح الفلاتر
-                </Link>
-              </div>
+              <EmptyState title={filtered ? "لا توجد مقالات تطابق بحثك" : "لا توجد مقالات منشورة حالياً"}
+                description={filtered ? "جرّب كلمات بحث أخرى أو أزل بعض الفلاتر." : "ستظهر المقالات هنا عند نشرها."}
+                action={filtered ? <Link href="/articles">مسح الفلاتر</Link> : undefined} />
             )}
             {result ? (
               <ArticleDirectoryPagination

@@ -75,6 +75,7 @@ test("all photographic/illustrative media are existing local files and unavailab
 const ui = {
   "next/link": ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children),
   "next/image": ({ src, alt, className, style }) => React.createElement("img", { src, alt, className, style }),
+  "next/navigation": { useRouter: () => ({ refresh() {} }), redirect: (url) => { throw Error(`REDIRECT:${url}`); } },
 };
 const viewLoad = loader(ui);
 const { ServiceOverviewCard } = viewLoad("components/public/service-overview-card.tsx");
@@ -103,7 +104,7 @@ test("future available detail configuration activates the existing CTA without a
 
 test("Services page preserves its design and copy, resolving actual published navigation with one bounded request", async () => {
   let requests = 0;
-  const local = loader({ ...ui, "@/api/public-content": { getServices: async (params) => { requests += 1; assert.deepEqual(params, { limit: 5, sort: "manual" }); return demo.getDemoServices(params); } } });
+  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/public-content": { getServices: async (params) => { requests += 1; assert.deepEqual(params, { limit: 5, sort: "manual" }); return demo.getDemoServices(params); } } });
   const { default: ServicesPage } = local("app/services/page.tsx");
   const html = renderToStaticMarkup(await ServicesPage());
   assert.equal(requests, 1);
@@ -120,7 +121,7 @@ test("Services page preserves its design and copy, resolving actual published na
 });
 
 test("the closing CTA uses only the configured official WhatsApp destination with safe external behavior", async () => {
-  const local = loader({ ...ui, "@/api/public-content": { getServices: async () => ({ items: [] }) } });
+  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getServices: async () => ({ items: [], pagination: { page: 1, limit: 5, total: 0, totalPages: 0 } }) } });
   const { default: ServicesPage } = local("app/services/page.tsx");
   const { createWhatsappUrl } = viewLoad("lib/whatsapp.ts");
   const html = renderToStaticMarkup(await ServicesPage());
@@ -163,4 +164,77 @@ test("all five published service CTAs use scoped navy/gold interactions and reta
     assert.ok(html.includes("اعرف المزيد"));
     assert.equal(html.includes("disabled="), false);
   }
+});
+
+const live = load("lib/services-directory-live.ts");
+const liveList = (items = [], page = 1, total = items.length) => ({ items, pagination: { page, limit: 5, total, totalPages: Math.ceil(total / 5) } });
+const liveService = { id: "live-service", slug: "real-service-slug", titleAr: "خدمة منشورة", summaryAr: "ملخص حقيقي", descriptionAr: "تفصيل حقيقي", imageUrl: "https://media.example.test/service.jpg", imageAltAr: "صورة الخدمة المنشورة", displayOrder: 3 };
+function liveRoute(data = liveList([liveService]), failure) {
+  const calls = [];
+  const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/server-client": { serverApiClient: { get: async (url, options) => {
+    calls.push({ url, params: options.params }); if (failure) throw failure; return { data: { success: true, data } };
+  } } } });
+  return { page: scoped("app/services/page.tsx").default, calls };
+}
+
+test("Live renders real published records, actual slugs/media and Backend ordering in the original cards", async () => {
+  const route = liveRoute(liveList([{ ...liveService, displayOrder: 20 }, { ...liveService, id: "second", slug: "second-service", titleAr: "الخدمة الثانية", displayOrder: 1 }]));
+  const html = renderToStaticMarkup(await route.page());
+  assert.deepEqual(route.calls, [{ url: "/services", params: { limit: 5, sort: "manual", page: 1 } }]);
+  assert.equal((html.match(/data-service-card=/g) ?? []).length, 2);
+  assert.ok(html.indexOf('data-service-card="real-service-slug"') < html.indexOf('data-service-card="second-service"'), "Do not re-sort or restore static service order");
+  for (const text of ["خدمة منشورة", "ملخص حقيقي", 'href="/services/real-service-slug"', 'src="https://media.example.test/service.jpg"', 'alt="صورة الخدمة المنشورة"', "hover:bg-accent hover:text-primary", "data-balanced-cards", "xl:[--card-columns:5]"]) assert.ok(html.includes(text), text);
+  assert.equal(html.includes('data-service-card="university-admission"'), false);
+  assert.equal(html.includes("نساعدك في اختيار الجامعات المناسبة"), false);
+});
+
+test("Live empty, failed and malformed collections preserve Hero, static editorial process and closing CTA without fake services", async () => {
+  for (const [data, failure, expected] of [[liveList(), undefined, "لا توجد خدمات منشورة حالياً"], [null, Error("offline"), "تعذّر تحميل الخدمات"], [{ items: [], pagination: { total: 2 } }, undefined, "تعذّر تحميل الخدمات"], [liveList([{ ...liveService, status: "DRAFT" }]), undefined, "تعذّر تحميل الخدمات"]]) {
+    const route = liveRoute(data, failure);
+    const html = renderToStaticMarkup(await route.page());
+    assert.ok(html.includes(expected));
+    assert.equal((html.match(/data-service-card=/g) ?? []).length, 0);
+    assert.ok(html.includes('id="services-title"'));
+    assert.ok(html.includes('id="services-process-title"'));
+    assert.ok(html.includes("جاهز تبدأ رحلتك الدراسية؟"));
+    for (const step of config.serviceProcess) assert.ok(html.includes(step.title));
+    if (expected.includes("تعذّر")) { assert.ok(html.includes("إعادة المحاولة")); assert.equal(html.includes("لا توجد خدمات"), false); }
+  }
+});
+
+test("Partial records use available real text then exact same-service temporary copy, never another service or name-only icon inference", () => {
+  const matching = { ...liveService, slug: "major-selection", titleAr: "اختيار التخصص", summaryAr: "", descriptionAr: "", imageUrl: null };
+  const original = live.serviceOverviewFromLive(matching);
+  assert.equal(original.icon, "major");
+  assert.equal(original.description, `${config.publicServices[1].description} (غير متوفر حالياً)`);
+  assert.equal(live.serviceOverviewFromLive({ ...matching, summaryAr: "بيان حقيقي" }).description, "بيان حقيقي");
+  assert.equal(live.serviceOverviewFromLive({ ...matching, descriptionAr: "تفصيل منشور" }).description, "تفصيل منشور");
+  const unrelated = live.serviceOverviewFromLive({ ...matching, slug: "another-slug" });
+  assert.equal(unrelated.icon, "general");
+  assert.equal(unrelated.description, "وصف الخدمة (غير متوفر حالياً)");
+  const missing = live.serviceOverviewFromLive({ ...matching, titleAr: null, imageUrl: "javascript:alert(1)" });
+  assert.equal(missing.title, "اسم الخدمة (غير متوفر حالياً)");
+  assert.equal(missing.image, null);
+  const html = renderToStaticMarkup(React.createElement(ServiceOverviewCard, { service: original, publishedHref: "/services/major-selection", live: true }));
+  assert.ok(html.includes("صورة الخدمة (غير متوفر حالياً)"));
+  assert.ok(html.includes("رسم توضيحي لخدمة اختيار التخصص"));
+  assert.equal(html.includes("/images/services/"), false);
+});
+
+test("Live page counts remain balanced and pagination stays server-side with no all-catalog fetch", async () => {
+  for (const count of [1, 2, 3, 4, 5]) {
+    const route = liveRoute(liveList(Array.from({ length: count }, (_, index) => ({ ...liveService, id: `id-${index}`, slug: `service-${index}` }))));
+    const html = renderToStaticMarkup(await route.page());
+    assert.equal((html.match(/data-service-card=/g) ?? []).length, count);
+    assert.ok(html.includes("justify-center"));
+    assert.ok(html.includes("[&amp;&gt;*]:grow-0"));
+    assert.equal(route.calls.length, 1);
+  }
+  const route = liveRoute(liveList([liveService], 2, 6));
+  const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({ page: "2", sort: "newest", featured: "true" }) }));
+  assert.deepEqual(route.calls, [{ url: "/services", params: { page: 2, limit: 5, sort: "manual" } }]);
+  assert.ok(html.includes('href="/services?page=1"'));
+  const out = liveRoute(liveList([], 9, 6));
+  await assert.rejects(out.page({ searchParams: Promise.resolve({ page: "9" }) }), /REDIRECT:\/services\?page=2/);
+  for (const value of [undefined, [], "-1", "0", "1.5", "x", "9007199254740992"]) assert.equal(live.servicesDirectoryPage(value), 1);
 });

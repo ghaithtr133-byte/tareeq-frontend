@@ -4,6 +4,7 @@ import { getContactSettings } from "@/api/site-settings";
 import { Container } from "@/components/layout/container";
 import { ContactInquiryForm } from "@/components/public/contact-inquiry-form";
 import { ContactInformationCard, ContactWhatsappCard } from "@/components/public/contact-cards";
+import { HomeSectionError } from "@/components/home/home-section-error";
 import type { ContactSettings } from "@/lib/contact";
 import { innerPageHero } from "@/lib/inner-page-hero";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
@@ -31,7 +32,7 @@ export default async function ContactPage() {
       <div data-contact-layout className="mt-5 grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
         <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-5">
           <div className="order-1 min-w-0"><ContactWhatsappCard /></div>
-          <div className="order-3 min-w-0 lg:order-2"><ContactInformationCard settings={settings} />{settingsFailed ? <p role="status" className="mt-3 text-sm leading-7 text-muted-foreground">تعذر تحميل معلومات التواصل الإضافية حاليًا. يمكنك استخدام واتساب أو نموذج الاستفسار.</p> : null}</div>
+          <div className="order-3 min-w-0 lg:order-2"><ContactInformationCard settings={settings} demo={demo} />{settingsFailed ? <div className="mt-3"><HomeSectionError title="تعذر تحميل معلومات التواصل الإضافية" description="يمكنك إعادة المحاولة. يبقى نموذج الاستفسار وواتساب متاحين." /></div> : null}</div>
         </div>
         <div className="order-2 min-w-0 lg:col-start-1 lg:row-start-1"><ContactInquiryForm demo={demo} /></div>
       </div>

@@ -4,10 +4,10 @@ import { useState } from "react";
 import { GraduationCap } from "lucide-react";
 
 /* API images may use domains not configured for Next Image. */
-export function UniversityDirectoryImage({ src, alt, className = "aspect-[16/9]" }: { src: string | null; alt: string; className?: string }) {
+export function UniversityDirectoryImage({ src, alt, className = "aspect-[16/9]", unavailableLabel }: { src: string | null; alt: string; className?: string; unavailableLabel?: string }) {
   const [failed, setFailed] = useState(false);
   return <div className={`overflow-hidden bg-[#EAF0F6] ${className}`}>{src && !failed ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none" />
-  ) : <div className="grid h-full place-items-center text-[#A9BDCE]" aria-hidden="true"><GraduationCap className="size-14" strokeWidth={1.2} /></div>}</div>;
+  ) : <div className="grid h-full place-items-center text-[#A9BDCE]" aria-hidden={unavailableLabel ? undefined : true}>{unavailableLabel ? <span className="flex flex-col items-center gap-2 px-3 text-center text-sm leading-6"><GraduationCap className="size-14" strokeWidth={1.2} aria-hidden="true" /><span>{unavailableLabel}</span></span> : <GraduationCap className="size-14" strokeWidth={1.2} />}</div>}</div>;
 }

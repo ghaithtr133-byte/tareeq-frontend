@@ -3,9 +3,12 @@ import Link from "next/link";
 import { ArrowLeft, GraduationCap, MapPin } from "lucide-react";
 import type { Scholarship, University } from "@/api/public-content";
 import { UniversityDirectoryImage } from "@/components/public/university-directory-image";
+import { approvedHomeCardCopy, homeCardText } from "@/lib/homepage-card-content";
+import { directoryUniversityTypes, type DirectoryUniversity } from "@/lib/university-directory-data";
+import { homeMetadataLabel } from "@/lib/homepage-data";
 
 function CountryFlag({ slug }: { slug?: string }) {
-  if (!slug || !["romania", "turkey", "poland", "hungary", "malaysia", "cyprus", "united-kingdom"].includes(slug)) return null;
+  if (!slug || !["romania", "turkey", "poland", "hungary", "malaysia", "cyprus", "united-kingdom"].includes(slug)) return <span className="grid h-4 w-6 shrink-0 place-items-center" role="img" aria-label="علم الدولة (غير متوفر حالياً)"><MapPin className="size-4" aria-hidden="true" /></span>;
   return <svg viewBox="0 0 30 20" className="h-4 w-6 shrink-0 rounded-[2px] shadow-sm" aria-hidden="true">
     {slug === "romania" ? <><path fill="#002B7F" d="M0 0h10v20H0z" /><path fill="#FCD116" d="M10 0h10v20H10z" /><path fill="#CE1126" d="M20 0h10v20H20z" /></> : null}
     {slug === "poland" ? <><path fill="#fff" d="M0 0h30v10H0z" /><path fill="#DC143C" d="M0 10h30v10H0z" /></> : null}
@@ -19,37 +22,39 @@ function CountryFlag({ slug }: { slug?: string }) {
 
 const cardClass = "group flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#E4EAF0] bg-white shadow-[0_12px_30px_-25px_rgba(8,43,80,0.4)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-[#C8A253] hover:shadow-[0_20px_42px_-24px_rgba(8,43,80,0.48)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253] motion-reduce:transform-none motion-reduce:transition-none";
 
-export function DirectoryUniversityCard({ university, demo }: { university: University; demo: boolean }) {
+export function DirectoryUniversityCard({ university, demo }: { university: DirectoryUniversity; demo: boolean }) {
   const logo = demo && university.id === "demo-university-bucharest" ? "/images/universities/university-of-bucharest.svg" : undefined;
+  const original = approvedHomeCardCopy("universities", university.slug, university.nameAr);
   return <Link href={`/universities/${university.slug}`} className={cardClass}>
-    <UniversityDirectoryImage src={university.imageUrl} alt={university.imageAltAr || university.nameAr} className="aspect-[16/10]" />
+    <UniversityDirectoryImage key={university.imageUrl} src={university.imageUrl} alt={university.imageAltAr || university.nameAr} className="aspect-[16/10]" unavailableLabel="صورة الجامعة (غير متوفر حالياً)" />
     <div className="relative flex flex-1 flex-col items-center px-5 pb-5 pt-10 text-center">
       <span className="absolute -top-8 flex size-16 items-center justify-center rounded-xl border border-[#E8EDF2] bg-white p-2 shadow-[0_5px_20px_-10px_rgba(8,43,80,0.45)]">
-        {logo ? <Image src={logo} alt={`شعار ${university.nameAr}`} width={56} height={56} className="max-h-full w-auto object-contain" /> : <GraduationCap className="size-8 text-[#91A6BA]" strokeWidth={1.5} aria-hidden="true" />}
+        {logo ? <Image src={logo} alt={`شعار ${university.nameAr}`} width={56} height={56} className="max-h-full w-auto object-contain" /> : <span role="img" aria-label="شعار الجامعة (غير متوفر حالياً)"><GraduationCap className="size-8 text-[#91A6BA]" strokeWidth={1.5} aria-hidden="true" /></span>}
       </span>
       <h3 className="min-h-14 text-lg font-extrabold leading-7 text-[#082B50]">{university.nameAr}</h3>
       <div className="mt-2 flex min-h-6 flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-normal text-[#52647A]">
-        {university.country?.nameAr ? <span className="inline-flex items-center gap-1.5"><CountryFlag slug={university.country.slug} />{university.country.nameAr}</span> : null}
-        {university.cityAr ? <span className="inline-flex items-center gap-1"><MapPin className="size-4 text-[#8A9BAD]" aria-hidden="true" />{university.cityAr}</span> : null}
+        <span className="inline-flex items-center gap-1.5"><CountryFlag slug={university.country?.slug} />{homeCardText(university.country?.nameAr, "الدولة")}</span>
+        <span className="inline-flex items-center gap-1"><MapPin className="size-4 text-[#8A9BAD]" aria-hidden="true" />{homeCardText(university.city?.nameAr || university.cityAr, "المدينة", original?.city)}</span>
+        <span className="rounded-full bg-[#EDF2F7] px-2 py-0.5 text-xs leading-6">{homeCardText(university.universityType ? directoryUniversityTypes[university.universityType] : undefined, "نوع الجامعة", original?.universityType)}</span>
       </div>
-      {university.overviewAr ? <p className="mt-3 min-h-14 line-clamp-2 text-sm leading-7 text-[#607185]">{university.overviewAr}</p> : <span className="mt-3 min-h-14" aria-hidden="true" />}
+      <p className="mt-3 min-h-14 line-clamp-2 text-sm leading-7 text-[#607185]">{homeCardText(university.overviewAr, "نبذة الجامعة")}</p>
       <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-bold text-[#17669C] transition-colors group-hover:text-[#A47B2D]">عرض التفاصيل <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" /></span>
     </div>
   </Link>;
 }
 
-export function DirectoryScholarshipCard({ scholarship, university }: { scholarship: Scholarship; university?: University }) {
+export function DirectoryScholarshipCard({ scholarship, university, live = false }: { scholarship: Scholarship; university?: University; live?: boolean }) {
   const status = scholarship.effectiveApplicationStatus ?? scholarship.applicationStatus;
   return <Link href={`/scholarships/${scholarship.slug}`} className={cardClass}>
     <div className="relative p-2 pb-0">
-      <UniversityDirectoryImage src={university?.imageUrl ?? null} alt={university ? `صورة مرتبطة بـ ${university.nameAr}` : ""} className="aspect-[3/1] rounded-lg lg:aspect-[4/1]" />
-      <span className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-bold ${status === "OPEN" ? "bg-[#F4D889] text-[#082B50]" : "bg-[#E5EAF0] text-[#394E63]"}`}>{status === "OPEN" ? "التقديم مفتوح" : "التقديم مغلق"}</span>
+      <UniversityDirectoryImage src={university?.imageUrl ?? null} alt={university ? `صورة مرتبطة بـ ${university.nameAr}` : ""} className="aspect-[3/1] rounded-lg lg:aspect-[4/1]" unavailableLabel={live ? "صورة الجامعة (غير متوفر حالياً)" : undefined} />
+      <span className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-bold ${status === "OPEN" ? "bg-[#F4D889] text-[#082B50]" : "bg-[#E5EAF0] text-[#394E63]"}`}>{status === "OPEN" ? "التقديم مفتوح" : status === "CLOSED" || !live ? "التقديم مغلق" : homeCardText(undefined, "حالة التقديم")}</span>
     </div>
     <div className="flex flex-1 flex-col items-center px-4 pb-3 pt-3 text-center">
       <h3 className="font-bold leading-6 text-[#082B50]">{scholarship.titleAr}</h3>
-      {scholarship.university?.nameAr ? <p className="mt-1 text-sm font-normal leading-6 text-[#52647A]">{scholarship.university.nameAr}</p> : null}
-      {[scholarship.studyLevel, scholarship.fundingType].some(Boolean) ? <p className="mt-1 flex flex-wrap items-center justify-center gap-x-1.5 text-sm leading-6 text-[#607185]">{scholarship.studyLevel ? <span>{scholarship.studyLevel}</span> : null}{scholarship.studyLevel && scholarship.fundingType ? <span aria-hidden="true">·</span> : null}{scholarship.fundingType ? <span>{scholarship.fundingType}</span> : null}</p> : null}
-      {scholarship.country?.nameAr ? <p className="mt-1 inline-flex items-center gap-1.5 text-sm leading-6 text-[#52647A]"><CountryFlag slug={scholarship.country.slug} />{scholarship.country.nameAr}</p> : null}
+      {scholarship.university?.nameAr || live ? <p className="mt-1 text-sm font-normal leading-6 text-[#52647A]">{homeCardText(scholarship.university?.nameAr, "اسم الجامعة")}</p> : null}
+      {live ? <p className="mt-1 flex flex-wrap items-center justify-center gap-x-1.5 text-sm leading-6 text-[#607185]"><span>{homeCardText(homeMetadataLabel(scholarship.studyLevel), "المرحلة الدراسية")}</span><span aria-hidden="true">·</span><span>{homeCardText(homeMetadataLabel(scholarship.fundingType), "نوع التمويل")}</span></p> : [scholarship.studyLevel, scholarship.fundingType].some(Boolean) ? <p className="mt-1 flex flex-wrap items-center justify-center gap-x-1.5 text-sm leading-6 text-[#607185]">{scholarship.studyLevel ? <span>{scholarship.studyLevel}</span> : null}{scholarship.studyLevel && scholarship.fundingType ? <span aria-hidden="true">·</span> : null}{scholarship.fundingType ? <span>{scholarship.fundingType}</span> : null}</p> : null}
+      {scholarship.country?.nameAr || live ? <p className="mt-1 inline-flex items-center gap-1.5 text-sm leading-6 text-[#52647A]"><CountryFlag slug={scholarship.country?.slug} />{homeCardText(scholarship.country?.nameAr, "دولة المنحة")}</p> : null}
       <span className="mt-auto inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#17669C] transition-colors group-hover:text-[#A47B2D]">عرض التفاصيل <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" aria-hidden="true" /></span>
     </div>
   </Link>;

@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import type { Country } from "@/api/public-content";
+import { ArrowLeft, MapPinned } from "lucide-react";
+import type { DestinationCountry } from "@/lib/study-abroad-directory-data";
 import { StudyAbroadImage } from "@/components/public/study-abroad-image";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 
 function CountryFlag({ slug }: { slug: string }) {
-  if (!['romania', 'turkey', 'poland', 'hungary', 'malaysia', 'cyprus', 'united-kingdom'].includes(slug)) return null;
+  if (!['romania', 'turkey', 'poland', 'hungary', 'malaysia', 'cyprus', 'united-kingdom'].includes(slug)) return <span className="grid h-6 w-9 shrink-0 place-items-center" role="img" aria-label="علم الدولة (غير متوفر حالياً)"><MapPinned className="size-5 text-[#9DB0C1]" aria-hidden="true" /></span>;
   return <svg viewBox="0 0 30 20" className="h-6 w-9 shrink-0 rounded-[3px] shadow-sm" aria-hidden="true">
     {slug === 'romania' ? <><path fill="#002B7F" d="M0 0h10v20H0z" /><path fill="#FCD116" d="M10 0h10v20H10z" /><path fill="#CE1126" d="M20 0h10v20H20z" /></> : null}
     {slug === 'poland' ? <><path fill="#fff" d="M0 0h30v10H0z" /><path fill="#DC143C" d="M0 10h30v10H0z" /></> : null}
@@ -17,13 +17,13 @@ function CountryFlag({ slug }: { slug: string }) {
   </svg>;
 }
 
-export function StudyAbroadCountryCards({ countries }: { countries: Country[] }) {
+export function StudyAbroadCountryCards({ countries }: { countries: DestinationCountry[] }) {
   return <BalancedCardGrid className="mt-3" columns={{ md: 2, lg: 3 }}>
     {countries.map((country) => (
       <article key={country.id} className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_12px_30px_-25px_rgba(8,43,80,0.42)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-[#C8A253] hover:shadow-[0_20px_42px_-24px_rgba(8,43,80,0.48)] focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#C8A253] motion-reduce:transform-none motion-reduce:transition-none">
         <Link href={`/study-abroad/${encodeURIComponent(country.slug)}`} draggable={false} className="flex h-full flex-1 flex-col focus-visible:outline-none" aria-label={`تفاصيل الدراسة في ${country.nameAr}`}>
         <div className="relative block aspect-[16/9] overflow-hidden bg-[#EAF0F6]">
-          <StudyAbroadImage src={country.imageUrl} alt={country.imageAltAr || `مشهد من ${country.nameAr}`} />
+          <StudyAbroadImage key={country.imageUrl} src={country.imageUrl} alt={country.imageAltAr || `مشهد من ${country.nameAr}`} unavailableLabel="صورة الوجهة (غير متوفر حالياً)" />
           {country.featured ? <span className="absolute right-4 top-4 rounded-full bg-[#C8A253] px-3 py-1 text-xs font-bold text-[#082B50] shadow-sm">وجهة مميزة</span> : null}
         </div>
         <div className="flex flex-1 flex-col p-5 sm:p-6">

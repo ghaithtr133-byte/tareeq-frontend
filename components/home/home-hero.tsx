@@ -1,5 +1,5 @@
 import NextImage from "next/image";
-import { CircleDollarSign, FileText, GraduationCap, MapPinned, type LucideIcon } from "lucide-react";
+import { CircleDollarSign, GraduationCap, MapPinned, type LucideIcon } from "lucide-react";
 import { HomeContainer as Container, HomeLink as Link } from "@/components/home/home-primitives";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "@/components/ui/icons";
@@ -10,7 +10,6 @@ const loadingCards = [
   { label: "وجهات دراسية", Icon: MapPinned },
   { label: "جامعات منشورة", Icon: GraduationCap },
   { label: "منح وبرامج", Icon: CircleDollarSign },
-  { label: "خدمات تعليمية", Icon: FileText },
 ];
 
 /** Keep the approved value slots mounted even when verified totals are unavailable. */
@@ -79,11 +78,11 @@ export function HomeHero({ admissionHref = "/services", heroCards = loadingCards
                 </p>
               </div>
             </div>
-            <div className="row-start-2 grid min-w-0 grid-cols-2 gap-3 pb-7 md:grid-cols-4 lg:col-span-2 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:gap-5 2xl:pb-7">
+            <div className="row-start-2 flex min-w-0 flex-wrap justify-center gap-3 pb-7 lg:col-span-2 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:gap-5 2xl:pb-7">
               {heroCards.map(({ label, Icon, count }) => (
                 <div
                   key={label}
-                  className="flex min-h-[5.25rem] min-w-0 items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-[#082B50] shadow-[0_12px_30px_-15px_rgba(8,43,80,0.45)] sm:gap-3 sm:px-4 2xl:min-h-[6rem] 2xl:px-5"
+                  className="flex min-h-[5.25rem] min-w-0 grow-0 shrink-0 basis-[calc((100%_-_0.75rem)/2)] items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-[#082B50] shadow-[0_12px_30px_-15px_rgba(8,43,80,0.45)] sm:gap-3 sm:px-4 md:basis-[calc((100%_-_2.25rem)/4)] xl:basis-[calc((100%_-_3rem)/4)] 2xl:min-h-[6rem] 2xl:basis-[calc((100%_-_3.75rem)/4)] 2xl:px-5"
                 >
                   <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#FAF4E7] 2xl:size-11">
                     <Icon

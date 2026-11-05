@@ -6,13 +6,14 @@ export type ContactSettings = Partial<Record<"academyNameAr" | "contactEmail" | 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function validateInquiry(values: InquiryValues): InquiryErrors {
   const errors: InquiryErrors = {};
-  if (values.fullName.trim().length < 2) errors.fullName = "يرجى كتابة الاسم الكامل (حرفان على الأقل).";
-  if (!emailPattern.test(values.email.trim())) errors.email = "يرجى إدخال بريد إلكتروني صحيح.";
-  if (values.subject.trim().length < 3) errors.subject = "يرجى اختيار موضوع الاستفسار (ثلاثة أحرف على الأقل).";
-  if (values.message.trim().length < 10) errors.message = "يرجى كتابة تفاصيل الاستفسار (عشرة أحرف على الأقل).";
+  if (values.fullName.trim().length < 2 || values.fullName.trim().length > 150) errors.fullName = "يرجى كتابة الاسم الكامل من حرفين إلى 150 حرفاً.";
+  if (!emailPattern.test(values.email.trim()) || values.email.trim().length > 254) errors.email = "يرجى إدخال بريد إلكتروني صحيح لا يتجاوز 254 حرفاً.";
+  if (values.subject.trim().length < 3 || values.subject.trim().length > 200) errors.subject = "يرجى اختيار موضوع الاستفسار من 3 إلى 200 حرف.";
+  if (values.message.trim().length < 10 || values.message.trim().length > 5000) errors.message = "يرجى كتابة تفاصيل الاستفسار من 10 إلى 5000 حرف.";
+  if (values.phone.trim() && (values.phone.trim().length > 25 || !/^\+?[0-9][0-9 ()-]{5,23}[0-9]$/.test(values.phone.trim()))) errors.phone = "يرجى إدخال رقم هاتف صحيح من 7 إلى 25 خانة، ويمكن أن يبدأ برمز + الدولي.";
   if (!values.privacyAccepted) errors.privacyAccepted = "يرجى الموافقة على سياسة الخصوصية.";
   if (values.website) errors.website = "تعذر إرسال الاستفسار. يرجى المحاولة مجددًا.";
-  // Optional phone syntax is owned by the Backend; don't invent a country/format restriction.
+  // Phone remains optional; syntax and limits match GeneralInquiryCreateRequest, not a country-specific rule.
   return errors;
 }
 
@@ -31,9 +32,30 @@ export function inquiryFieldErrors(error: unknown): InquiryErrors {
   for (const key of ["fullName", "email", "phone", "subject", "message", "privacyAccepted", "website"] as const) {
     const value = fields[key];
     const message = Array.isArray(value) ? value.find((item) => typeof item === "string") : value;
-    if (typeof message === "string" && message.trim()) errors[key] = message;
+    // Map the documented field, never expose technical validation details or echoed personal data.
+    if (typeof message === "string" && message.trim()) errors[key] = inquiryServerLabels[key];
   }
   return errors;
+}
+
+const inquiryServerLabels: Record<keyof InquiryValues, string> = {
+  fullName: "يرجى مراجعة الاسم الكامل.", email: "يرجى مراجعة البريد الإلكتروني.", phone: "يرجى مراجعة صيغة رقم الهاتف.",
+  subject: "يرجى مراجعة موضوع الاستفسار.", message: "يرجى مراجعة الرسالة وطولها.", privacyAccepted: "يرجى الموافقة على سياسة الخصوصية.", website: "تعذر إرسال الاستفسار. يرجى المحاولة مجدداً.",
+};
+
+export function inquiryFailureMessage(error: unknown) {
+  const failure = error as { status?: number; response?: { status?: number; data?: { error?: { details?: { retryAfterSeconds?: unknown } } } }; cause?: { response?: { status?: number; data?: { error?: { details?: { retryAfterSeconds?: unknown } } } } } };
+  const response = failure?.cause?.response ?? failure?.response;
+  const status = failure?.status ?? response?.status;
+  if (status === 429) {
+    const seconds = response?.data?.error?.details?.retryAfterSeconds;
+    return typeof seconds === "number" && Number.isSafeInteger(seconds) && seconds > 0
+      ? `تم تجاوز عدد المحاولات المسموح. يرجى الانتظار ${seconds} ثانية قبل المحاولة مجدداً. بياناتك ما زالت في النموذج.`
+      : "تم تجاوز عدد المحاولات المسموح. يرجى الانتظار والمحاولة لاحقاً. بياناتك ما زالت في النموذج.";
+  }
+  if (status === 413) return "حجم الرسالة كبير جداً. يرجى تقليل طولها والمحاولة مجدداً؛ بياناتك ما زالت في النموذج.";
+  if (status === 403) return "تعذر إرسال الاستفسار من هذا الموقع حالياً. يرجى المحاولة لاحقاً؛ بياناتك ما زالت في النموذج.";
+  return "تعذر إرسال الاستفسار. راجع الحقول الموضحة وحاول مجدداً؛ بياناتك ما زالت محفوظة في النموذج.";
 }
 
 export function contactSettings(value: unknown): ContactSettings {
@@ -63,11 +85,12 @@ const contactPlaceholders = {
   addressAr: "عنوان تجريبي — يُحدَّث لاحقاً",
 } as const;
 
-export function contactInformation(settings: ContactSettings) {
+export function contactInformation(settings: ContactSettings, demo = false) {
   const verified = contactSettings(settings);
   function field(key: keyof typeof contactPlaceholders) {
-    const value = verified[key] || contactPlaceholders[key];
-    const placeholder = !verified[key] || value === contactPlaceholders[key];
+    const placeholder = !verified[key] || verified[key] === contactPlaceholders[key];
+    const labels = { contactEmail: "البريد الإلكتروني", contactPhone: "رقم الهاتف", addressAr: "العنوان" };
+    const value = placeholder ? demo ? contactPlaceholders[key] : `${labels[key]} (غير متوفر حالياً)` : verified[key]!;
     const href = placeholder ? undefined : key === "contactEmail" ? `mailto:${value}` : key === "contactPhone" ? `tel:${value.replace(/[^\d+]/g, "")}` : undefined;
     return { value, placeholder, href };
   }

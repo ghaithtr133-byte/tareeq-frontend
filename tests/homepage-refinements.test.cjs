@@ -172,17 +172,24 @@ test("Homepage spacing stays compact without replacing approved artwork or remov
   const hero = html.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
   assert.ok(hero.includes("pb-6 pt-6"));
   assert.ok(hero.includes("/images/hero/study-abroad-student-landmarks.png"));
-  assert.equal((hero.match(/<strong/g) ?? []).length, 4);
+  assert.equal((hero.match(/<strong/g) ?? []).length, 3);
+  assert.equal(hero.includes("خدمات تعليمية"), false);
+  assert.ok(hero.includes("flex-wrap justify-center"));
+  assert.ok(hero.includes("grow-0 shrink-0 basis-[calc((100%_-_0.75rem)/2)]"));
+  assert.ok(hero.includes("md:basis-[calc((100%_-_2.25rem)/4)]"));
+  for (const icon of ["lucide-map-pinned", "lucide-graduation-cap", "lucide-circle-dollar-sign"]) assert.ok(hero.includes(icon));
   assert.ok(section(html, "journey-title").includes("/images/journey/journey-background.png"));
 });
 
 test("Hero shows descriptive missing totals, genuine loading skeletons and supplied zero without temporary labels", () => {
   const { HomeHero } = loader(ui)("components/home/home-hero.tsx");
   const missing = renderToStaticMarkup(React.createElement(HomeHero));
-  assert.equal((missing.match(/العدد \(غير متوفر حالياً\)/g) ?? []).length, 4);
+  assert.equal((missing.match(/العدد \(غير متوفر حالياً\)/g) ?? []).length, 3);
+  assert.equal(missing.includes("خدمات تعليمية"), false);
   const pending = renderToStaticMarkup(React.createElement(HomeHero, { pending: true }));
   assert.equal(pending.includes("غير متوفر حالياً"), false);
   assert.ok(pending.includes("animate-pulse"));
+  assert.equal((pending.match(/motion-safe:animate-pulse/g) ?? []).length, 3);
   const { MapPinned } = require("lucide-react");
   const actual = renderToStaticMarkup(React.createElement(HomeHero, { heroCards: [{ label: "وجهات دراسية", count: 0, Icon: MapPinned }] }));
   assert.equal(actual.includes("غير متوفر حالياً"), false);

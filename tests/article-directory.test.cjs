@@ -122,7 +122,7 @@ test("dates and image sources gracefully handle missing, malformed, and unsafe v
 const uiOverrides = {
   "next/link": ({ children, href, ...props }) => React.createElement("a", { href, ...props }, children),
   "next/image": ({ src, alt, sizes, className, style }) => React.createElement("img", { src, alt, sizes, className, style }),
-  "next/navigation": { useRouter: () => ({ push() {} }), redirect: (href) => { throw new Error(`REDIRECT:${href}`); } },
+  "next/navigation": { useRouter: () => ({ push() {}, refresh() {} }), redirect: (href) => { throw new Error(`REDIRECT:${href}`); } },
 };
 const viewLoad = loader(uiOverrides);
 test("article cards use one accessible detail link, real featured flag/date, and branded missing-image fallback", () => {
@@ -219,8 +219,90 @@ test("route distinguishes API errors from empty results, preserves query context
   const unavailable = renderToStaticMarkup(await ArticlesPage(props));
   assert.ok(unavailable.includes("يتعذر تحميل المقالات حالياً"));
   assert.equal(unavailable.includes("لا توجد مقالات تطابق بحثك"), false);
-  assert.ok(unavailable.includes("country=romania"));
+  assert.ok(unavailable.includes('value="romania" selected=""'), "Refresh retry retains the active country rather than replacing the URL");
   assert.equal(requests[0].limit, 12);
   mode = "range";
   await assert.rejects(ArticlesPage({ searchParams: Promise.resolve({ page: "999" }) }), /REDIRECT:\/articles\?page=2/);
+});
+
+const live = load("lib/article-directory-live.ts");
+const articleList = (items = [], page = 1, total = items.length) => ({ items, pagination: { page, limit: 12, total, totalPages: Math.ceil(total / 12) } });
+const liveArticle = { id: "live-one", slug: "published-article", titleAr: "مقال منشور", summaryAr: "ملخص من المصدر", featured: true, publishedAt: "2026-10-20T00:00:00Z", coverImageUrl: "https://media.example.test/cover.jpg", coverImageAltAr: "غلاف المقال الحقيقي" };
+function liveRoute({ data = articleList([liveArticle]), failed = false, countriesFailed = false, totalCountries = 1 } = {}) {
+  const calls = [];
+  const scoped = loader({ ...uiOverrides, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/server-client": { serverApiClient: { get: async (path, config) => {
+    calls.push({ path, params: config.params });
+    if ((path === "/articles" && failed) || (path === "/countries" && countriesFailed)) throw Error("offline");
+    return { data: { success: true, data: path === "/articles" ? data : { items: [{ id: "c1", slug: "romania", nameAr: "رومانيا" }], pagination: { page: 1, limit: 50, total: totalCountries, totalPages: Math.ceil(totalCountries / 50) } } } };
+  } } } });
+  return { calls, page: scoped("app/articles/page.tsx").default };
+}
+
+test("Live article projection accepts omitted status, validates identity/pages and preserves partial slots without fake dates", () => {
+  const parsed = live.parseArticleDirectory(articleList([liveArticle]), 1);
+  assert.equal(parsed.items[0].titleAr, liveArticle.titleAr);
+  for (const data of [null, {}, articleList([{ ...liveArticle, status: "DRAFT" }]), articleList([{ ...liveArticle, slug: "../bad" }]), articleList([liveArticle, liveArticle]), articleList([], 1, 4)]) assert.throws(() => live.parseArticleDirectory(data, 1));
+  const partial = live.parseArticleDirectory(articleList([{ id: "partial", slug: "partial-article", coverImageUrl: "javascript:alert(1)", createdAt: "2026-01-01T00:00:00Z" }]), 1).items[0];
+  const { ArticleDirectoryCard } = viewLoad("components/public/article-directory-card.tsx");
+  const html = renderToStaticMarkup(React.createElement(ArticleDirectoryCard, { article: partial, live: true }));
+  for (const label of ["عنوان المقال", "ملخص المقال", "تاريخ النشر", "صورة المقال"]) assert.ok(html.includes(`${label} (غير متوفر حالياً)`), label);
+  assert.equal(html.includes("<time"), false);
+  assert.equal(html.includes("2026-01-01"), false);
+  assert.equal(html.includes("دقائق قراءة"), false);
+  for (const date of [null, "invalid", "1", "2026-02-31T00:00:00Z"]) assert.equal(live.articleDirectoryDate(date), null);
+  const original = demo.publicDemoContent.articles[0];
+  assert.equal(live.parseArticleDirectory(articleList([{ ...original, summaryAr: "" }]), 1, [original]).items[0].summaryAr, `${original.summaryAr} (غير متوفر حالياً)`);
+  assert.equal(live.parseArticleDirectory(articleList([{ ...original, slug: "different", summaryAr: "" }]), 1, [original]).items[0].summaryAr, "ملخص المقال (غير متوفر حالياً)");
+});
+
+test("Live uses only selected Backend page/filters, real featured flags and media; one featured article remains prominent and unique", async () => {
+  const route = liveRoute({ data: articleList([liveArticle, { ...liveArticle, id: "other", slug: "other-article", featured: false }], 2, 14) });
+  const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({ page: "2", search: "بحث", country: "romania", featured: "true", category: "ignored", sort: "manual" }) }));
+  assert.deepEqual(route.calls, [{ path: "/articles", params: { page: 2, limit: 12, search: "بحث", featured: "true", country: "romania", sort: "newest" } }, { path: "/countries", params: { limit: 50, sort: "manual" } }]);
+  assert.equal((html.match(/data-article-card=/g) ?? []).length, 2);
+  assert.equal((html.match(/data-prominent="true"/g) ?? []).length, 1);
+  assert.ok(html.includes('href="/articles/published-article"'));
+  assert.ok(html.includes('src="https://media.example.test/cover.jpg"'));
+  assert.ok(html.includes('alt="غلاف المقال الحقيقي"'));
+  assert.ok(html.includes('data-article-featured="true"') || html.includes("data-article-featured"));
+  assert.ok(html.includes("data-balanced-cards"));
+  const split = helpers.editorialArticles([liveArticle], true);
+  assert.equal(split.featured.length, 1);
+  assert.equal(split.regular.length, 0);
+  const unfeatured = helpers.editorialArticles([{ ...liveArticle, featured: false }], true);
+  assert.equal(unfeatured.featured.length, 0);
+  assert.equal(unfeatured.regular.length, 1);
+});
+
+test("Live empty and error states stay distinct, keep controls and Hero, and isolate country lookup failures", async () => {
+  for (const [config, filters, expected] of [[{ data: articleList() }, {}, "لا توجد مقالات منشورة حالياً"], [{ data: articleList() }, { search: "no-match" }, "لا توجد مقالات تطابق بحثك"], [{ failed: true }, {}, "يتعذر تحميل المقالات حالياً"], [{ data: { items: [], pagination: { total: 3 } } }, {}, "يتعذر تحميل المقالات حالياً"]]) {
+    const route = liveRoute(config);
+    const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve(filters) }));
+    assert.ok(html.includes(expected));
+    assert.ok(html.includes('id="articles-title"'));
+    assert.ok(html.includes('aria-label="البحث وتصفية المقالات"'));
+    assert.ok(html.includes('id="article-results"'));
+    assert.equal((html.match(/data-article-card=/g) ?? []).length, 0);
+    if (expected.includes("يتعذر")) { assert.ok(html.includes("إعادة المحاولة")); assert.equal(html.includes("لا توجد مقالات"), false); }
+  }
+  const route = liveRoute({ countriesFailed: true });
+  const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({}) }));
+  assert.ok(html.includes("مقال منشور"));
+  assert.ok(html.includes("تعذّر تحميل خيارات الدول"));
+  assert.ok(html.includes("إعادة المحاولة"));
+  const limited = liveRoute({ totalCountries: 60 });
+  assert.ok(renderToStaticMarkup(await limited.page({ searchParams: Promise.resolve({}) })).includes("أول 50 دولة"));
+});
+
+test("Live small groups remain balanced, while Demo retains original editorial placement and media isolation", async () => {
+  for (const count of [1, 2, 3]) {
+    const route = liveRoute({ data: articleList(Array.from({ length: count }, (_, index) => ({ ...liveArticle, id: `id-${index}`, slug: `article-${index}`, featured: false }))) });
+    const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({}) }));
+    assert.equal((html.match(/data-article-card=/g) ?? []).length, count);
+    for (const token of ["justify-center", "xl:[--card-columns:4]", "[&amp;&gt;*]:grow-0", "aspect-[2/1]"]) assert.ok(html.includes(token));
+  }
+  const scoped = loader({ ...uiOverrides, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/public-content": { getArticles: demo.getDemoArticles, getCountries: demo.getDemoCountries } });
+  const html = renderToStaticMarkup(await scoped("app/articles/page.tsx").default({ searchParams: Promise.resolve({}) }));
+  assert.equal((html.match(/data-article-card=/g) ?? []).length, 12);
+  assert.equal((html.match(/data-prominent="true"/g) ?? []).length, 2);
 });

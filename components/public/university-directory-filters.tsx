@@ -4,19 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { UniversityFilterScrollArea } from "@/components/public/university-filter-scroll-area";
+import { ErrorState } from "@/components/ui/content-state";
+import { directoryFilterLabel } from "@/lib/university-directory-data";
 
 type Option = readonly [string, string];
 type FilterValues = Record<string, string>;
-type FilterGroup = { key: string; label: string; options: readonly Option[] };
+type FilterGroup = { key: string; label: string; options: readonly Option[]; unavailable?: string };
 const inputClass =
   "min-h-12 w-full rounded-lg border border-[#DCE4EC] bg-[#FCFDFE] px-3 text-sm text-[#082B50] transition-colors placeholder:text-[#8393A5] hover:border-[#BAC8D5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C8A253]";
 
 export function UniversityDirectoryFilters({
   values,
   groups,
+  filterError = false,
 }: {
   values: FilterValues;
   groups: FilterGroup[];
+  filterError?: boolean;
 }) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -64,6 +68,7 @@ export function UniversityDirectoryFilters({
   function fields(prefix: string) {
     return (
       <div className="space-y-5">
+        {filterError ? <ErrorState title="تعذر تحميل بعض الفلاتر" description="الجامعات المتاحة ما زالت ظاهرة. أعد المحاولة لتحميل الخيارات." onRetry={() => router.refresh()} /> : null}
         <div>
           <label
             htmlFor={`${prefix}-search`}
@@ -91,17 +96,20 @@ export function UniversityDirectoryFilters({
             <select
               id={`${prefix}-${group.key}`}
               value={draft[group.key] ?? ""}
+              disabled={!!group.unavailable}
+              aria-describedby={group.unavailable ? `${prefix}-${group.key}-state` : undefined}
               onChange={(event) => change(group.key, event.target.value)}
               className={inputClass}
             >
-              <option value="">الكل</option>
-              {draft[group.key] && !group.options.some(([value]) => value === draft[group.key]) ? <option value={draft[group.key]}>{draft[group.key]}</option> : null}
+              <option value="">{group.unavailable ? "الخيارات غير متاحة حالياً" : "الكل"}</option>
+              {draft[group.key] && !group.options.some(([value]) => value === draft[group.key]) ? <option value={draft[group.key]}>{directoryFilterLabel(group.key, draft[group.key])}</option> : null}
               {group.options.map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
               ))}
             </select>
+            {group.unavailable ? <p id={`${prefix}-${group.key}-state`} className="mt-1 text-xs leading-6 text-[#607185]">{group.unavailable}</p> : null}
           </div>
         ))}
         <button
@@ -191,7 +199,7 @@ export function UniversityDirectoryFilters({
                 : "جامعات غير مميزة"
               : (groups
                   .find((group) => group.key === key)
-                  ?.options.find(([option]) => option === value)?.[1] ?? value);
+                  ?.options.find(([option]) => option === value)?.[1] ?? directoryFilterLabel(key, value));
           return (
             <button
               key={key}

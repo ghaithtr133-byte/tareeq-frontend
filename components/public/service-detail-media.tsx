@@ -12,12 +12,12 @@ export function ServiceDetailIcon({ kind, className }: { kind: ServiceKind; clas
   return <Icon className={className} strokeWidth={1.6} aria-hidden="true" />;
 }
 
-export function ServiceDetailMedia({ media, kind, title, hero = false }: {
-  media: { src: string; alt: string } | null; kind: ServiceKind; title: string; hero?: boolean;
+export function ServiceDetailMedia({ media, kind, title, hero = false, unavailableLabel }: {
+  media: { src: string; alt: string } | null; kind: ServiceKind; title: string; hero?: boolean; unavailableLabel?: string;
 }) {
   const [failed, setFailed] = useState(false);
   const Icon = serviceDetailIcons[kind];
   return <div className={`relative h-full w-full overflow-hidden ${hero ? "bg-[#EFF4F8]" : "bg-[#EDF3F8]"}`}>
-    {media && !failed ? <Image src={media.src} alt={media.alt} fill sizes={hero ? "(min-width: 768px) 52vw, 100vw" : "96px"} unoptimized={!media.src.startsWith("/")} priority={hero} onError={() => setFailed(true)} className="object-cover" style={{ objectPosition: kind === "admissions" ? "36% 42%" : "center" }} /> : <div role="img" aria-label={`رسم توضيحي لخدمة ${title}`} className="grid h-full min-h-24 place-items-center bg-gradient-to-br from-[#E1EBF4] via-[#F7F9FB] to-[#F7EAD2]"><Icon className={hero ? "size-20 text-[#A88950]" : "size-10 text-[#A88950]"} strokeWidth={1.3} aria-hidden="true" /></div>}
+    {media && !failed ? <Image src={media.src} alt={media.alt} fill sizes={hero ? "(min-width: 768px) 52vw, 100vw" : "96px"} unoptimized={!media.src.startsWith("/")} priority={hero} onError={() => setFailed(true)} className="object-cover" style={{ objectPosition: kind === "admissions" ? "36% 42%" : "center" }} /> : <div role="img" aria-label={unavailableLabel ?? `رسم توضيحي لخدمة ${title}`} className="grid h-full min-h-24 place-items-center bg-gradient-to-br from-[#E1EBF4] via-[#F7F9FB] to-[#F7EAD2]"><Icon className={hero ? "size-20 text-[#A88950]" : "size-10 text-[#A88950]"} strokeWidth={1.3} aria-hidden="true" />{unavailableLabel ? <span className="px-2 pb-2 text-center text-xs leading-6 text-muted-foreground">{unavailableLabel}</span> : null}</div>}
   </div>;
 }

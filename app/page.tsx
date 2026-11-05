@@ -244,10 +244,11 @@ export default async function Home() {
   // The public /services contract returns only published entries but omits status.
   const admissionHref = serviceResult.kind === "partial" ? "/services" : publishedServiceHref("القبول الجامعي", serviceResult.items.map((item) => ({ ...item, status: "PUBLISHED" as const }))) ?? "/services";
   const heroCards = [
-    { label: "وجهات دراسية", Icon: MapPinned },
+    // Only this query is unfiltered. Featured university/scholarship totals are
+    // subset counts, not published catalogue totals; keep those slots unavailable.
+    { label: "وجهات دراسية", Icon: MapPinned, count: !demoMode && (countryResult.kind === "success" || countryResult.kind === "empty") ? countryResult.total : undefined },
     { label: "جامعات منشورة", Icon: GraduationCap },
     { label: "منح وبرامج", Icon: CircleDollarSign },
-    { label: "خدمات تعليمية", Icon: FileText },
   ];
   return (
     <main className="overflow-x-clip bg-[#FAF9F6]">

@@ -72,6 +72,11 @@ test("Live Homepage uses six bounded published endpoints, never Demo data, and p
   assert.equal(html.includes("كيف أختار الجامعة المناسبة؟"), false);
   assert.equal(html.includes("أرقام للعرض التجريبي"), false);
   assert.equal(html.includes("أرقام توضيحية"), false);
+  const hero = html.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
+  assert.equal((hero.match(/<strong/g) ?? []).length, 3);
+  assert.equal(hero.includes("خدمات تعليمية"), false);
+  assert.ok(hero.includes(">1</strong>"));
+  assert.equal((hero.match(/العدد \(غير متوفر حالياً\)/g) ?? []).length, 2);
 });
 
 test("every approved section and heading stays visible with contextual empty states and no fake content", async () => {
@@ -88,6 +93,8 @@ test("every approved section and heading stays visible with contextual empty sta
   assert.ok(html.includes('id="hero-title"'));
   assert.ok(html.includes('id="journey-title"'));
   assert.ok(html.includes('id="consultation-title"'));
+  const hero = html.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
+  assert.ok(hero.includes(">0</strong>"));
 });
 
 test("network, timeout, 5xx and invalid response failures are isolated with retry and no raw errors", async () => {

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getCountry } from "@/api/public-content";
+import { getPublishedCountry, getCountryFaqs, countrySlugIsValid } from "@/api/country-details";
 import { ApiError } from "@/api/error";
 import { Container } from "@/components/layout/container";
-import { ApiUnavailable } from "@/components/public/public-content";
+import { ErrorState } from "@/components/ui/content-state";
 import { CountryDetails } from "@/components/public/country-details";
-import { getCountryOverviewImage } from "@/lib/country-overview-images";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
 
@@ -15,20 +14,25 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  if (!countrySlugIsValid(slug)) notFound();
   try {
-    const country = await getCountry(slug);
+    const country = await getPublishedCountry(slug);
     return createPageMetadata(country.seoTitleAr ?? `الدراسة في ${country.nameAr}`, country.seoDescriptionAr ?? country.introductionAr, { index: true, pathname: `/study-abroad/${encodeURIComponent(country.slug)}`, imageUrl: country.imageUrl, publishedAt: country.publishedAt });
   } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); return createPageMetadata("وجهة الدراسة", "معلومات وجهة الدراسة المنشورة لدى طريق الأكاديمية."); }
 }
 
 export default async function DestinationPage({ params }: Props) {
   const { slug } = await params;
+  if (!countrySlugIsValid(slug)) notFound();
   let country;
-  try { country = await getCountry(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); }
-  if (!country) return <main className="bg-[#F8FAFC] py-10"><Container><ApiUnavailable /></Container></main>;
-  // The API has no structured facts, study guide, secondary image or country FAQ association.
-  // Demo overview/facts/guide/FAQs stay isolated; Live may use only explicitly mapped local imagery.
+  try { country = await getPublishedCountry(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); }
+  if (!country) return <main className="bg-[#F8FAFC] py-10"><Container><ErrorState title="يتعذر تحميل معلومات الدولة حالياً" description="يرجى المحاولة مجدداً؛ لم نعرض بيانات تجريبية بدلاً من المحتوى المنشور." variant="section" action={<a href={`/study-abroad/${encodeURIComponent(slug)}`}>إعادة المحاولة</a>} /></Container></main>;
+  // Facts and guide lack structured API fields. Country-specific FAQs do have
+  // a documented endpoint; failures remain isolated from the country content.
   const demoDetails = isPublicDemoMode() ? (await import("@/lib/mocks/country-details-fixtures")).getDemoCountryDetails(country) : null;
-  const overviewImage = demoDetails?.overviewImage ?? getCountryOverviewImage(country.slug);
-  return <CountryDetails country={country} demoDetails={demoDetails} overviewImage={overviewImage} />;
+  // Overview media is optional. No dedicated public Backend field is approved
+  // yet, so Live must not substitute local/Demo artwork for an Admin image.
+  const overviewImage = demoDetails?.overviewImage ?? null;
+  const faqs = isPublicDemoMode() ? undefined : await getCountryFaqs(country);
+  return <CountryDetails country={country} demoDetails={demoDetails} overviewImage={overviewImage} faqResult={faqs} />;
 }
