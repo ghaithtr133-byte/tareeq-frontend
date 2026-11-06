@@ -1,4 +1,3 @@
-import "server-only";
 import { createDirectoryDemoScholarships } from "@/lib/mocks/scholarship-directory-fixtures";
 
 import { ApiError } from "@/api/error";

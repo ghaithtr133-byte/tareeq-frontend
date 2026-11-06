@@ -4,30 +4,27 @@ import Link from "next/link";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { Country, PublicList, Scholarship, University } from "@/api/public-content";
 import type { LiveUniversityParams } from "@/lib/university-directory-data";
-import { loadRelatedUniversityScholarships } from "@/api/university-related-scholarships";
+import { loadBrowserRelatedUniversityScholarships } from "@/api/university-related-scholarships-browser";
 import { nextRelatedScholarshipPage, universityScholarshipParams } from "@/lib/university-related-scholarships";
 import { DirectoryScholarshipCard } from "@/components/public/university-directory-cards";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 import { EmptyState, ErrorState } from "@/components/ui/content-state";
 import { SkeletonResults } from "@/components/public/content-skeletons";
 
-export function LiveUniversityRelatedScholarships({ criteria, initial, countries, universities }: { criteria: LiveUniversityParams; initial: PublicList<Scholarship> | null; countries: Country[]; universities: University[] }) {
+export function LiveUniversityRelatedScholarships({ criteria, initial = null, countries, universities }: { criteria: LiveUniversityParams; initial?: PublicList<Scholarship> | null; countries: Country[]; universities: University[] }) {
   const query = useInfiniteQuery({
     queryKey: ["university-search-scholarships", universityScholarshipParams(criteria, 1)],
     gcTime: 0,
     staleTime: 60_000,
     initialPageParam: 1,
-    enabled: !!initial,
     queryFn: async ({ pageParam }) => {
-      const response = await loadRelatedUniversityScholarships(criteria, pageParam);
-      if (!response.ok) throw Error("تعذر تحميل المنح المرتبطة");
-      return response.data;
+      return loadBrowserRelatedUniversityScholarships(criteria, pageParam);
     },
     getNextPageParam: nextRelatedScholarshipPage,
     initialData: initial ? { pages: [initial], pageParams: [1] } : undefined,
   });
   const items = [...new Map((query.data?.pages ?? []).flatMap((page) => page.items).map((item) => [item.id, item])).values()];
-  const failed = query.isError || query.isFetchNextPageError || (!initial && !query.data && !query.isFetching);
+  const failed = query.isError || query.isFetchNextPageError;
   return <>
     {query.isFetching && !items.length ? <div className="mt-6"><SkeletonResults kind="scholarship" count={4} label="جارٍ تحميل المنح المرتبطة…" /></div> : null}
     {items.length ? <BalancedCardGrid className="mt-6" columns={{ sm: 2 }} gap={4}>{items.map((item) => {

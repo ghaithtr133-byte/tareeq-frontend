@@ -1,101 +1,21 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { innerPageHero } from "@/lib/inner-page-hero";
 import Link from "next/link";
-import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
-import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import {
-  getCountries,
-  getScholarships,
-  getUniversities,
-  type Country,
-  type University,
-} from "@/api/public-content";
 import { Container } from "@/components/layout/container";
-import { ScholarshipDirectoryCard } from "@/components/public/scholarship-directory-card";
-import { ScholarshipDirectoryFilters } from "@/components/public/scholarship-directory-filters";
-import { ScholarshipDirectoryPagination } from "@/components/public/scholarship-directory-pagination";
-import {
-  directoryScholarshipParams,
-  scholarshipDirectoryHref,
-  scholarshipFilterValues,
-} from "@/lib/scholarship-directory";
-import type { RouteSearchParams } from "@/lib/public-search-params";
-import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
-import { parseScholarshipDirectory, scholarshipLookup, joinScholarshipDirectory } from "@/lib/scholarship-directory-live";
-import { EmptyState } from "@/components/ui/content-state";
-import { HomeSectionError } from "@/components/home/home-section-error";
+import { ScholarshipsDirectoryLive } from "@/components/public/scholarships-directory-live";
+import { SkeletonResults } from "@/components/public/content-skeletons";
 
-export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata(
   "المنح الدراسية",
   "تصفح أحدث المنح الدراسية المتوفرة من جامعات وحكومات حول العالم وابدأ رحلتك الأكاديمية الآن.",
   { index: true, pathname: "/scholarships" },
 );
 
-export default async function ScholarshipsPage({
-  searchParams,
-}: {
-  searchParams: Promise<RouteSearchParams>;
-}) {
-  const params = directoryScholarshipParams(await searchParams);
-  const values = scholarshipFilterValues(params);
-  const demo = isPublicDemoMode();
-  const [scholarships, countries, universities] = await Promise.allSettled([
-    getScholarships(params).then((data) => demo ? data : parseScholarshipDirectory(data, params.page ?? 1)),
-    getCountries({ limit: 50, sort: "manual" }).then((data) => demo ? data : scholarshipLookup<Country>(data)),
-    getUniversities({ limit: 50, sort: "name" }).then((data) => demo ? data : scholarshipLookup<University>(data)),
-  ]);
-  const result =
-    scholarships.status === "fulfilled" ? scholarships.value : null;
-  const items = result ? demo ? result.items : joinScholarshipDirectory(result.items,
-    countries.status === "fulfilled" ? countries.value.items : [],
-    universities.status === "fulfilled" ? universities.value.items : []) : [];
-  const filtered = ["search", "country", "university", "studyLevel", "fundingType", "applicationStatus", "featured"].some((key) => values[key as keyof typeof values]);
-  const lookupNotices = [
-    countries.status === "fulfilled" && countries.value.pagination.total > countries.value.items.length ? "قائمة الدول محدودة بأول 50 دولة منشورة؛ قد لا تظهر بعض الخيارات." : "",
-    universities.status === "fulfilled" && universities.value.pagination.total > universities.value.items.length ? "قائمة الجامعات محدودة بأول 50 جامعة منشورة؛ قد لا تظهر بعض الخيارات." : "",
-  ].filter(Boolean);
-  if (
-    result &&
-    (params.page ?? 1) > Math.max(1, result.pagination.totalPages)
-  ) {
-    redirect(
-      scholarshipDirectoryHref(
-        values,
-        Math.max(1, result.pagination.totalPages),
-      ),
-    );
-  }
-  // Demo display choices and media stay server-side, outside the Live API contract.
-  const demoContent = demo
-    ? (await import("@/lib/mocks/public-demo-content")).publicDemoContent
-    : null;
-  const media = demo
-    ? (await import("@/lib/mocks/scholarship-directory-fixtures"))
-        .demoScholarshipMedia
-    : {};
-  const demoOptions = demoContent
-    ? {
-        studyLevel: [
-          ...new Set(
-            demoContent.scholarships
-              .map((item) => item.studyLevel)
-              .filter(Boolean),
-          ),
-        ].map((value) => ({ value, label: value })),
-        fundingType: [
-          ...new Set(
-            demoContent.scholarships
-              .map((item) => item.fundingType)
-              .filter(Boolean),
-          ),
-        ].map((value) => ({ value, label: value })),
-      }
-    : undefined;
-
+export default function ScholarshipsPage() {
   return (
     <main className="bg-[#F8FAFC]">
       <section
@@ -140,70 +60,7 @@ export default async function ScholarshipsPage({
         </Container>
       </section>
       <Container className="py-4 sm:py-5">
-        <ScholarshipDirectoryFilters
-          values={values}
-          countries={
-            countries.status === "fulfilled"
-              ? countries.value.items.map((item) => ({
-                  value: item.slug,
-                  label: item.nameAr,
-                }))
-              : []
-          }
-          universities={
-            universities.status === "fulfilled"
-              ? universities.value.items.map((item) => ({
-                  value: item.slug,
-                  label: item.nameAr,
-                }))
-              : []
-          }
-          demoOptions={demoOptions}
-          lookupNotices={lookupNotices}
-          optionError={
-            countries.status === "rejected" ||
-            universities.status === "rejected"
-          }
-        >
-          <section
-            id="scholarship-results"
-            aria-label="نتائج المنح الدراسية"
-            className="scroll-mt-28"
-          >
-              <p className="py-4 text-sm text-muted-foreground" role="status">
-                {result ? <>تم العثور على{" "}
-                <strong className="font-bold text-[#17669C]">
-                  {result.pagination.total}
-                </strong>{" "}
-                منحة دراسية</> : "نتائج المنح الدراسية"}
-              </p>
-            {!result ? (
-              <HomeSectionError title="تعذّر تحميل المنح الدراسية" description="حدثت مشكلة أثناء جلب المنح المنشورة. يرجى المحاولة مجدداً." />
-            ) : items.length ? (
-              <BalancedCardGrid columns={{ md: 2, lg: 3 }}>
-                {items.map((item) => (
-                  <ScholarshipDirectoryCard
-                    key={item.id}
-                    scholarship={item}
-                    media={demo ? media[item.slug] : undefined}
-                    variant="directory"
-                    live={!demo}
-                  />
-                ))}
-              </BalancedCardGrid>
-            ) : (
-              <EmptyState title={filtered ? "لا توجد منح دراسية تطابق البحث" : "لا توجد منح دراسية منشورة حالياً"}
-                description={filtered ? "جرّب تغيير كلمات البحث أو إزالة بعض الفلاتر." : "ستظهر المنح الدراسية هنا عند نشرها."}
-                action={filtered ? <Link href="/scholarships">مسح الفلاتر</Link> : undefined} />
-            )}
-            {result ? (
-              <ScholarshipDirectoryPagination
-                pagination={result.pagination}
-                values={values}
-              />
-            ) : null}
-          </section>
-        </ScholarshipDirectoryFilters>
+        <Suspense fallback={<SkeletonResults kind="scholarship" label="جارٍ تحميل المنح الدراسية…" />}><ScholarshipsDirectoryLive /></Suspense>
         <ConsultationCta className="mb-4 mt-8" titleId="scholarships-contact-title" title="تحتاج مساعدة في التقديم على المنح الدراسية؟" description="فريقنا جاهز لمساعدتك في اختيار الفرص المناسبة وتجهيز طلبك باحترافية." backgroundImage="/images/footer/footer-skyline.png" action={
             <Link
               href="/contact"

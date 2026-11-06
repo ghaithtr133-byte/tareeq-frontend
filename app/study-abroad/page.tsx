@@ -1,23 +1,14 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
-import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getCountries } from "@/api/public-content";
 import { Container } from "@/components/layout/container";
-import { StudyAbroadCountryCards } from "@/components/public/study-abroad-country-cards";
-import { StudyAbroadFilters } from "@/components/public/study-abroad-filters";
-import { StudyAbroadPagination } from "@/components/public/study-abroad-pagination";
-import {
-  countriesParams,
-  type RouteSearchParams,
-} from "@/lib/public-search-params";
+import { StudyAbroadDirectoryLive } from "@/components/public/study-abroad-directory-live";
+import { SkeletonResults } from "@/components/public/content-skeletons";
 import { createPageMetadata } from "@/lib/seo";
 import { innerPageHero } from "@/lib/inner-page-hero";
-import { parseDestinationDirectory } from "@/lib/study-abroad-directory-data";
-import { EmptyState, ErrorState } from "@/components/ui/content-state";
 
-export const dynamic = "force-dynamic";
 const pageContainerClass = "2xl:max-w-[112rem]";
 export const metadata = createPageMetadata(
   "الوجهات الدراسية",
@@ -25,53 +16,7 @@ export const metadata = createPageMetadata(
   { index: true, pathname: "/study-abroad" },
 );
 
-export default async function StudyAbroadPage({
-  searchParams,
-}: {
-  searchParams: Promise<RouteSearchParams>;
-}) {
-  const raw = await searchParams;
-  const parsed = countriesParams(raw);
-  const params = {
-    search:
-      parsed.search && parsed.search.length <= 200 ? parsed.search : undefined,
-    featured: parsed.featured === "true" ? "true" : undefined,
-    sort: parsed.sort ?? "manual",
-    page: parsed.page,
-    limit: 6,
-  } as const;
-  const values = {
-    search: params.search ?? "",
-    featured: params.featured === "true",
-    sort: params.sort,
-  } as const;
-  const countries = await getCountries(params).then(parseDestinationDirectory).catch(() => undefined);
-  const paginationParams: RouteSearchParams = {
-    ...(params.search ? { search: params.search } : {}),
-    ...(params.featured ? { featured: params.featured } : {}),
-    ...(params.sort !== "manual" ? { sort: params.sort } : {}),
-  };
-  const retryQuery = new URLSearchParams({
-    ...(params.search ? { search: params.search } : {}),
-    ...(params.featured ? { featured: params.featured } : {}),
-    ...(params.sort !== "manual" ? { sort: params.sort } : {}),
-    ...(params.page ? { page: String(params.page) } : {}),
-  }).toString();
-
-  if (
-    countries &&
-    countries.pagination.totalPages > 0 &&
-    (params.page ?? 1) > countries.pagination.totalPages
-  ) {
-    const query = new URLSearchParams({
-      ...(params.search ? { search: params.search } : {}),
-      ...(params.featured ? { featured: params.featured } : {}),
-      ...(params.sort !== "manual" ? { sort: params.sort } : {}),
-      page: String(countries.pagination.totalPages),
-    }).toString();
-    redirect(`/study-abroad?${query}`);
-  }
-
+export default function StudyAbroadPage() {
   return (
     <main className="bg-[#F8FAFC]">
       <section
@@ -117,62 +62,7 @@ export default async function StudyAbroadPage({
         </Container>
       </section>
       <Container className={`${pageContainerClass} py-3 sm:py-4`}>
-        <StudyAbroadFilters values={values}>
-          <section
-            id="destination-results"
-            aria-label="نتائج الوجهات الدراسية"
-            className="mt-3 scroll-mt-28"
-          >
-            {countries ? (
-             
-                 <p className="py-4 text-sm text-muted-foreground">
-                تم العثور على{" "}
-                <strong className="font-bold text-[#17669C]">
-                  {countries.pagination.total}
-                </strong>{" "}
-               وجهات دراسية
-              </p>
-            ) : null}
-            {!countries ? (
-              <ErrorState
-                className="mt-3"
-                variant="section"
-                title="يتعذر تحميل الوجهات حاليًا"
-                description="تعذر تحميل الوجهات المنشورة. يرجى المحاولة مجدداً."
-                action={<a
-                  href={
-                    retryQuery ? `/study-abroad?${retryQuery}` : "/study-abroad"
-                  }
-                  className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-[#17669C] hover:text-[#A47B2D]"
-                >
-                  إعادة المحاولة
-                </a>}
-              />
-            ) : countries.items.length ? (
-              <StudyAbroadCountryCards countries={countries.items} />
-            ) : (
-              <EmptyState
-                className="mt-3"
-                variant="section"
-                title={params.search || params.featured ? "لا توجد وجهات تطابق البحث" : "لا توجد وجهات منشورة حالياً"}
-                description={params.search || params.featured ? "جرّب تغيير كلمات البحث أو إزالة التصفية." : "يمكنك العودة لاحقاً للاطلاع على الوجهات المنشورة الجديدة."}
-                action={<Link
-                  href="/study-abroad"
-                  className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-[#17669C] hover:text-[#A47B2D]"
-                >
-                  مسح التصفية
-                </Link>}
-              />
-            )}
-            {countries ? (
-              <StudyAbroadPagination
-                pathname="/study-abroad"
-                params={paginationParams}
-                pagination={countries.pagination}
-              />
-            ) : null}
-          </section>
-        </StudyAbroadFilters>
+        <Suspense fallback={<SkeletonResults kind="country" label="جارٍ تحميل الوجهات الدراسية…" />}><StudyAbroadDirectoryLive /></Suspense>
         <ConsultationCta className="mt-8" titleId="destinations-cta-title" title="طموحك يتجاوز القارات؟" description="دعنا نساعدك في اكتشاف الوجهة الدراسية الأنسب لطموحك وتخصصك، واستكشاف الجامعات والمنح المتاحة فيها." backgroundImage="/images/study-abroad/destinations-cta.png" action={
             <Link
               href="/universities"

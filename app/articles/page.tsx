@@ -1,61 +1,19 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { innerPageHero } from "@/lib/inner-page-hero";
 import Link from "next/link";
-import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
-import { redirect } from "next/navigation";
-import { getArticles, getCountries } from "@/api/public-content";
 import { Container } from "@/components/layout/container";
-import { ArticleDirectoryCard } from "@/components/public/article-directory-card";
-import { ArticleDirectoryFilters } from "@/components/public/article-directory-filters";
-import { ArticleDirectoryPagination } from "@/components/public/article-directory-pagination";
-import {
-  articleDirectoryHref,
-  articleFilterValues,
-  directoryArticleParams,
-  editorialArticles,
-} from "@/lib/article-directory";
-import { isPublicDemoMode } from "@/lib/public-content-mode";
-import type { RouteSearchParams } from "@/lib/public-search-params";
 import { createPageMetadata } from "@/lib/seo";
-import { parseArticleDirectory, parseArticleCountries } from "@/lib/article-directory-live";
-import { EmptyState } from "@/components/ui/content-state";
-import { HomeSectionError } from "@/components/home/home-section-error";
-// Approved same-record editorial text only, visibly marked by the Live parser; never collection/error fallback.
-import { publicDemoContent } from "@/lib/mocks/public-demo-content";
+import { ArticlesDirectoryLive } from "@/components/public/articles-directory-live";
+import { SkeletonResults } from "@/components/public/content-skeletons";
 
-export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata(
   "المقالات",
   "مقالات ونصائح تعليمية تساعدك في رحلتك الأكاديمية والاستعداد للدراسة في الخارج.",
   { index: true, pathname: "/articles" },
 );
 
-export default async function ArticlesPage({
-  searchParams,
-}: {
-  searchParams: Promise<RouteSearchParams>;
-}) {
-  const params = directoryArticleParams(await searchParams);
-  const values = articleFilterValues(params);
-  const demo = isPublicDemoMode();
-  const [articles, countries] = await Promise.allSettled([
-    getArticles(params).then((data) => demo ? data : parseArticleDirectory(data, params.page ?? 1, publicDemoContent.articles)),
-    getCountries({ limit: 50, sort: "manual" }).then((data) => demo ? data : parseArticleCountries(data)),
-  ]);
-  const result = articles.status === "fulfilled" ? articles.value : null;
-  if (result && params.page! > Math.max(1, result.pagination.totalPages))
-    redirect(
-      articleDirectoryHref(values, Math.max(1, result.pagination.totalPages)),
-    );
-  let items = result?.items ?? [];
-  if (demo) {
-    const { withDemoArticleDirectoryMedia } =
-      await import("@/lib/mocks/article-directory-fixtures");
-    items = withDemoArticleDirectoryMedia(items);
-  }
-  // Original editorial treatment partitions THIS server page, not a second catalog or guessed featured list.
-  const editorial = editorialArticles(items, !demo);
-  const filtered = Object.values(values).some(Boolean);
+export default function ArticlesPage() {
   return (
     <main className="bg-[#F6F8FB] pb-8 text-primary">
       <section
@@ -106,79 +64,7 @@ export default async function ArticlesPage({
         </Container>
       </section>
       <Container className="pt-3 sm:pt-4">
-        <ArticleDirectoryFilters
-          values={values}
-          countries={
-            countries.status === "fulfilled"
-              ? countries.value.items.map((country) => ({
-                  value: country.slug,
-                  label: country.nameAr,
-                }))
-              : []
-          }
-          optionError={countries.status === "rejected"}
-          optionLimited={countries.status === "fulfilled" && countries.value.pagination.total > countries.value.items.length}
-        >
-          <section
-            id="article-results"
-            aria-label="نتائج المقالات"
-            className="scroll-mt-28 pt-2"
-          >
-              <p className="mb-2 text-right text-sm leading-6 text-muted-foreground" role="status">
-                {result ? <>تم العثور على{" "}
-                <strong className="font-bold text-[#17669C]">
-                  {result.pagination.total}
-                </strong>{" "}
-                مقال</> : "نتائج المقالات"}
-              </p>
-            {!result ? (
-              <HomeSectionError title="يتعذر تحميل المقالات حالياً" description="حدثت مشكلة أثناء جلب المقالات المنشورة. يرجى المحاولة مجدداً." />
-            ) : items.length ? (
-              <>
-                {editorial.featured.length ? (
-                  <BalancedCardGrid
-                    data-article-featured
-                    columns={{ md: 2 }}
-                  >
-                    {editorial.featured.map((article) => (
-                      <ArticleDirectoryCard
-                        key={article.id}
-                        article={article}
-                        prominent
-                        live={!demo}
-                      />
-                    ))}
-                  </BalancedCardGrid>
-                ) : null}
-                {editorial.regular.length ? (
-                  <BalancedCardGrid
-                    data-article-grid
-                    columns={{ md: 2, xl: 4 }}
-                    className={editorial.featured.length ? "mt-5" : ""}
-                  >
-                    {editorial.regular.map((article) => (
-                      <ArticleDirectoryCard
-                        key={article.id}
-                        article={article}
-                        live={!demo}
-                      />
-                    ))}
-                  </BalancedCardGrid>
-                ) : null}
-              </>
-            ) : (
-              <EmptyState title={filtered ? "لا توجد مقالات تطابق بحثك" : "لا توجد مقالات منشورة حالياً"}
-                description={filtered ? "جرّب كلمات بحث أخرى أو أزل بعض الفلاتر." : "ستظهر المقالات هنا عند نشرها."}
-                action={filtered ? <Link href="/articles">مسح الفلاتر</Link> : undefined} />
-            )}
-            {result ? (
-              <ArticleDirectoryPagination
-                pagination={result.pagination}
-                values={values}
-              />
-            ) : null}
-          </section>
-        </ArticleDirectoryFilters>
+        <Suspense fallback={<SkeletonResults kind="article" label="جارٍ تحميل المقالات…" />}><ArticlesDirectoryLive /></Suspense>
       </Container>
     </main>
   );
