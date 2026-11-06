@@ -40,7 +40,7 @@ const ui = {
   "next/image": ({ src, alt, className, style }) => React.createElement("img", { src, alt, className, style }),
   "next/navigation": { useRouter: () => ({ refresh() {} }), notFound: () => { throw Error("NOT_FOUND"); } },
   "@tanstack/react-query": { useInfiniteQuery: (options) => ({ data: options.initialData, isFetching: false, isError: false }) },
-  "@/api/service-faq-actions": { loadServiceFaqs: async () => ({ ok: true, data: { items: [], pagination: { page: 1, limit: 5, total: 0, totalPages: 0 } } }) },
+  "@/lib/api-client/service-faq-actions": { loadServiceFaqs: async () => ({ ok: true, data: { items: [], pagination: { page: 1, limit: 5, total: 0, totalPages: 0 } } }) },
 };
 
 test("all nine existing Demo service records resolve through the guard, without invented slug aliases", async () => {
@@ -94,7 +94,7 @@ test("dynamic template supports every Demo service using one detail request and 
   const items = (await demo.getDemoServices({ limit: 50, sort: "manual" })).items;
   const calls = [];
   const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true },
-    "@/api/public-content": { getService: async (slug) => { calls.push(slug); return demo.getDemoService(slug); }, getServices: async (params) => { assert.deepEqual(params, { limit: 4, sort: "manual" }); return demo.getDemoServices(params); } },
+    "@/lib/api-client/public-content": { getService: async (slug) => { calls.push(slug); return demo.getDemoService(slug); }, getServices: async (params) => { assert.deepEqual(params, { limit: 4, sort: "manual" }); return demo.getDemoServices(params); } },
   });
   const Page = local("app/services/[slug]/page.tsx").default;
   for (const service of items) {
@@ -116,7 +116,7 @@ test("Live generic slugs use API content with no Demo steps, benefits or FAQ and
   const service = { ...source, id: "live-42", slug: "custom-published-service", titleAr: "خدمة منشورة جديدة", summaryAr: "ملخص المصدر", descriptionAr: "الفقرة الأولى\n\n<script>alert(1)</script>", imageUrl: null };
   let fixtureCalls = 0;
   const local = loader({ ...ui,
-    "@/api/public-content": { getService: async () => service, getServices: async () => ({ items: [], pagination: { page: 1, limit: 4, total: 0, totalPages: 0 } }) },
+    "@/lib/api-client/public-content": { getService: async () => service, getServices: async () => ({ items: [], pagination: { page: 1, limit: 4, total: 0, totalPages: 0 } }) },
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
     "@/lib/mocks/service-detail-fixtures": { demoServiceDetails: () => { fixtureCalls += 1; throw Error("must not call"); } },
   });
@@ -132,13 +132,13 @@ test("Live generic slugs use API content with no Demo steps, benefits or FAQ and
 });
 test("404 and draft responses cannot render service details, while network errors do not fabricate Demo content", async () => {
   const source = await demo.getDemoService("major-selection");
-  const { ApiError } = load("api/error.ts");
+  const { ApiError } = load("lib/api-client/error.ts");
   for (const getService of [async () => { throw new ApiError(404, "missing"); }, async () => ({ ...source, status: "DRAFT" })]) {
-    const local = loader({ ...ui, "@/api/error": { ApiError }, "@/api/public-content": { getService } });
+    const local = loader({ ...ui, "@/lib/api-client/error": { ApiError }, "@/lib/api-client/public-content": { getService } });
     await assert.rejects(local("app/services/[slug]/page.tsx").default({ params: Promise.resolve({ slug: "missing" }) }), /NOT_FOUND/);
     await assert.rejects(local("app/services/[slug]/page.tsx").generateMetadata({ params: Promise.resolve({ slug: "missing" }) }), /NOT_FOUND/);
   }
-  const fail = loader({ ...ui, "@/api/public-content": { getService: async () => { throw Error("offline"); } } });
+  const fail = loader({ ...ui, "@/lib/api-client/public-content": { getService: async () => { throw Error("offline"); } } });
   const html = renderToStaticMarkup(await fail("app/services/[slug]/page.tsx").default({ params: Promise.resolve({ slug: "actual-slug" }) }));
   assert.ok(html.includes("تعذّر تحميل معلومات الخدمة"));
   assert.ok(html.includes("إعادة المحاولة"));
@@ -148,7 +148,7 @@ test("metadata uses authoritative SEO fields and canonical slug without inventin
   const source = await demo.getDemoService("major-selection");
   const service = { ...source, slug: "source-slug", seoTitleAr: "عنوان معتمد", seoDescriptionAr: "وصف معتمد" };
   let args;
-  const local = loader({ ...ui, "@/api/public-content": { getService: async () => service }, "@/lib/seo": { createPageMetadata: (...value) => { args = value; return {}; } } });
+  const local = loader({ ...ui, "@/lib/api-client/public-content": { getService: async () => service }, "@/lib/seo": { createPageMetadata: (...value) => { args = value; return {}; } } });
   await local("app/services/[slug]/page.tsx").generateMetadata({ params: Promise.resolve({ slug: "source-slug" }) });
   assert.equal(args[0], service.seoTitleAr);
   assert.equal(args[1], service.seoDescriptionAr);
@@ -175,7 +175,7 @@ test("hero and compact consultation keep contextual WhatsApp without a duplicate
 });
 
 test("Live directory API failure shows shared retry state without static cards or fabricated slugs", async () => {
-  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "next/navigation": { useRouter: () => ({ refresh() {} }) }, "@/api/public-content": { getServices: async () => { throw Error("offline"); } } });
+  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "next/navigation": { useRouter: () => ({ refresh() {} }) }, "@/lib/api-client/public-content": { getServices: async () => { throw Error("offline"); } } });
   const html = renderToStaticMarkup(await local("app/services/page.tsx").default({ searchParams: Promise.resolve({}) }));
   assert.equal((html.match(/data-service-card=/g) ?? []).length, 0);
   assert.ok(html.includes("تعذّر تحميل الخدمات"));
@@ -188,8 +188,8 @@ const collection = (items = [], limit = 4, page = 1, total = items.length) => ({
 test("Published service detail projections omit status safely, retain exact identity, and use real media rather than admission Demo art", async () => {
   const base = await demo.getDemoService("university-admissions");
   const raw = { ...base, status: undefined, imageUrl: "https://media.example.test/official.jpg", imageAltAr: "الصورة المعتمدة" };
-  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getService: async () => raw } });
-  const parsed = await local("api/service-detail.ts").getPublishedServiceDetail(raw.slug);
+  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getService: async () => raw } });
+  const parsed = await local("lib/api-client/service-detail.ts").getPublishedServiceDetail(raw.slug);
   assert.equal(parsed.status, "PUBLISHED");
   assert.equal(parsed.titleAr, raw.titleAr);
   const media = local("lib/service-detail-live.ts").realServiceMedia(parsed);
@@ -203,7 +203,7 @@ test("Published service detail projections omit status safely, retain exact iden
 });
 
 test("Same-service temporary steps preserve original variable counts and never borrow from another slug or reuse directory process", async () => {
-  const api = load("api/service-detail.ts");
+  const api = load("lib/api-client/service-detail.ts");
   for (const slug of ["university-admissions", "major-selection"]) {
     const original = await demo.getDemoService(slug);
     const current = { ...original, id: "live-id", summaryAr: "", descriptionAr: "" };
@@ -226,8 +226,8 @@ test("Same-service temporary steps preserve original variable counts and never b
 test("Invalid/unpublished/mismatched service records are rejected, and malformed alternatives are errors rather than empty content", async () => {
   let requested = 0;
   let raw = { ...(await demo.getDemoService("major-selection")), status: undefined };
-  const scoped = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getService: async () => { requested++; return raw; } } });
-  const api = scoped("api/service-detail.ts");
+  const scoped = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getService: async () => { requested++; return raw; } } });
+  const api = scoped("lib/api-client/service-detail.ts");
   for (const slug of ["../wrong", "", "Wrong", "x".repeat(121)]) await assert.rejects(api.getPublishedServiceDetail(slug), { status: 404 });
   assert.equal(requested, 0);
   for (const status of ["DRAFT", "ARCHIVED"]) { raw = { ...raw, status }; await assert.rejects(api.getPublishedServiceDetail("major-selection"), { status: 404 }); }
@@ -243,8 +243,8 @@ test("SERVICE FAQs use only the documented canonical parent and independent page
   let mode = false;
   let response = collection([{ id: "faq-one", scope: "SERVICE", questionAr: "سؤال الخدمة", answerAr: "إجابة الخدمة" }], 5);
   const calls = [];
-  const scoped = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => mode }, "@/api/server-client": { serverApiClient: { get: async (url, config) => { calls.push({ url, config }); return { data: { success: true, data: response } }; } } } });
-  const { loadServiceFaqs } = scoped("api/service-faq-actions.ts");
+  const scoped = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => mode }, "@/lib/api-client/server-client": { serverApiClient: { get: async (url, config) => { calls.push({ url, config }); return { data: { success: true, data: response } }; } } } });
+  const { loadServiceFaqs } = scoped("lib/api-client/service-faq-actions.ts");
   const result = await loadServiceFaqs("actual-service");
   assert.equal(result.ok, true);
   assert.equal(result.data.items[0].question, "سؤال الخدمة");
@@ -264,7 +264,7 @@ test("SERVICE FAQs use only the documented canonical parent and independent page
 
 test("Live page isolates alternatives/FAQ failures while retaining real overview, original sections, media geometry and WhatsApp", async () => {
   const base = { ...(await demo.getDemoService("major-selection")), status: undefined, id: "live-id", imageUrl: null, descriptionAr: "الشرح الحقيقي فقط" };
-  const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getService: async () => base, getServices: async () => { throw Error("offline alternatives"); } }, "@/api/service-faq-actions": { loadServiceFaqs: async () => ({ ok: false }) } });
+  const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getService: async () => base, getServices: async () => { throw Error("offline alternatives"); } }, "@/lib/api-client/service-faq-actions": { loadServiceFaqs: async () => ({ ok: false }) } });
   const html = renderToStaticMarkup(await scoped("app/services/[slug]/page.tsx").default({ params: Promise.resolve({ slug: base.slug }) }));
   for (const marker of ["data-service-detail-hero", "data-service-steps", "data-service-benefits", "data-service-faq", "الشرح الحقيقي فقط", "تعذّر تحميل أسئلة الخدمة", "يتعذر تحميل الخدمات الأخرى", "إعادة المحاولة", "صورة الخدمة (غير متوفر حالياً)", "md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]", "xl:grid-cols-[minmax(0,1fr)_17rem]"]) assert.ok(html.includes(marker), marker);
   assert.equal((html.match(/الشرح الحقيقي فقط/g) ?? []).length, 1, "Overview is not mined or duplicated in benefits/process");

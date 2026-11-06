@@ -1,6 +1,6 @@
 "use server";
 
-import { serverApiClient } from "@/api/server-client";
+import { serverApiClient } from "@/lib/api-client/server-client";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { serviceDetailList, serviceText, validServiceSlug, type ServiceFaqResult } from "@/lib/service-detail-live";
 import { homeCardText } from "@/lib/homepage-card-content";

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { loadUniversityPrograms, loadUniversityAdmissions, loadUniversityGallery, loadUniversityFaqs } from "@/api/university-detail-actions";
+import { loadUniversityPrograms, loadUniversityAdmissions, loadUniversityGallery, loadUniversityFaqs } from "@/lib/api-client/university-detail-actions";
 import { UniversityPrograms } from "@/components/public/university-programs";
 import { UniversityDirectoryImage } from "@/components/public/university-directory-image";
 import { FaqAccordion } from "@/components/public/faq-accordion";

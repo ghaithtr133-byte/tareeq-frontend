@@ -1,4 +1,4 @@
-import type { Article } from "@/api/public-content";
+import type { Article } from "@/lib/api-client/public-content";
 
 export function latestOtherArticles(articles: Article[], currentId: string) {
   const seen = new Set([currentId]);

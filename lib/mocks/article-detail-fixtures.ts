@@ -1,4 +1,4 @@
-import type { Article, Scholarship } from "@/api/public-content";
+import type { Article, Scholarship } from "@/lib/api-client/public-content";
 import { publicDemoContent } from "@/lib/mocks/public-demo-content";
 
 /** Explicit Demo-only editorial/relationship examples, never pending Live response fields. */

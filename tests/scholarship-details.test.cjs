@@ -74,8 +74,8 @@ test("Demo submission is isolated and Live only accepts HTTP 201 without falling
   const calls = [];
   let status = 201;
   let failure;
-  const local = loader({ "@/api/client": { browserApiClient: { post: async (...args) => { calls.push(args); if (failure) throw failure; return { status }; } } } });
-  const { submitScholarshipAssistance } = local("api/scholarship-assistance.ts");
+  const local = loader({ "@/lib/api-client/client": { browserApiClient: { post: async (...args) => { calls.push(args); if (failure) throw failure; return { status }; } } } });
+  const { submitScholarshipAssistance } = local("lib/api-client/scholarship-assistance.ts");
   const payload = helpers.scholarshipAssistancePayload(scholarship, valid);
   await submitScholarshipAssistance(payload, true);
   assert.equal(calls.length, 0);
@@ -174,8 +174,8 @@ test("detail route loads the actual slug, preserves metadata, 404, and API-unava
   let requestedSlug;
   class ApiError extends Error { constructor(status) { super("API failure"); this.status = status; } }
   const routeLoad = loader({
-    "@/api/public-content": { getScholarship: async (slug) => { requestedSlug = slug; if (failure) throw failure; return scholarship; } },
-    "@/api/error": { ApiError },
+    "@/lib/api-client/public-content": { getScholarship: async (slug) => { requestedSlug = slug; if (failure) throw failure; return scholarship; } },
+    "@/lib/api-client/error": { ApiError },
     "next/navigation": { useRouter: () => ({ refresh() {} }), notFound: () => { throw new Error("NOT_FOUND"); } },
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
     "@/lib/seo": { createPageMetadata: (title, description, options) => ({ title, description, ...options }) },
@@ -264,12 +264,12 @@ test("Published detail adapter uses the existing client and only necessary bound
   let demoMode = false;
   const country = { id: "c1", slug: "romania", nameAr: "رومانيا" };
   const list = (items) => ({ items, pagination: { page: 1, limit: 50, total: items.length, totalPages: items.length ? 1 : 0 } });
-  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => demoMode }, "@/api/public-content": {
+  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => demoMode }, "@/lib/api-client/public-content": {
     getScholarship: async (slug) => { calls.push(["scholarship", slug]); return record; },
     getCountries: async (params) => { calls.push(["countries", params]); if (failLookup) throw Error("offline"); return list([country]); },
     getUniversities: async (params) => { calls.push(["universities", params]); return list([{ id: "u1", slug: "actual-university", nameAr: "جامعة حقيقية" }]); },
   } });
-  const api = local("api/scholarship-detail.ts");
+  const api = local("lib/api-client/scholarship-detail.ts");
   const joined = await api.getPublishedScholarshipDetail(projected.slug);
   assert.equal(joined.status, "PUBLISHED");
   assert.equal(joined.country.nameAr, "رومانيا");
@@ -296,12 +296,12 @@ test("Published detail adapter uses the existing client and only necessary bound
 });
 
 test("Invalid/unknown/unpublished scholarships are not substituted, and explicit malformed identity is an error", async () => {
-  const { ApiError } = load("api/error.ts");
+  const { ApiError } = load("lib/api-client/error.ts");
   let record = projected;
   let error;
   let calls = 0;
-  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/error": { ApiError }, "@/api/public-content": { getScholarship: async () => { calls++; if (error) throw error; return record; } } });
-  const api = local("api/scholarship-detail.ts");
+  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/error": { ApiError }, "@/lib/api-client/public-content": { getScholarship: async () => { calls++; if (error) throw error; return record; } } });
+  const api = local("lib/api-client/scholarship-detail.ts");
   for (const slug of ["../bad", "", "A-wrong", "x".repeat(121)]) await assert.rejects(api.getPublishedScholarshipDetail(slug), { status: 404 });
   assert.equal(calls, 0);
   for (const status of ["DRAFT", "ARCHIVED"]) { record = { ...projected, status }; await assert.rejects(api.getPublishedScholarshipDetail(projected.slug), { status: 404 }); }

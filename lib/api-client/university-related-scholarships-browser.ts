@@ -1,5 +1,5 @@
-import type { PublicList, Scholarship } from "@/api/public-content";
-import { getBrowserScholarships } from "@/api/public-content-browser";
+import type { PublicList, Scholarship } from "@/lib/api-client/public-content";
+import { getBrowserScholarships } from "@/lib/api-client/public-content-browser";
 import type { LiveUniversityParams } from "@/lib/university-directory-data";
 import { parseRelatedScholarships, universityScholarshipParams } from "@/lib/university-related-scholarships";
 

@@ -47,10 +47,10 @@ test("Live uses only documented SiteSettings and bounded Services clients; it ne
   const calls = [];
   const local = loader({
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
-    "@/api/server-client": { serverApiClient: { get: async (url) => { calls.push(url); assert.equal(url, "/site-settings"); return { data: { success: true, data: { academyNameAr: "اسم الجهة الحقيقي" } } }; } } },
-    "@/api/public-content": { getServices: async (params) => { calls.push(params); return list([service]); } },
+    "@/lib/api-client/server-client": { serverApiClient: { get: async (url) => { calls.push(url); assert.equal(url, "/site-settings"); return { data: { success: true, data: { academyNameAr: "اسم الجهة الحقيقي" } } }; } } },
+    "@/lib/api-client/public-content": { getServices: async (params) => { calls.push(params); return list([service]); } },
   });
-  const result = await local("api/about-page.ts").loadAboutPage();
+  const result = await local("lib/api-client/about-page.ts").loadAboutPage();
   assert.deepEqual(calls, ["/site-settings", { limit: 3, sort: "manual" }]);
   assert.equal(result.demo, false);
   assert.equal(result.profile.status, "unsupported");
@@ -63,10 +63,10 @@ test("Live errors, empty lists and invalid/unpublished services remain distinct 
   for (const raw of [list([]), list([{ ...service, status: "DRAFT" }]), list([{ ...service, slug: "../unsafe" }]), { items: [] }, Error("network")]) {
     const local = loader({
       "@/lib/public-content-mode": { isPublicDemoMode: () => false },
-      "@/api/site-settings": { getContactSettings: async () => { throw Error("identity offline"); } },
-      "@/api/public-content": { getServices: async () => { if (raw instanceof Error) throw raw; return raw; } },
+      "@/lib/api-client/site-settings": { getContactSettings: async () => { throw Error("identity offline"); } },
+      "@/lib/api-client/public-content": { getServices: async () => { if (raw instanceof Error) throw raw; return raw; } },
     });
-    const result = await local("api/about-page.ts").loadAboutPage();
+    const result = await local("lib/api-client/about-page.ts").loadAboutPage();
     assert.equal(result.identity.status, "rejected");
     assert.equal(result.profile.status, "unsupported");
     if (raw.items?.length === 0 && raw.pagination) { assert.equal(result.services.status, "fulfilled"); assert.deepEqual(result.services.value, []); }
@@ -77,9 +77,9 @@ test("Live errors, empty lists and invalid/unpublished services remain distinct 
 test("Demo uses the established Demo source, not Live settings, without an invented About success record", async () => {
   const local = loader({
     "@/lib/public-content-mode": { isPublicDemoMode: () => true },
-    "@/api/server-client": { serverApiClient: { get: async () => { throw Error("Demo must not request Live"); } } },
+    "@/lib/api-client/server-client": { serverApiClient: { get: async () => { throw Error("Demo must not request Live"); } } },
   });
-  const result = await local("api/about-page.ts").loadAboutPage();
+  const result = await local("lib/api-client/about-page.ts").loadAboutPage();
   assert.equal(result.demo, true);
   assert.deepEqual(result.identity.value, {});
   assert.equal(result.profile.status, "unsupported");
@@ -89,9 +89,9 @@ test("Demo uses the established Demo source, not Live settings, without an inven
 test("static About shell uses a bounded public browser services request", async () => {
   const calls = [];
   const local = loader({
-    "@/api/client": { browserApiClient: { get: async (...args) => { calls.push(args); return { data: { success: true, data: list([service]) } }; } } },
+    "@/lib/api-client/client": { browserApiClient: { get: async (...args) => { calls.push(args); return { data: { success: true, data: list([service]) } }; } } },
   });
-  const services = await local("api/public-services-browser.ts").getBrowserAboutServices();
+  const services = await local("lib/api-client/public-services-browser.ts").getBrowserAboutServices();
   assert.equal(services[0].titleAr, service.titleAr);
   assert.deepEqual(calls, [["/services", { params: { limit: 3, sort: "manual" }, withCredentials: false, timeout: 15000 }]]);
   const page = fs.readFileSync(path.resolve(__dirname, "..", "app/about/page.tsx"), "utf8");

@@ -1,5 +1,5 @@
 import "server-only";
-import type { Service } from "@/api/public-content";
+import type { Service } from "@/lib/api-client/public-content";
 import { emptyServiceExtras, type ServiceDetailExtras } from "@/lib/service-details";
 
 // Illustrative service-specific journeys. Never consumed in Live Mode or added to the API schema.

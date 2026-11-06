@@ -1,4 +1,4 @@
-import type { PublicList, Scholarship, ScholarshipListParams } from "@/api/public-content";
+import type { PublicList, Scholarship, ScholarshipListParams } from "@/lib/api-client/public-content";
 import type { LiveUniversityParams } from "@/lib/university-directory-data";
 import { liveUniversityFilters } from "@/lib/university-directory-data";
 

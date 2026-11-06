@@ -1,13 +1,13 @@
 import "server-only";
 import { cache } from "react";
-import { getService } from "@/api/public-content";
-import { ApiError } from "@/api/error";
+import { getService } from "@/lib/api-client/public-content";
+import { ApiError } from "@/lib/api-client/error";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { parsePublishedService, validServiceSlug } from "@/lib/service-detail-live";
 import { publicDemoContent } from "@/lib/mocks/public-demo-content";
 import { demoServiceDetails } from "@/lib/mocks/service-detail-fixtures";
 import { homeCardText } from "@/lib/homepage-card-content";
-import type { Service, PublicList } from "@/api/public-content";
+import type { Service, PublicList } from "@/lib/api-client/public-content";
 import type { ServiceDetailExtras } from "@/lib/service-details";
 import { serviceDetailList } from "@/lib/service-detail-live";
 

@@ -1,4 +1,4 @@
-import type { UniversityListParams } from "@/api/public-content";
+import type { UniversityListParams } from "@/lib/api-client/public-content";
 import { publicDemoContent } from "@/lib/mocks/public-demo-content";
 
 // These illustrative program records belong only to the demo directory.

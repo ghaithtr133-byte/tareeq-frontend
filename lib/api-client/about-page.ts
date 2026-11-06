@@ -1,11 +1,11 @@
 import "server-only";
 import { cache } from "react";
-import { getServices } from "@/api/public-content";
-import { getContactSettings } from "@/api/site-settings";
+import { getServices } from "@/lib/api-client/public-content";
+import { getContactSettings } from "@/lib/api-client/site-settings";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { parsePublishedService, serviceDetailList } from "@/lib/service-detail-live";
 import type { AboutProfileState } from "@/lib/about-content";
-import type { Service } from "@/api/public-content";
+import type { Service } from "@/lib/api-client/public-content";
 import type { ContactSettings } from "@/lib/contact";
 
 export const loadAboutPage = cache(async (): Promise<{ demo: boolean; profile: AboutProfileState; identity: PromiseSettledResult<ContactSettings>; services: PromiseSettledResult<Service[]> }> => {

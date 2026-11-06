@@ -1,9 +1,9 @@
-import { browserApiClient } from "@/api/client";
+import { browserApiClient } from "@/lib/api-client/client";
 import type {
   Article, ArticleListParams, Country, CountryListParams, PublicList,
   Scholarship, ScholarshipListParams, Service, ServiceListParams,
   University, UniversityListParams,
-} from "@/api/public-content";
+} from "@/lib/api-client/public-content";
 import {
   getDemoArticles, getDemoCountries, getDemoScholarships, getDemoServices,
   getDemoUniversities,

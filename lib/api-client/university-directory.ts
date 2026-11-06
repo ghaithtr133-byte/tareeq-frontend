@@ -1,5 +1,5 @@
 import "server-only";
-import { serverApiClient } from "@/api/server-client";
+import { serverApiClient } from "@/lib/api-client/server-client";
 import { parseUniversityFacets, type LiveUniversityParams } from "@/lib/university-directory-data";
 
 export async function getUniversityFilterOptions(params: LiveUniversityParams) {

@@ -1,4 +1,4 @@
-import type { PublicList, Service } from "@/api/public-content";
+import type { PublicList, Service } from "@/lib/api-client/public-content";
 import { homeImageUrl } from "@/lib/homepage-data";
 import { approvedHomeCardCopy, homeCardText } from "@/lib/homepage-card-content";
 import { publicServices, type PublicService } from "@/lib/public-services";

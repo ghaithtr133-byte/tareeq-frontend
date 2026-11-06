@@ -1,4 +1,4 @@
-import type { Article, Country, PublicList } from "@/api/public-content";
+import type { Article, Country, PublicList } from "@/lib/api-client/public-content";
 import { homeCardText } from "@/lib/homepage-card-content";
 import { articleImageSource } from "@/lib/article-directory";
 

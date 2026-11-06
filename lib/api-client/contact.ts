@@ -1,5 +1,5 @@
-import { browserApiClient } from "@/api/client";
-import { ApiError } from "@/api/error";
+import { browserApiClient } from "@/lib/api-client/client";
+import { ApiError } from "@/lib/api-client/error";
 import type { InquiryPayload } from "@/lib/contact";
 
 export async function submitInquiry(payload: InquiryPayload, demo: boolean) {

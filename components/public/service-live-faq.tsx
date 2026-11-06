@@ -1,6 +1,6 @@
 "use client";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { loadServiceFaqs } from "@/api/service-faq-actions";
+import { loadServiceFaqs } from "@/lib/api-client/service-faq-actions";
 import type { ServiceFaqResult } from "@/lib/service-detail-live";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { EmptyState, ErrorState } from "@/components/ui/content-state";

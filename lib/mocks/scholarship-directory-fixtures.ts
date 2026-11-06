@@ -1,4 +1,4 @@
-import type { Country, Scholarship } from "@/api/public-content";
+import type { Country, Scholarship } from "@/lib/api-client/public-content";
 
 // Fictional directory examples only. These slugs also keep Demo detail navigation valid.
 export const directoryDemoScholarshipSlugs = [

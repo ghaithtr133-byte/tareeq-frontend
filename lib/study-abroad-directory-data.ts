@@ -1,4 +1,4 @@
-import type { Country, Pagination, PublicList } from "@/api/public-content";
+import type { Country, Pagination, PublicList } from "@/lib/api-client/public-content";
 import { approvedHomeCardCopy, homeCardText } from "@/lib/homepage-card-content";
 
 // Actual public list projection omits status/createdAt/updatedAt. The endpoint

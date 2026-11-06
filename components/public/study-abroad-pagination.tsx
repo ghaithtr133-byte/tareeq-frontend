@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Pagination } from "@/api/public-content";
+import type { Pagination } from "@/lib/api-client/public-content";
 import { queryString, type RouteSearchParams } from "@/lib/public-search-params";
 
 type PageItem = number | "ellipsis-start" | "ellipsis-end";

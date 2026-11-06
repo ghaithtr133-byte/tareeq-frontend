@@ -56,7 +56,7 @@ test("inquiry validation enforces trimmed minimums, email, consent and honeypot"
 });
 
 test("Backend field validation survives the existing normalized API error cause", () => {
-  const { normalizeApiError } = load("api/error.ts");
+  const { normalizeApiError } = load("lib/api-client/error.ts");
   const original = { isAxiosError: true, response: { status: 422, data: { error: { details: { fields: { fullName: ["اسم غير صالح"], subject: ["موضوع غير صالح"], phone: "صيغة الهاتف غير مقبولة", privacyAccepted: "الموافقة مطلوبة", unknown: "ignore" } } } } } };
   const errors = helpers.inquiryFieldErrors(normalizeApiError(original));
   assert.deepEqual(errors, { fullName: "يرجى مراجعة الاسم الكامل.", phone: "يرجى مراجعة صيغة رقم الهاتف.", subject: "يرجى مراجعة موضوع الاستفسار.", privacyAccepted: "يرجى الموافقة على سياسة الخصوصية." });
@@ -68,7 +68,7 @@ test("Live inquiry uses existing endpoint and confirms storage; Demo never calls
   let status = 201;
   let data = { success: true, data: { message: "Submission received." } };
   let failure;
-  const { submitInquiry } = loader({ "@/api/client": { browserApiClient: { post: async (...args) => { calls.push(args); if (failure) throw failure; return { status, data }; } } } })("api/contact.ts");
+  const { submitInquiry } = loader({ "@/lib/api-client/client": { browserApiClient: { post: async (...args) => { calls.push(args); if (failure) throw failure; return { status, data }; } } } })("lib/api-client/contact.ts");
   const payload = helpers.inquiryPayload(valid);
   await submitInquiry(payload, true);
   assert.equal(calls.length, 0);
@@ -97,7 +97,7 @@ test("site settings only retain valid approved contact fields and safe URLs", ()
 test("site settings adapter is isolated in Demo, uses one Live GET, and rejects unsupported envelopes", async () => {
   const calls = [];
   let response = { success: true, data: { contactEmail: "info@example.test" } };
-  const { getContactSettings } = loader({ "@/api/server-client": { serverApiClient: { get: async (...args) => { calls.push(args); return { data: response }; } } } })("api/site-settings.ts");
+  const { getContactSettings } = loader({ "@/lib/api-client/server-client": { serverApiClient: { get: async (...args) => { calls.push(args); return { data: response }; } } } })("lib/api-client/site-settings.ts");
   assert.deepEqual(await getContactSettings(true), {});
   assert.equal(calls.length, 0);
   assert.deepEqual(await getContactSettings(false), { contactEmail: "info@example.test" });
@@ -115,9 +115,9 @@ test("site settings adapter is isolated in Demo, uses one Live GET, and rejects 
 test("static Contact shell retrieves public SiteSettings directly in the browser client", async () => {
   const calls = [];
   const local = loader({
-    "@/api/client": { browserApiClient: { get: async (...args) => { calls.push(args); return { data: { success: true, data: { contactEmail: "info@example.test" } } }; } } },
+    "@/lib/api-client/client": { browserApiClient: { get: async (...args) => { calls.push(args); return { data: { success: true, data: { contactEmail: "info@example.test" } } }; } } },
   });
-  const settings = await local("api/site-settings-browser.ts").getBrowserContactSettings();
+  const settings = await local("lib/api-client/site-settings-browser.ts").getBrowserContactSettings();
   assert.equal(settings.contactEmail, "info@example.test");
   assert.deepEqual(calls, [["/site-settings", { withCredentials: false, timeout: 15000 }]]);
   const page = fs.readFileSync(path.resolve(__dirname, "..", "app/contact/page.tsx"), "utf8");
@@ -179,7 +179,7 @@ function formHarness(demo = false, post) {
   const states = [], refs = [];
   let stateIndex = 0, refIndex = 0;
   const mutation = { isPending: false, mutateAsync: async () => {} };
-  const local = loader({ ...boundary, ...(post ? { "@/api/client": { browserApiClient: { post } } } : {}), react: { ...React, useState: (initial) => { const index = stateIndex++; if (!(index in states)) states[index] = initial; return [states[index], (next) => { states[index] = next; }]; }, useRef: (initial) => { const index = refIndex++; return refs[index] ?? (refs[index] = { current: initial }); } }, "@tanstack/react-query": { useMutation: (options) => { mutation.options = options; if (post) mutation.mutateAsync = options.mutationFn; return mutation; } } });
+  const local = loader({ ...boundary, ...(post ? { "@/lib/api-client/client": { browserApiClient: { post } } } : {}), react: { ...React, useState: (initial) => { const index = stateIndex++; if (!(index in states)) states[index] = initial; return [states[index], (next) => { states[index] = next; }]; }, useRef: (initial) => { const index = refIndex++; return refs[index] ?? (refs[index] = { current: initial }); } }, "@tanstack/react-query": { useMutation: (options) => { mutation.options = options; if (post) mutation.mutateAsync = options.mutationFn; return mutation; } } });
   const { ContactInquiryForm } = local("components/public/contact-inquiry-form.tsx");
   const render = () => { stateIndex = 0; refIndex = 0; return ContactInquiryForm({ demo }); };
   const findForm = (element) => {
@@ -265,7 +265,7 @@ test("Live contact card keeps every slot and disabled social glyph without fake 
 });
 
 test("rate limiting and transport failures provide safe Arabic feedback and retain documented retry guidance", () => {
-  const { ApiError, normalizeApiError } = load("api/error.ts");
+  const { ApiError, normalizeApiError } = load("lib/api-client/error.ts");
   const limited = normalizeApiError({ isAxiosError: true, response: { status: 429, data: { error: { details: { retryAfterSeconds: 600 }, message: "private server details" } } } });
   assert.ok(helpers.inquiryFailureMessage(limited).includes("600 ثانية"));
   assert.equal(helpers.inquiryFailureMessage(limited).includes("private server details"), false);
@@ -283,7 +283,7 @@ test("real form-to-client path never resets or reports success on malformed acce
   global.FormData = class { get(key) { return key === "privacyAccepted" ? "on" : valid[key]; } };
   global.requestAnimationFrame = (action) => { action(); return 0; };
   try {
-    const { normalizeApiError } = load("api/error.ts");
+    const { normalizeApiError } = load("lib/api-client/error.ts");
     const attempts = [];
     let response = { status: 201, data: {} }, failure;
     const h = formHarness(false, async (...args) => { attempts.push(args); if (failure) throw failure; return response; });

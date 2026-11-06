@@ -1,6 +1,6 @@
 "use server";
 
-import { getScholarships } from "@/api/public-content";
+import { getScholarships } from "@/lib/api-client/public-content";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import type { LiveUniversityParams } from "@/lib/university-directory-data";
 import { parseRelatedScholarships, universityScholarshipParams } from "@/lib/university-related-scholarships";

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { getBrowserServices } from "@/api/public-content-browser";
+import { getBrowserServices } from "@/lib/api-client/public-content-browser";
 import { ServiceOverviewCard } from "@/components/public/service-overview-card";
 import { SkeletonResults } from "@/components/public/content-skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/content-state";

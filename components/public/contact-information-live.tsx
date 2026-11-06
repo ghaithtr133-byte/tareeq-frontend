@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getBrowserContactSettings } from "@/api/site-settings-browser";
+import { getBrowserContactSettings } from "@/lib/api-client/site-settings-browser";
 import { ContactInformationCard } from "@/components/public/contact-cards";
 import { ErrorState } from "@/components/ui/content-state";
 import { Skeleton } from "@/components/ui/skeleton";

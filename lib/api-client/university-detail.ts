@@ -1,8 +1,8 @@
 import "server-only";
 
 import { cache } from "react";
-import { getCountries, getUniversity } from "@/api/public-content";
-import { ApiError } from "@/api/error";
+import { getCountries, getUniversity } from "@/lib/api-client/public-content";
+import { ApiError } from "@/lib/api-client/error";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { detailSlug, parseDetailUniversity } from "@/lib/university-detail-live";
 

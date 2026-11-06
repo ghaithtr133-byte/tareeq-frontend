@@ -1,4 +1,4 @@
-import type { Article, Country, PublicList, Scholarship, Service, University } from "@/api/public-content";
+import type { Article, Country, PublicList, Scholarship, Service, University } from "@/lib/api-client/public-content";
 
 export type HomeFaqRecord = { id: string; scope: "GLOBAL"; questionAr: string; answerAr: string; publishedAt?: string | null };
 export type HomeUniversity = University & { universityType?: "PUBLIC" | "PRIVATE" | null; city?: { nameAr?: string } | null };

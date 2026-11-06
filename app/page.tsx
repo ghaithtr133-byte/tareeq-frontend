@@ -15,12 +15,12 @@ import {
   type Country,
   type Scholarship,
   type Service,
-} from "@/api/public-content";
+} from "@/lib/api-client/public-content";
 import { HomeContainer as Container, HomeLink as Link } from "@/components/home/home-primitives";
 import { FeaturedUniversitiesCarousel } from "@/components/home/featured-universities-carousel";
 import { HomeFaq } from "@/components/home/home-faq";
 import { TrustExperience } from "@/components/home/trust-experience";
-import { loadHomeSection } from "@/api/homepage";
+import { loadHomeSection } from "@/lib/api-client/homepage";
 import { HomeSectionError } from "@/components/home/home-section-error";
 import { EmptyState } from "@/components/ui/content-state";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";

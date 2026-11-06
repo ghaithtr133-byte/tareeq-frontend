@@ -1,5 +1,5 @@
 import "server-only";
-import { serverApiClient } from "@/api/server-client";
+import { serverApiClient } from "@/lib/api-client/server-client";
 import { homeError, homeQueries, parseHomeList, type HomeEntities, type HomeResult, type HomeSection } from "@/lib/homepage-data";
 
 async function demoCollection(section: HomeSection) {
@@ -7,7 +7,7 @@ async function demoCollection(section: HomeSection) {
     const { demoHomeQuestions } = await import("@/lib/mocks/home-faq");
     return { items: demoHomeQuestions.map((item, index) => ({ id: `demo-faq-${index}`, scope: "GLOBAL", questionAr: item.question, answerAr: item.answer })), pagination: { total: demoHomeQuestions.length } };
   }
-  const api = await import("@/api/public-content");
+  const api = await import("@/lib/api-client/public-content");
   switch (section) {
     case "countries": return api.getCountries(homeQueries.countries);
     case "universities": return api.getUniversities(homeQueries.universities);

@@ -25,7 +25,7 @@ function loadTypeScript(relativePath, overrides = {}) {
 class ApiError extends Error {}
 const { getDemoCountries } = loadTypeScript("lib/mocks/public-demo-content.ts", {
   "server-only": {},
-  "@/api/error": { ApiError },
+  "@/lib/api-client/error": { ApiError },
   "@/lib/mocks/scholarship-directory-fixtures": loadTypeScript("lib/mocks/scholarship-directory-fixtures.ts"),
 });
 const { queryString } = loadTypeScript("lib/public-search-params.ts");

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Pagination } from "@/api/public-content";
+import type { Pagination } from "@/lib/api-client/public-content";
 import { scholarshipDirectoryHref, scholarshipPageNumbers, type ScholarshipFilterValues } from "@/lib/scholarship-directory";
 
 export function ScholarshipDirectoryPagination({ pagination, values }: { pagination: Pagination; values: ScholarshipFilterValues }) {

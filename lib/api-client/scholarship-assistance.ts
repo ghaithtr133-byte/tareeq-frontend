@@ -1,5 +1,5 @@
-import { browserApiClient } from "@/api/client";
-import { ApiError } from "@/api/error";
+import { browserApiClient } from "@/lib/api-client/client";
+import { ApiError } from "@/lib/api-client/error";
 import type { ScholarshipAssistancePayload } from "@/lib/scholarship-assistance";
 
 /** Existing public application contract. A 201 confirms storage, not email delivery. */

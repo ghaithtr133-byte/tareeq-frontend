@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getServices, type Service } from "@/api/public-content";
-import { ApiError } from "@/api/error";
+import { getServices, type Service } from "@/lib/api-client/public-content";
+import { ApiError } from "@/lib/api-client/error";
 import { Container } from "@/components/layout/container";
 import { HomeSectionError } from "@/components/home/home-section-error";
 import { ServiceDetails } from "@/components/public/service-details";
@@ -9,8 +9,8 @@ import { demoServiceDetails } from "@/lib/mocks/service-detail-fixtures";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { otherPublishedServices, serviceDetailHref, serviceDetailMedia } from "@/lib/service-details";
 import { createPageMetadata } from "@/lib/seo";
-import { getPublishedServiceDetail, parseOtherServices, unavailableServiceContent } from "@/api/service-detail";
-import { loadServiceFaqs } from "@/api/service-faq-actions";
+import { getPublishedServiceDetail, parseOtherServices, unavailableServiceContent } from "@/lib/api-client/service-detail";
+import { loadServiceFaqs } from "@/lib/api-client/service-faq-actions";
 import { realServiceMedia } from "@/lib/service-detail-live";
 
 export const dynamic = "force-dynamic";

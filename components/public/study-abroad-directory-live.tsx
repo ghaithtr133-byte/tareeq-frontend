@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { getBrowserCountries } from "@/api/public-content-browser";
+import { getBrowserCountries } from "@/lib/api-client/public-content-browser";
 import { StudyAbroadCountryCards } from "@/components/public/study-abroad-country-cards";
 import { StudyAbroadFilters } from "@/components/public/study-abroad-filters";
 import { StudyAbroadPagination } from "@/components/public/study-abroad-pagination";

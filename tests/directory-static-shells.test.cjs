@@ -27,7 +27,7 @@ test("directory client regions read browser URL state and use the public browser
 });
 
 test("browser adapters retain bounded backend pagination and never introduce a Next proxy route", () => {
-  const source = read("api/public-content-browser.ts");
+  const source = read("lib/api-client/public-content-browser.ts");
   for (const endpoint of ["/articles", "/scholarships", "/services", "/countries", "/universities"]) assert.ok(source.includes(endpoint));
   assert.equal(fs.existsSync(path.join(root, "app/api/public-content")), false);
   assert.ok(read("components/public/live-university-related-scholarships.tsx").includes("loadBrowserRelatedUniversityScholarships"));

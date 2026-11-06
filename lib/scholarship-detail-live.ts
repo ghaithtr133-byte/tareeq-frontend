@@ -1,4 +1,4 @@
-import type { Scholarship } from "@/api/public-content";
+import type { Scholarship } from "@/lib/api-client/public-content";
 import { homeImageUrl } from "@/lib/homepage-data";
 import { directoryDeadline, scholarshipUnavailable, type DirectoryLiveScholarship } from "@/lib/scholarship-directory-live";
 

@@ -1,4 +1,4 @@
-import type { Article, ArticleBlock, Scholarship } from "@/api/public-content";
+import type { Article, ArticleBlock, Scholarship } from "@/lib/api-client/public-content";
 import { articleDirectoryDate } from "@/lib/article-directory-live";
 import { articleImageSource } from "@/lib/article-directory";
 import { homeCardText } from "@/lib/homepage-card-content";

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { GraduationCap, Landmark, MessageCircle } from "lucide-react";
 import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
-import type { Country } from "@/api/public-content";
+import type { Country } from "@/lib/api-client/public-content";
 import { Container } from "@/components/layout/container";
 import { CountryFaq } from "@/components/public/country-faq";
 import { ScholarshipCountryFlag } from "@/components/public/scholarship-country-flag";
@@ -16,7 +16,7 @@ import { CountryInformation, type CountryInformationItem } from "@/components/pu
 import { completeCountryFacts, unavailableCountryGuide } from "@/lib/country-detail-content";
 import { homeCardText } from "@/lib/homepage-card-content";
 import { EmptyState, ErrorState } from "@/components/ui/content-state";
-import type { CountryFaqResult } from "@/api/country-details";
+import type { CountryFaqResult } from "@/lib/api-client/country-details";
 
 const focus = "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#A47B2D]";
 

@@ -37,7 +37,7 @@ function page(getCountries = getDemoCountries) {
     "next/link": ({ scroll, ...props }) => { void scroll; return React.createElement("a", props); },
     "next/image": ({ src, alt, className }) => React.createElement("img", { src, alt, className }),
     "next/navigation": { useRouter: () => ({ push() {} }), redirect: (href) => { throw Error(`redirect:${href}`); } },
-    "@/api/public-content": { getCountries },
+    "@/lib/api-client/public-content": { getCountries },
   })("app/study-abroad/page.tsx").default;
 }
 async function render(search = {}, getCountries) {
@@ -51,7 +51,7 @@ async function liveRender(payload, search = {}, calls = []) {
     "next/navigation": { useRouter: () => ({ push() {} }), redirect: (href) => { throw Error(`redirect:${href}`); } },
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
     "@/lib/mocks/public-demo-content": new Proxy({}, { get() { throw Error("Live must never call Demo fixtures"); } }),
-    "@/api/server-client": { serverApiClient: { get: async (path, config) => {
+    "@/lib/api-client/server-client": { serverApiClient: { get: async (path, config) => {
       calls.push({ path, config });
       if (payload instanceof Error) throw payload;
       return { data: { success: true, data: payload } };

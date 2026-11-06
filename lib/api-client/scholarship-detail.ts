@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
-import { getScholarship, getCountries, getUniversities, type Country, type University } from "@/api/public-content";
-import { ApiError } from "@/api/error";
+import { getScholarship, getCountries, getUniversities, type Country, type University } from "@/lib/api-client/public-content";
+import { ApiError } from "@/lib/api-client/error";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { parseScholarshipDetail, scholarshipDetailSlug } from "@/lib/scholarship-detail-live";
 import { joinScholarshipDirectory, scholarshipLookup } from "@/lib/scholarship-directory-live";

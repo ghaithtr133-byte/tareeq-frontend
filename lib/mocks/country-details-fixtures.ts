@@ -1,5 +1,5 @@
 import "server-only";
-import type { Country } from "@/api/public-content";
+import type { Country } from "@/lib/api-client/public-content";
 import { getCountryOverviewImage } from "@/lib/country-overview-images";
 import type { CountryStudyGuidePanel } from "@/components/public/country-study-guide";
 import { approvedCountryGuide } from "@/lib/country-detail-content";

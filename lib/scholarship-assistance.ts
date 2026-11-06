@@ -1,4 +1,4 @@
-import type { Scholarship } from "@/api/public-content";
+import type { Scholarship } from "@/lib/api-client/public-content";
 
 export type AssistanceScholarship = Pick<Scholarship, "id" | "titleAr" | "status" | "applicationStatus" | "effectiveApplicationStatus">;
 export type AssistanceValues = { fullName: string; email: string; phone: string; message: string; privacyAccepted: boolean; website: string };

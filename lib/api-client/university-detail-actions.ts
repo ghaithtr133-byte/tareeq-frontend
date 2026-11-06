@@ -1,11 +1,11 @@
 "use server";
 
-import { getScholarships } from "@/api/public-content";
+import { getScholarships } from "@/lib/api-client/public-content";
 import { RELATED_SCHOLARSHIP_BATCH } from "@/lib/university-details";
-import { serverApiClient } from "@/api/server-client";
+import { serverApiClient } from "@/lib/api-client/server-client";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { detailSlug, detailList, detailText, programQuery, parseDetailPrograms, parseDetailAdmissions, parseDetailGallery, parseDetailFaqs, type LiveProgramFilters } from "@/lib/university-detail-live";
-import type { Scholarship } from "@/api/public-content";
+import type { Scholarship } from "@/lib/api-client/public-content";
 
 /** Read-only bridge to the EXISTING public scholarship client; source mode stays server-owned. */
 export async function loadUniversityScholarships(slug: string, page: number) {

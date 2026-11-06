@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { BookOpen, ClipboardList, GraduationCap, Images, Info, MessageCircle, MessageCircleQuestion } from "lucide-react";
-import type { PublicList, Scholarship, University } from "@/api/public-content";
+import type { PublicList, Scholarship, University } from "@/lib/api-client/public-content";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { UniversityDirectoryImage } from "@/components/public/university-directory-image";
 import { UniversityDetailScholarships } from "@/components/public/university-detail-scholarships";

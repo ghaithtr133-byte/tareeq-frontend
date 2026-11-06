@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { LoaderCircle, Mail, Send } from "lucide-react";
-import { submitInquiry } from "@/api/contact";
+import { submitInquiry } from "@/lib/api-client/contact";
 import { inquiryFailureMessage, inquiryFieldErrors, inquiryPayload, validateInquiry, type InquiryErrors, type InquiryValues } from "@/lib/contact";
 
 const inputClass = "mt-1.5 min-h-11 w-full min-w-0 rounded-lg border border-[#D7DFE8] bg-white px-3 py-2 text-base text-[#082B50] placeholder:text-[#8390A0] focus:border-[#C8A253] focus:outline-2 focus:outline-offset-2 focus:outline-[#C8A253]";

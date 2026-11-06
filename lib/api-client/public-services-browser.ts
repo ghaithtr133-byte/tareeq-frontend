@@ -1,5 +1,5 @@
-import { browserApiClient } from "@/api/client";
-import type { PublicList, Service } from "@/api/public-content";
+import { browserApiClient } from "@/lib/api-client/client";
+import type { PublicList, Service } from "@/lib/api-client/public-content";
 import { parsePublishedService, serviceDetailList } from "@/lib/service-detail-live";
 
 /** Bounded public services request used by the static About page shell. */

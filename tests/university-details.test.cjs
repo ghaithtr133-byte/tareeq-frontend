@@ -78,13 +78,13 @@ test("scholarships append 3 + 3 + 1, respect metadata, deduplicate, and reject u
 test("read-only scholarship bridge uses existing scoped endpoint client, limit 3, validates input, and never fabricates errors as empty", async () => {
   const calls = [];
   const data = { items: [], pagination: { page: 2, limit: 3, total: 0, totalPages: 0 } };
-  const local = loader({ "@/api/public-content": { getScholarships: async (params) => { calls.push(params); return data; } } });
-  const { loadUniversityScholarships } = local("api/university-detail-actions.ts");
+  const local = loader({ "@/lib/api-client/public-content": { getScholarships: async (params) => { calls.push(params); return data; } } });
+  const { loadUniversityScholarships } = local("lib/api-client/university-detail-actions.ts");
   assert.deepEqual(await loadUniversityScholarships("university-bucharest", 2), { ok: true, data });
   assert.deepEqual(calls, [{ university: "university-bucharest", page: 2, limit: 3, sort: "newest" }]);
   for (const [slug, page] of [["", 1], ["valid", 0], ["valid", 1.5]]) assert.deepEqual(await loadUniversityScholarships(slug, page), { ok: false });
   assert.equal(calls.length, 1);
-  const fail = loader({ "@/api/public-content": { getScholarships: async () => { throw Error("offline"); } } })("api/university-detail-actions.ts");
+  const fail = loader({ "@/lib/api-client/public-content": { getScholarships: async () => { throw Error("offline"); } } })("lib/api-client/university-detail-actions.ts");
   assert.deepEqual(await fail.loadUniversityScholarships("valid", 1), { ok: false });
 });
 
@@ -98,7 +98,7 @@ test("shared page structure has one scholarship section and FAQ outside all pane
   const university = await demo.getDemoUniversity("university-bucharest");
   const initial = await demo.getDemoScholarships({ university: university.slug, limit: 3 });
   for (const demoMode of [true, false]) {
-    const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => demoMode }, "@/api/public-content": { getUniversity: async () => university }, "@/api/university-detail-actions": {
+    const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => demoMode }, "@/lib/api-client/public-content": { getUniversity: async () => university }, "@/lib/api-client/university-detail-actions": {
       loadUniversityScholarships: async () => ({ ok: true, data: initial }),
       loadUniversityPrograms: async () => ({ ok: true, data: { items: [], pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } } }),
       loadUniversityAdmissions: async () => ({ ok: true, data: [] }), loadUniversityGallery: async () => ({ ok: true, data: [] }),
@@ -147,7 +147,7 @@ test("related scholarship component preserves successful empty section, isolates
   const requests = [];
   const local = loader({ ...ui,
     "@tanstack/react-query": { useInfiniteQuery: (value) => { options = value; return state; } },
-    "@/api/university-detail-actions": { loadUniversityScholarships: async (slug, page) => { requests.push({ slug, page }); return { ok: true, data: pages[page - 1] }; } },
+    "@/lib/api-client/university-detail-actions": { loadUniversityScholarships: async (slug, page) => { requests.push({ slug, page }); return { ok: true, data: pages[page - 1] }; } },
   });
   const { UniversityDetailScholarships } = local("components/public/university-detail-scholarships.tsx");
   const render = () => renderToStaticMarkup(React.createElement(UniversityDetailScholarships, props));
@@ -177,10 +177,10 @@ test("Live detail validates exact identity, published projection, optional media
   const base = await demo.getDemoUniversity("university-bucharest");
   const record = { ...base, status: undefined, country: undefined, cityId: "city-1", city: { id: "city-1", nameAr: "مدينة موثقة" }, overviewAr: null, imageUrl: "javascript:alert(1)", officialWebsite: "javascript:alert(1)" };
   const countries = [];
-  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": {
+  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": {
     getUniversity: async () => record, getCountries: async (params) => { countries.push(params); return { items: [base.country] }; },
   } });
-  const result = await local("api/university-detail.ts").getUniversityDetail(base.slug);
+  const result = await local("lib/api-client/university-detail.ts").getUniversityDetail(base.slug);
   assert.equal(result.country.id, base.countryId);
   assert.equal(result.cityAr, "مدينة موثقة");
   assert.equal(result.imageUrl, null);
@@ -192,12 +192,12 @@ test("Live detail validates exact identity, published projection, optional media
   assert.throws(() => parse({ ...record, status: "DRAFT" }, base.slug));
   assert.equal(parse({ ...record, city: { id: "wrong", nameAr: "wrong" } }, base.slug).cityAr, base.cityAr);
   for (const value of ["DRAFT", "ARCHIVED"]) {
-    const scoped = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getUniversity: async () => ({ ...base, status: value }) } });
-    await assert.rejects(scoped("api/university-detail.ts").getUniversityDetail(base.slug), { status: 404 });
+    const scoped = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getUniversity: async () => ({ ...base, status: value }) } });
+    await assert.rejects(scoped("lib/api-client/university-detail.ts").getUniversityDetail(base.slug), { status: 404 });
   }
-  await assert.rejects(local("api/university-detail.ts").getUniversityDetail("../invalid"), { status: 404 });
-  const noLookup = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getUniversity: async () => base, getCountries: () => { throw Error("unexpected supplementary request"); } } });
-  assert.equal((await noLookup("api/university-detail.ts").getUniversityDetail(base.slug)).country.id, base.countryId);
+  await assert.rejects(local("lib/api-client/university-detail.ts").getUniversityDetail("../invalid"), { status: 404 });
+  const noLookup = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getUniversity: async () => base, getCountries: () => { throw Error("unexpected supplementary request"); } } });
+  assert.equal((await noLookup("lib/api-client/university-detail.ts").getUniversityDetail(base.slug)).country.id, base.countryId);
 });
 
 test("Live programs map exact names, multiple languages, zero and historical tuition without invented duration or fees", () => {
@@ -241,7 +241,7 @@ test("Live admission scopes stay distinct; gallery has its own source; FAQs reje
 test("Live collection bridges use only documented parent paths and server-side filters/pages; failures and Demo stay isolated", async () => {
   let demoMode = false;
   const calls = [];
-  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => demoMode }, "@/api/server-client": { serverApiClient: { get: async (url, config) => {
+  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => demoMode }, "@/lib/api-client/server-client": { serverApiClient: { get: async (url, config) => {
     calls.push({ url, config });
     let data;
     if (url.endsWith("/programs")) data = livePage([programRecord], 12, config.params.page, 25);
@@ -250,7 +250,7 @@ test("Live collection bridges use only documented parent paths and server-side f
     else data = { university: [], studyLevels: [], programs: [] };
     return { data: { success: true, data } };
   } } } });
-  const api = local("api/university-detail-actions.ts");
+  const api = local("lib/api-client/university-detail-actions.ts");
   const programs = await api.loadUniversityPrograms("one-university", { search: "  الطب  ", studyLevel: "BACHELORS", language: "ENGLISH", faculty: "الطب", universityId: "ignored" }, 2);
   assert.equal(programs.ok, true);
   assert.deepEqual(calls[0], { url: "/universities/one-university/programs", config: { params: { page: 2, limit: 12, search: "الطب", faculty: "الطب", studyLevel: "BACHELORS", language: "ENGLISH" }, timeout: 12000 } });
@@ -271,7 +271,7 @@ test("Live collection bridges use only documented parent paths and server-side f
 
 test("Live university page isolates failed requests and keeps every approved tab and FAQ mounted", async () => {
   const university = { ...(await demo.getDemoUniversity("university-bucharest")), country: undefined, status: undefined, imageUrl: null, cityAr: null, overviewAr: null };
-  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getUniversity: async () => university }, "@/api/university-detail-actions": {
+  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getUniversity: async () => university }, "@/lib/api-client/university-detail-actions": {
     loadUniversityScholarships: async () => ({ ok: false }), loadUniversityPrograms: async () => ({ ok: false }),
     loadUniversityAdmissions: async () => ({ ok: false }), loadUniversityGallery: async () => ({ ok: false }), loadUniversityFaqs: async () => ({ ok: false }),
   } });
@@ -283,9 +283,9 @@ test("Live university page isolates failed requests and keeps every approved tab
   assert.equal(html.includes("لا توجد منح مرتبطة منشورة"), false);
   assert.ok(html.includes("رسم أكاديمي توضيحي، وليس صورة للحرم الجامعي"));
   assert.ok(html.includes("شعار جامعة بوخارست (غير متوفر حالياً)"));
-  const { ApiError } = load("api/error.ts");
+  const { ApiError } = load("lib/api-client/error.ts");
   for (const status of [404, 500]) {
-    const broken = loader({ ...ui, "@/api/university-detail": { getUniversityDetail: async () => { throw new ApiError(status, "test"); } }, "@/api/error": { ApiError } });
+    const broken = loader({ ...ui, "@/lib/api-client/university-detail": { getUniversityDetail: async () => { throw new ApiError(status, "test"); } }, "@/lib/api-client/error": { ApiError } });
     const render = () => broken("app/universities/[slug]/page.tsx").default({ params: Promise.resolve({ slug: university.slug }) });
     if (status === 404) await assert.rejects(render, /NOT_FOUND/);
     else assert.ok(renderToStaticMarkup(await render()).includes("تعذّر تحميل معلومات الجامعة"));
@@ -334,7 +334,7 @@ test("academic UI uses specializations while scholarship terminology and Backend
   assert.equal(mapped.name, row.nameAr, "Never rewrite Backend editorial content at runtime");
   assert.equal(mapped.tuition.period, "لكامل مدة التخصص");
   assert.equal(live.parseDetailPrograms(livePage([{ id: "partial" }])).items[0].name, "اسم التخصص (غير متوفر حالياً)");
-  const source = fs.readFileSync(path.resolve(__dirname, "../api/university-detail-actions.ts"), "utf8");
+  const source = fs.readFileSync(path.resolve(__dirname, "../lib/api-client/university-detail-actions.ts"), "utf8");
   assert.ok(source.includes('"programs"'));
   assert.ok(source.includes("getScholarships({ university: slug"));
 });

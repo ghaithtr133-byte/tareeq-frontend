@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, BadgeCheck, ChevronDown, ChevronLeft, CircleHelp, ClipboardCheck, Headset, Info, Layers, LayoutGrid, MessageCircle, Send, ShieldCheck, Sparkles, Star, Target, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { Service } from "@/api/public-content";
+import type { Service } from "@/lib/api-client/public-content";
 import { Container } from "@/components/layout/container";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { ServiceAboutLink } from "@/components/public/service-about-link";

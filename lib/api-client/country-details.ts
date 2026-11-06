@@ -1,8 +1,8 @@
 import "server-only";
 import { cache } from "react";
-import { getCountry, type Country } from "@/api/public-content";
-import { serverApiClient } from "@/api/server-client";
-import { ApiError } from "@/api/error";
+import { getCountry, type Country } from "@/lib/api-client/public-content";
+import { serverApiClient } from "@/lib/api-client/server-client";
+import { ApiError } from "@/lib/api-client/error";
 import { homeImageUrl } from "@/lib/homepage-data";
 
 export const countrySlugIsValid = (slug: string) => slug.length >= 2 && slug.length <= 120 && /^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u.test(slug);

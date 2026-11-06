@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, BookOpen, GraduationCap } from "lucide-react";
-import type { Article } from "@/api/public-content";
+import type { Article } from "@/lib/api-client/public-content";
 import type { ArticleScholarship } from "@/lib/article-detail-live";
 import { ArticleDetailMedia } from "@/components/public/article-detail-media";
 import { ScholarshipCountryFlag } from "@/components/public/scholarship-country-flag";

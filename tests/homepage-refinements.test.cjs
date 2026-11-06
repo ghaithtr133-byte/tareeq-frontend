@@ -40,7 +40,7 @@ const ui = {
 };
 function homeLoader(services, calls = []) {
   const methods = { getCountries: demo.getDemoCountries, getUniversities: demo.getDemoUniversities, getScholarships: demo.getDemoScholarships, getServices: services ?? demo.getDemoServices, getArticles: demo.getDemoArticles };
-  return loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/public-content": Object.fromEntries(Object.entries(methods).map(([name, fn]) => [name, (...args) => { calls.push({ name, args }); return fn(...args); }])) });
+  return loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/lib/api-client/public-content": Object.fromEntries(Object.entries(methods).map(([name, fn]) => [name, (...args) => { calls.push({ name, args }); return fn(...args); }])) });
 }
 async function renderHome(local = homeLoader()) {
   return renderToStaticMarkup(await local("app/page.tsx").default());

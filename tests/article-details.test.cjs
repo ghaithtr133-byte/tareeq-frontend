@@ -143,14 +143,14 @@ test("Live route uses documented relatedScholarships without per-scholarship cal
   let record = { ...original, status: undefined, relatedScholarships: [{ ...demo.publicDemoContent.scholarships[0], status: undefined, effectiveApplicationStatus: "CLOSED", imageUrl: "https://example.com/real-cover.jpg" }] };
   class ApiError extends Error { constructor(status) { super("API failure"); this.status = status; } }
   const local = loader({ ...ui,
-    "@/api/public-content": {
+    "@/lib/api-client/public-content": {
       getArticle: async (slug) => { if (failure) throw failure; assert.equal(slug, original.slug); return record; },
       getArticles: async (params) => { calls.push(["latest", params]); if (latestFailure) throw Error("offline"); return { items: demo.publicDemoContent.articles.slice(0, 4).map((row) => ({ ...row, status: undefined })), pagination: { page: 1, limit: 4, total: 4, totalPages: 1 } }; },
       getScholarship: async () => { throw Error("N+1 must not be called"); },
       getCountries: async (params) => { calls.push(["countries", params]); if (relationFailure) throw Error("offline"); return { items: [original.country], pagination: { page: 1, limit: 50, total: 1, totalPages: 1 } }; },
       getUniversities: async (params) => { calls.push(["universities", params]); return { items: [original.university], pagination: { page: 1, limit: 50, total: 1, totalPages: 1 } }; },
     },
-    "@/api/error": { ApiError },
+    "@/lib/api-client/error": { ApiError },
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
     "next/navigation": { notFound: () => { throw new Error("NOT_FOUND"); }, useRouter: () => ({ refresh() {} }) },
   });
@@ -228,7 +228,7 @@ test("Live metadata uses the same article's real SEO and date, while invalid/unp
   let raw = { ...original, status: undefined, relatedScholarships: [], seoTitleAr: "عنوان حقيقي", seoDescriptionAr: "وصف حقيقي", publishedAt: "2026-11-05T12:00:00Z" };
   let requested = 0;
   const local = loader({ ...ui,
-    "@/api/public-content": { getArticle: async () => { requested++; return raw; } },
+    "@/lib/api-client/public-content": { getArticle: async () => { requested++; return raw; } },
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
     "next/navigation": { notFound: () => { throw Error("NOT_FOUND"); } },
   });
@@ -257,7 +257,7 @@ test("Live metadata uses the same article's real SEO and date, while invalid/unp
 
 test("Demo route retains approved body fixtures, related cards, media and disclosure without Live lookups", async () => {
   const local = loader({ ...ui,
-    "@/api/public-content": {
+    "@/lib/api-client/public-content": {
       getArticle: async () => original,
       getArticles: async () => ({ items: demo.publicDemoContent.articles.slice(0, 4) }),
       getCountries: async () => { throw Error("Demo must not request Live relations"); },

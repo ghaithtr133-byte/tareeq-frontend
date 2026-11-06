@@ -170,7 +170,7 @@ test("toolbar uses only supported controls and a featured-only checkbox, with ac
 test.skip("legacy server-rendered Articles route coverage; replaced by client-shell coverage", async () => {
   const calls = [];
   const local = loader({ ...uiOverrides,
-    "@/api/public-content": { getArticles: async (params) => { calls.push(params); return demo.getDemoArticles(params); }, getCountries: demo.getDemoCountries },
+    "@/lib/api-client/public-content": { getArticles: async (params) => { calls.push(params); return demo.getDemoArticles(params); }, getCountries: demo.getDemoCountries },
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
   });
   const page = local("app/articles/page.tsx").default;
@@ -191,8 +191,8 @@ test.skip("legacy server-rendered Articles route coverage; replaced by client-sh
 test("Live adapter requests only the selected API page and propagates failure without Demo fallback", async () => {
   const calls = [];
   let failure = false;
-  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/server-client": { serverApiClient: { get: async (...args) => { calls.push(args); if (failure) throw new Error("offline"); return { data: { success: true, data: { items: [], pagination: { page: 2, limit: 12, total: 30, totalPages: 3 } } } }; } } } });
-  const { getArticles } = local("api/public-content.ts");
+  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/server-client": { serverApiClient: { get: async (...args) => { calls.push(args); if (failure) throw new Error("offline"); return { data: { success: true, data: { items: [], pagination: { page: 2, limit: 12, total: 30, totalPages: 3 } } } }; } } } });
+  const { getArticles } = local("lib/api-client/public-content.ts");
   const params = helpers.directoryArticleParams({ search: "بحث", country: "romania", featured: "true", page: "2" });
   const result = await getArticles(params);
   assert.equal(calls.length, 1);
@@ -207,7 +207,7 @@ test.skip("legacy server-rendered Articles route coverage; replaced by client-sh
   let mode = "empty";
   const requests = [];
   const local = loader({ ...uiOverrides,
-    "@/api/public-content": { getArticles: async (params) => { requests.push(params); if (mode === "error") throw new Error("offline"); return { items: [], pagination: { page: params.page, limit: 12, total: mode === "range" ? 13 : 0, totalPages: mode === "range" ? 2 : 0 } }; }, getCountries: async () => ({ items: [] }) },
+    "@/lib/api-client/public-content": { getArticles: async (params) => { requests.push(params); if (mode === "error") throw new Error("offline"); return { items: [], pagination: { page: params.page, limit: 12, total: mode === "range" ? 13 : 0, totalPages: mode === "range" ? 2 : 0 } }; }, getCountries: async () => ({ items: [] }) },
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
   });
   const { default: ArticlesPage } = local("app/articles/page.tsx");
@@ -230,7 +230,7 @@ const articleList = (items = [], page = 1, total = items.length) => ({ items, pa
 const liveArticle = { id: "live-one", slug: "published-article", titleAr: "مقال منشور", summaryAr: "ملخص من المصدر", featured: true, publishedAt: "2026-10-20T00:00:00Z", coverImageUrl: "https://media.example.test/cover.jpg", coverImageAltAr: "غلاف المقال الحقيقي" };
 function liveRoute({ data = articleList([liveArticle]), failed = false, countriesFailed = false, totalCountries = 1 } = {}) {
   const calls = [];
-  const scoped = loader({ ...uiOverrides, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/server-client": { serverApiClient: { get: async (path, config) => {
+  const scoped = loader({ ...uiOverrides, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/server-client": { serverApiClient: { get: async (path, config) => {
     calls.push({ path, params: config.params });
     if ((path === "/articles" && failed) || (path === "/countries" && countriesFailed)) throw Error("offline");
     return { data: { success: true, data: path === "/articles" ? data : { items: [{ id: "c1", slug: "romania", nameAr: "رومانيا" }], pagination: { page: 1, limit: 50, total: totalCountries, totalPages: Math.ceil(totalCountries / 50) } } } };
@@ -301,7 +301,7 @@ test.skip("legacy server-rendered Articles route coverage; replaced by client-sh
     assert.equal((html.match(/data-article-card=/g) ?? []).length, count);
     for (const token of ["justify-center", "xl:[--card-columns:4]", "[&amp;&gt;*]:grow-0", "aspect-[2/1]"]) assert.ok(html.includes(token));
   }
-  const scoped = loader({ ...uiOverrides, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/public-content": { getArticles: demo.getDemoArticles, getCountries: demo.getDemoCountries } });
+  const scoped = loader({ ...uiOverrides, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/lib/api-client/public-content": { getArticles: demo.getDemoArticles, getCountries: demo.getDemoCountries } });
   const html = renderToStaticMarkup(await scoped("app/articles/page.tsx").default({ searchParams: Promise.resolve({}) }));
   assert.equal((html.match(/data-article-card=/g) ?? []).length, 12);
   assert.equal((html.match(/data-prominent="true"/g) ?? []).length, 2);

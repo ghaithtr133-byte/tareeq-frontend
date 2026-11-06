@@ -64,14 +64,14 @@ The frontend uses Backend-managed HttpOnly cookie sessions. Browser Axios reques
 
 The browser flow is: component → approved query/mutation hook → API resource function → browser Axios client → Hono REST backend. Server-rendered operations use the separate server-only Axios client directly; they do not use a Next.js proxy.
 
-`QueryProvider` configures one stable TanStack Query client for the application. Generic centralized keys in `api/query-keys.ts` support future resource list, detail, filter, and targeted-invalidation patterns without defining unapproved business resources.
+`QueryProvider` configures one stable TanStack Query client for the application. Generic centralized keys in `lib/api-client/query-keys.ts` support future resource list, detail, filter, and targeted-invalidation patterns without defining unapproved business resources.
 
 ## Structure
 
 - `app/` — App Router layout, global styles, and the minimal public homepage
 - `components/layout/` — shared responsive container, header, and footer
 - `components/ui/` — reusable shadcn/ui-compatible primitives
-- `api/` — browser/server Axios transports, normalized errors, and centralized query keys
+- `lib/api-client/` — browser/server Axios transports, normalized errors, and centralized query keys
 - `hook/queries/` — future approved `useQuery` hooks
 - `hook/mutations/` — future approved `useMutation` hooks
 - `providers/` — client-side infrastructure providers

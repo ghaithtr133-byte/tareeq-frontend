@@ -1,4 +1,4 @@
-import type { Scholarship, ScholarshipListParams } from "@/api/public-content";
+import type { Scholarship, ScholarshipListParams } from "@/lib/api-client/public-content";
 import { scholarshipsParams, type RouteSearchParams } from "@/lib/public-search-params";
 
 export const scholarshipFilterKeys = ["search", "country", "university", "studyLevel", "fundingType", "applicationStatus", "featured", "sort"] as const;

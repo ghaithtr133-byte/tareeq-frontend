@@ -1,5 +1,5 @@
 import "server-only";
-import type { University } from "@/api/public-content";
+import type { University } from "@/lib/api-client/public-content";
 import { emptyUniversityContent, type UniversityDetailContent, type UniversityProgram } from "@/lib/university-details";
 
 // Fictional complete, small datasets. These are UI labels, not invented API enum values.

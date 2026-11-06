@@ -1,5 +1,5 @@
 import "server-only";
-import { serverApiClient } from "@/api/server-client";
+import { serverApiClient } from "@/lib/api-client/server-client";
 import { parseContactSettingsResponse } from "@/lib/contact";
 
 export async function getContactSettings(demo: boolean) {

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Service } from "@/api/public-content";
-import { getBrowserAboutServices } from "@/api/public-services-browser";
-import { getBrowserContactSettings } from "@/api/site-settings-browser";
+import type { Service } from "@/lib/api-client/public-content";
+import { getBrowserAboutServices } from "@/lib/api-client/public-services-browser";
+import { getBrowserContactSettings } from "@/lib/api-client/site-settings-browser";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 import { SkeletonResults } from "@/components/public/content-skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/content-state";

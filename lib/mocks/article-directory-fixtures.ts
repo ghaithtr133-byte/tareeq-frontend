@@ -1,4 +1,4 @@
-import type { Article } from "@/api/public-content";
+import type { Article } from "@/lib/api-client/public-content";
 
 /** Local, directory-only illustrations; shared Homepage/ticker/detail records stay untouched. */
 export function withDemoArticleDirectoryMedia(articles: Article[]): Article[] {

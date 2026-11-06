@@ -4,7 +4,7 @@ import Link from "next/link";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, LoaderCircle, X } from "lucide-react";
-import { submitScholarshipAssistance } from "@/api/scholarship-assistance";
+import { submitScholarshipAssistance } from "@/lib/api-client/scholarship-assistance";
 import { assistanceFieldErrors, canRequestScholarshipAssistance, scholarshipAssistancePayload, validateAssistance, type AssistanceErrors, type AssistanceScholarship, type AssistanceValues } from "@/lib/scholarship-assistance";
 import { cn } from "@/lib/utils";
 

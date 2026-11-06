@@ -1,4 +1,4 @@
-import type { PublicList, University } from "@/api/public-content";
+import type { PublicList, University } from "@/lib/api-client/public-content";
 import type { UniversityProgram } from "@/lib/university-details";
 import { homeImageUrl } from "@/lib/homepage-data";
 import { directoryLanguages, directoryStudyLevels } from "@/lib/university-directory-data";

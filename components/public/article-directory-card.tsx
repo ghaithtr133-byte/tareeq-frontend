@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Star } from "lucide-react";
-import type { Article } from "@/api/public-content";
+import type { Article } from "@/lib/api-client/public-content";
 import { ArticleDirectoryImage } from "@/components/public/article-directory-image";
 import { articlePublicationDate } from "@/lib/article-directory";
 

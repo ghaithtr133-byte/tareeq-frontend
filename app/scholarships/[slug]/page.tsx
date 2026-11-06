@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getPublishedScholarshipDetail } from "@/api/scholarship-detail";
-import { ApiError } from "@/api/error";
+import { getPublishedScholarshipDetail } from "@/lib/api-client/scholarship-detail";
+import { ApiError } from "@/lib/api-client/error";
 import { Container } from "@/components/layout/container";
 import { ContentSection } from "@/components/public/page-components";
 import { HomeSectionError } from "@/components/home/home-section-error";

@@ -1,8 +1,8 @@
 import "server-only";
 import { cache } from "react";
-import { getArticle, getCountries, getUniversities } from "@/api/public-content";
-import type { Article, Country, University } from "@/api/public-content";
-import { ApiError } from "@/api/error";
+import { getArticle, getCountries, getUniversities } from "@/lib/api-client/public-content";
+import type { Article, Country, University } from "@/lib/api-client/public-content";
+import { ApiError } from "@/lib/api-client/error";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { parseArticleBody, parseArticleScholarships, parsePublishedArticle, validArticleSlug } from "@/lib/article-detail-live";
 import { scholarshipLookup } from "@/lib/scholarship-directory-live";

@@ -1,4 +1,4 @@
-import type { Country, PublicList, University, UniversityListParams } from "@/api/public-content";
+import type { Country, PublicList, University, UniversityListParams } from "@/lib/api-client/public-content";
 import type { RouteSearchParams } from "@/lib/public-search-params";
 import { homeImageUrl } from "@/lib/homepage-data";
 

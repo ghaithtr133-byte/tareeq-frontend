@@ -2,7 +2,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import type { Article, ArticleBlock, Country, Pagination, Scholarship, Service, University } from "@/api/public-content";
+import type { Article, ArticleBlock, Country, Pagination, Scholarship, Service, University } from "@/lib/api-client/public-content";
 import { Container } from "@/components/layout/container";
 import { ContentUnavailable } from "@/components/public/page-components";
 import { buildArticleToc } from "@/lib/article-toc";

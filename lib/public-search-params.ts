@@ -6,7 +6,7 @@ import type {
   ScholarshipListParams,
   ServiceListParams,
   UniversityListParams,
-} from "@/api/public-content";
+} from "@/lib/api-client/public-content";
 
 export type RouteSearchParams = Record<string, string | string[] | undefined>;
 

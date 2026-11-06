@@ -1,4 +1,4 @@
-import type { Country, PublicList, Scholarship, University } from "@/api/public-content";
+import type { Country, PublicList, Scholarship, University } from "@/lib/api-client/public-content";
 import { homeImageUrl } from "@/lib/homepage-data";
 
 export type DirectoryLiveScholarship = Scholarship & { imageUrl?: string | null; imageAltAr?: string | null };

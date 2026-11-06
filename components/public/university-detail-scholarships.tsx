@@ -1,8 +1,8 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import type { PublicList, Scholarship, CountryReference } from "@/api/public-content";
-import { loadUniversityScholarships } from "@/api/university-detail-actions";
+import type { PublicList, Scholarship, CountryReference } from "@/lib/api-client/public-content";
+import { loadUniversityScholarships } from "@/lib/api-client/university-detail-actions";
 import { ScholarshipDirectoryCard } from "@/components/public/scholarship-directory-card";
 import { nextScholarshipPage, uniqueUniversityScholarships } from "@/lib/university-details";
 import { SkeletonResults } from "@/components/public/content-skeletons";

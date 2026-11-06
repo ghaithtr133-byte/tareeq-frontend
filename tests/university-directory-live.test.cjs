@@ -47,7 +47,7 @@ async function render(raw = {}, changes = {}, calls = []) {
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
     "@/lib/mocks/public-demo-content": new Proxy({}, { get() { throw Error("Live must not touch Demo records"); } }),
     "@/lib/university-directory-demo": new Proxy({}, { get() { throw Error("Live must not import Demo directory"); } }),
-    "@/api/server-client": { serverApiClient: { get: async (path, config) => {
+    "@/lib/api-client/server-client": { serverApiClient: { get: async (path, config) => {
       calls.push({ path, config });
       const response = responses[path];
       if (response instanceof Error) throw response;
@@ -107,8 +107,8 @@ test.skip("legacy server-rendered universities route coverage; replaced by clien
 
 test("Read-only load-more bridge validates requests and uses scholarship pagination independently", async () => {
   const calls = [];
-  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getScholarships: async (params) => { calls.push(params); return list([related(5)], { page: params.page, limit: 4, total: 9, totalPages: 3 }); } } });
-  const { loadRelatedUniversityScholarships } = local("api/university-related-scholarships.ts");
+  const local = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getScholarships: async (params) => { calls.push(params); return list([related(5)], { page: params.page, limit: 4, total: 9, totalPages: 3 }); } } });
+  const { loadRelatedUniversityScholarships } = local("lib/api-client/university-related-scholarships.ts");
   const criteria = { country: "romania", page: 99, limit: 6, sort: "name", major: "medicine" };
   const result = await loadRelatedUniversityScholarships(criteria, 2);
   assert.equal(result.ok, true);
@@ -120,7 +120,7 @@ test("Read-only load-more bridge validates requests and uses scholarship paginat
   assert.equal((await loadRelatedUniversityScholarships({}, 1)).ok, false);
   assert.equal((await loadRelatedUniversityScholarships(criteria, 0)).ok, false);
   assert.equal(calls.length, 1);
-  const demo = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/public-content": { getScholarships() { throw Error("must not fetch"); } } })("api/university-related-scholarships.ts");
+  const demo = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/lib/api-client/public-content": { getScholarships() { throw Error("must not fetch"); } } })("lib/api-client/university-related-scholarships.ts");
   assert.equal((await demo.loadRelatedUniversityScholarships(criteria, 1)).ok, false);
 });
 
@@ -129,7 +129,7 @@ test("Related load-more appends batches, retries failed pages, and keys data onl
   const first = list([related(1)], { limit: 4, total: 9, totalPages: 3 });
   const second = list([related(1), related(2)], { page: 2, limit: 4, total: 9, totalPages: 3 });
   let state = { data: { pages: [first, second] }, isFetching: false, isError: false, isFetchNextPageError: false, hasNextPage: true, fetchNextPage() { fetched++; }, refetch() { refetched++; } };
-  const local = loader({ ...ui, "@tanstack/react-query": { useInfiniteQuery: (value) => { options = value; return state; } }, "@/api/university-related-scholarships": { loadRelatedUniversityScholarships: async () => ({ ok: true, data: second }) } });
+  const local = loader({ ...ui, "@tanstack/react-query": { useInfiniteQuery: (value) => { options = value; return state; } }, "@/lib/api-client/university-related-scholarships": { loadRelatedUniversityScholarships: async () => ({ ok: true, data: second }) } });
   const { LiveUniversityRelatedScholarships } = local("components/public/live-university-related-scholarships.tsx");
   const props = { criteria: { country: "romania", page: 7, sort: "name" }, initial: first, countries: [country], universities: [] };
   let tree = LiveUniversityRelatedScholarships(props);
@@ -217,7 +217,7 @@ test.skip("legacy server-rendered universities route coverage; replaced by clien
 });
 
 test.skip("legacy server-rendered universities route coverage; replaced by client-shell coverage", async () => {
-  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/server-client": { serverApiClient: { get() { throw Error("Demo must not request Live endpoints"); } } } });
+  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/lib/api-client/server-client": { serverApiClient: { get() { throw Error("Demo must not request Live endpoints"); } } } });
   const page = local("app/universities/page.tsx").default;
   const initial = renderToStaticMarkup(await page({ searchParams: Promise.resolve({}) }));
   assert.equal(initial.includes('id="related-scholarships-title"'), false);

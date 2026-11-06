@@ -1,6 +1,6 @@
 import { createDirectoryDemoScholarships } from "@/lib/mocks/scholarship-directory-fixtures";
 
-import { ApiError } from "@/api/error";
+import { ApiError } from "@/lib/api-client/error";
 import type {
   Article,
   ArticleListParams,
@@ -14,7 +14,7 @@ import type {
   ServiceListParams,
   University,
   UniversityListParams,
-} from "@/api/public-content";
+} from "@/lib/api-client/public-content";
 
 const timestamp = "2026-10-01T09:00:00.000Z";
 const image = (id: string) =>

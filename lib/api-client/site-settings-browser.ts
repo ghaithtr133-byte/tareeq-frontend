@@ -1,4 +1,4 @@
-import { browserApiClient } from "@/api/client";
+import { browserApiClient } from "@/lib/api-client/client";
 import { parseContactSettingsResponse } from "@/lib/contact";
 
 /** Public browser request for static page shells; it never falls back to Demo data. */

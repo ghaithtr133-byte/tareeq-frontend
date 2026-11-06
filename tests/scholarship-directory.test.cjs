@@ -104,10 +104,10 @@ test("Live adapter requests only selected API page and propagates errors without
   const calls = [];
   const apiLoad = loader({
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
-    "@/api/server-client": { serverApiClient: { get: async (...args) => { calls.push(args); throw new Error("API unavailable"); } } },
+    "@/lib/api-client/server-client": { serverApiClient: { get: async (...args) => { calls.push(args); throw new Error("API unavailable"); } } },
     "@/lib/mocks/public-demo-content": { getDemoScholarships: () => { throw new Error("Demo must not run"); } },
   });
-  const api = apiLoad("api/public-content.ts");
+  const api = apiLoad("lib/api-client/public-content.ts");
   const params = helpers.directoryScholarshipParams({ page: "3", country: "romania" });
   await assert.rejects(api.getScholarships(params), /API unavailable/);
   assert.equal(calls.length, 1);
@@ -144,7 +144,7 @@ test.skip("legacy server-rendered Scholarships route coverage; replaced by clien
     "next/image": ({ src, alt, className }) => React.createElement("img", { src, alt, className }),
     "next/navigation": { useRouter: () => ({ push() {} }), redirect: () => { throw Error("unexpected redirect"); } },
     "@/lib/public-content-mode": { isPublicDemoMode: () => true },
-    "@/api/public-content": Object.fromEntries(Object.entries(methods).map(([name, method]) => [name, (...args) => { calls.push({ name, args }); return method(...args); }])),
+    "@/lib/api-client/public-content": Object.fromEntries(Object.entries(methods).map(([name, method]) => [name, (...args) => { calls.push({ name, args }); return method(...args); }])),
   });
   const html = renderToStaticMarkup(await pageLoad("app/scholarships/page.tsx").default({ searchParams: Promise.resolve({}) }));
   const hero = html.match(/<section aria-labelledby="scholarships-title"[\s\S]*?<\/section>/)[0];
@@ -216,7 +216,7 @@ test("Live joins real relationship IDs once, respects valid projections and neve
 
 function liveRoute({ data = pageData([liveRecord]), countries = pageData(liveCountries, 1, 50), universities = pageData(liveUniversities, 1, 50), failScholarships = false, failCountries = false } = {}) {
   const calls = [];
-  const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/server-client": { serverApiClient: { get: async (url, config) => {
+  const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/server-client": { serverApiClient: { get: async (url, config) => {
     calls.push({ url, params: config.params });
     if ((url === "/scholarships" && failScholarships) || (url === "/countries" && failCountries)) throw Error("offline");
     return { data: { success: true, data: url === "/scholarships" ? data : url === "/countries" ? countries : universities } };

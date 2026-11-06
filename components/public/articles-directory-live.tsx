@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { getBrowserArticles, getBrowserCountries } from "@/api/public-content-browser";
+import { getBrowserArticles, getBrowserCountries } from "@/lib/api-client/public-content-browser";
 import { ArticleDirectoryCard } from "@/components/public/article-directory-card";
 import { ArticleDirectoryFilters } from "@/components/public/article-directory-filters";
 import { ArticleDirectoryPagination } from "@/components/public/article-directory-pagination";

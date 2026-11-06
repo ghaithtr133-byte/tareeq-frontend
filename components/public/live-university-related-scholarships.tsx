@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import type { Country, PublicList, Scholarship, University } from "@/api/public-content";
+import type { Country, PublicList, Scholarship, University } from "@/lib/api-client/public-content";
 import type { LiveUniversityParams } from "@/lib/university-directory-data";
-import { loadBrowserRelatedUniversityScholarships } from "@/api/university-related-scholarships-browser";
+import { loadBrowserRelatedUniversityScholarships } from "@/lib/api-client/university-related-scholarships-browser";
 import { nextRelatedScholarshipPage, universityScholarshipParams } from "@/lib/university-related-scholarships";
 import { DirectoryScholarshipCard } from "@/components/public/university-directory-cards";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";

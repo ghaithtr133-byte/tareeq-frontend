@@ -1,4 +1,4 @@
-import { browserApiClient } from "@/api/client";
+import { browserApiClient } from "@/lib/api-client/client";
 import type { LiveUniversityParams } from "@/lib/university-directory-data";
 import { parseUniversityFacets } from "@/lib/university-directory-data";
 

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getPublishedCountry, getCountryFaqs, countrySlugIsValid } from "@/api/country-details";
-import { ApiError } from "@/api/error";
+import { getPublishedCountry, getCountryFaqs, countrySlugIsValid } from "@/lib/api-client/country-details";
+import { ApiError } from "@/lib/api-client/error";
 import { Container } from "@/components/layout/container";
 import { ErrorState } from "@/components/ui/content-state";
 import { CountryDetails } from "@/components/public/country-details";

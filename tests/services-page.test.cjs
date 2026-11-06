@@ -104,7 +104,7 @@ test("future available detail configuration activates the existing CTA without a
 
 test.skip("legacy server-rendered Services route coverage; replaced by client-shell coverage", async () => {
   let requests = 0;
-  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/public-content": { getServices: async (params) => { requests += 1; assert.deepEqual(params, { limit: 5, sort: "manual" }); return demo.getDemoServices(params); } } });
+  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/lib/api-client/public-content": { getServices: async (params) => { requests += 1; assert.deepEqual(params, { limit: 5, sort: "manual" }); return demo.getDemoServices(params); } } });
   const { default: ServicesPage } = local("app/services/page.tsx");
   const html = renderToStaticMarkup(await ServicesPage({ searchParams: Promise.resolve({}) }));
   assert.equal(requests, 1);
@@ -121,7 +121,7 @@ test.skip("legacy server-rendered Services route coverage; replaced by client-sh
 });
 
 test("the closing CTA uses only the configured official WhatsApp destination with safe external behavior", async () => {
-  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getServices: async () => ({ items: [], pagination: { page: 1, limit: 5, total: 0, totalPages: 0 } }) } });
+  const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": { getServices: async () => ({ items: [], pagination: { page: 1, limit: 5, total: 0, totalPages: 0 } }) } });
   const { default: ServicesPage } = local("app/services/page.tsx");
   const { createWhatsappUrl } = viewLoad("lib/whatsapp.ts");
   const html = renderToStaticMarkup(await ServicesPage({ searchParams: Promise.resolve({}) }));
@@ -171,7 +171,7 @@ const liveList = (items = [], page = 1, total = items.length) => ({ items, pagin
 const liveService = { id: "live-service", slug: "real-service-slug", titleAr: "خدمة منشورة", summaryAr: "ملخص حقيقي", descriptionAr: "تفصيل حقيقي", imageUrl: "https://media.example.test/service.jpg", imageAltAr: "صورة الخدمة المنشورة", displayOrder: 3 };
 function liveRoute(data = liveList([liveService]), failure) {
   const calls = [];
-  const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/server-client": { serverApiClient: { get: async (url, options) => {
+  const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/server-client": { serverApiClient: { get: async (url, options) => {
     calls.push({ url, params: options.params }); if (failure) throw failure; return { data: { success: true, data } };
   } } } });
   return { page: scoped("app/services/page.tsx").default, calls };

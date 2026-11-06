@@ -1,6 +1,6 @@
 import "server-only";
 
-import { serverApiClient } from "@/api/server-client";
+import { serverApiClient } from "@/lib/api-client/server-client";
 import {
   getDemoArticle,
   getDemoArticles,

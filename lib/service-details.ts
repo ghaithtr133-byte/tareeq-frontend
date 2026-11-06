@@ -1,4 +1,4 @@
-import type { Service } from "@/api/public-content";
+import type { Service } from "@/lib/api-client/public-content";
 import type { FaqItem } from "@/components/public/faq-accordion";
 
 export type ServiceKind = "admissions" | "major" | "scholarships" | "documents" | "follow-up" | "general";

@@ -1,4 +1,4 @@
-import type { Article, ArticleListParams } from "@/api/public-content";
+import type { Article, ArticleListParams } from "@/lib/api-client/public-content";
 import { articlesParams, type RouteSearchParams } from "@/lib/public-search-params";
 
 export type ArticleFilterValues = { search: string; country: string; featured: string };

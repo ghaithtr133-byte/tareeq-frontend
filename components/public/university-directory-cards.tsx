@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, GraduationCap, MapPin } from "lucide-react";
-import type { Scholarship, University } from "@/api/public-content";
+import type { Scholarship, University } from "@/lib/api-client/public-content";
 import { UniversityDirectoryImage } from "@/components/public/university-directory-image";
 import { approvedHomeCardCopy, homeCardText } from "@/lib/homepage-card-content";
 import { directoryUniversityTypes, type DirectoryUniversity } from "@/lib/university-directory-data";

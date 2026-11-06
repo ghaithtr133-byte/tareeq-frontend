@@ -48,8 +48,8 @@ const records = {
 };
 const collection = (items) => ({ items, pagination: { page: 1, limit: 12, total: items.length, totalPages: items.length ? 1 : 0 } });
 function liveLoader(overrides = {}, calls = []) {
-  return loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": new Proxy({}, { get() { throw Error("Live must not load Demo content"); } }),
-    "@/api/server-client": { serverApiClient: { get: async (path, config) => {
+  return loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": new Proxy({}, { get() { throw Error("Live must not load Demo content"); } }),
+    "@/lib/api-client/server-client": { serverApiClient: { get: async (path, config) => {
       calls.push({ path, config });
       const section = path.slice(1);
       const value = section in overrides ? overrides[section] : collection(records[section]);

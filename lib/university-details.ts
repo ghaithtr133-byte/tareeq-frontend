@@ -1,4 +1,4 @@
-import type { PublicList, Scholarship } from "@/api/public-content";
+import type { PublicList, Scholarship } from "@/lib/api-client/public-content";
 
 export const universityTabs = [
   { id: "overview", label: "نظرة عامة" },

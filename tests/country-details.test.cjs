@@ -37,13 +37,13 @@ const boundary = {
 };
 const data = loader()("lib/mocks/public-demo-content.ts");
 const fixtures = loader()("lib/mocks/country-details-fixtures.ts");
-const apiError = loader()("api/error.ts");
+const apiError = loader()("lib/api-client/error.ts");
 function route(demo, country = data.publicDemoContent.countries[1], fail, faqPayload = { items: [], pagination: { total: 0 } }, calls = []) {
   return loader({ ...boundary,
     "@/lib/public-content-mode": { isPublicDemoMode: () => demo },
-    "@/api/error": apiError,
-    "@/api/server-client": { serverApiClient: { get: async (path, config) => { calls.push({ path, config }); if (faqPayload instanceof Error) throw faqPayload; return { data: { success: true, data: faqPayload } }; } } },
-    "@/api/public-content": { getCountry: async () => { if (fail) throw fail; return country; } },
+    "@/lib/api-client/error": apiError,
+    "@/lib/api-client/server-client": { serverApiClient: { get: async (path, config) => { calls.push({ path, config }); if (faqPayload instanceof Error) throw faqPayload; return { data: { success: true, data: faqPayload } }; } } },
+    "@/lib/api-client/public-content": { getCountry: async () => { if (fail) throw fail; return country; } },
   })("app/study-abroad/[slug]/page.tsx");
 }
 const props = { params: Promise.resolve({ slug: "requested-alias" }) };
