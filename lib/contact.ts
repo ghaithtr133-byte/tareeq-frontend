@@ -78,6 +78,17 @@ export function contactSettings(value: unknown): ContactSettings {
   return result;
 }
 
+/** Validates the documented public SiteSettings envelope before presentation. */
+export function parseContactSettingsResponse(value: unknown): ContactSettings {
+  const response = value && typeof value === "object" ? value as Record<string, unknown> : undefined;
+  const data = response?.data;
+  const fields = ["academyNameAr", "contactEmail", "contactPhone", "addressAr", "facebookUrl", "instagramUrl", "linkedinUrl", "youtubeUrl"];
+  if (response?.success !== true || !data || typeof data !== "object" || Array.isArray(data) || !fields.some((key) => key in data) || fields.some((key) => (data as Record<string, unknown>)[key] !== undefined && (data as Record<string, unknown>)[key] !== null && typeof (data as Record<string, unknown>)[key] !== "string")) {
+    throw new Error("Invalid site settings response.");
+  }
+  return contactSettings(data);
+}
+
 // Presentation only: never persisted to settings or used as real contact destinations.
 const contactPlaceholders = {
   contactEmail: "example@tareeq-academy.com",
