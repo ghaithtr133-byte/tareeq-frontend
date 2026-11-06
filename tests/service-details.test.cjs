@@ -176,7 +176,7 @@ test("hero and compact consultation keep contextual WhatsApp without a duplicate
 
 test("Live directory API failure shows shared retry state without static cards or fabricated slugs", async () => {
   const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "next/navigation": { useRouter: () => ({ refresh() {} }) }, "@/api/public-content": { getServices: async () => { throw Error("offline"); } } });
-  const html = renderToStaticMarkup(await local("app/services/page.tsx").default());
+  const html = renderToStaticMarkup(await local("app/services/page.tsx").default({ searchParams: Promise.resolve({}) }));
   assert.equal((html.match(/data-service-card=/g) ?? []).length, 0);
   assert.ok(html.includes("تعذّر تحميل الخدمات"));
   assert.ok(html.includes("إعادة المحاولة"));
