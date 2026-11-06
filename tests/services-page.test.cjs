@@ -106,7 +106,7 @@ test("Services page preserves its design and copy, resolving actual published na
   let requests = 0;
   const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/api/public-content": { getServices: async (params) => { requests += 1; assert.deepEqual(params, { limit: 5, sort: "manual" }); return demo.getDemoServices(params); } } });
   const { default: ServicesPage } = local("app/services/page.tsx");
-  const html = renderToStaticMarkup(await ServicesPage());
+  const html = renderToStaticMarkup(await ServicesPage({ searchParams: Promise.resolve({}) }));
   assert.equal(requests, 1);
   assert.ok(html.includes('src="/images/services/services-hero.png"'));
   assert.equal((html.match(/data-service-card=/g) ?? []).length, 5);
@@ -124,7 +124,7 @@ test("the closing CTA uses only the configured official WhatsApp destination wit
   const local = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/api/public-content": { getServices: async () => ({ items: [], pagination: { page: 1, limit: 5, total: 0, totalPages: 0 } }) } });
   const { default: ServicesPage } = local("app/services/page.tsx");
   const { createWhatsappUrl } = viewLoad("lib/whatsapp.ts");
-  const html = renderToStaticMarkup(await ServicesPage());
+  const html = renderToStaticMarkup(await ServicesPage({ searchParams: Promise.resolve({}) }));
   assert.ok(html.includes(`href="${createWhatsappUrl()}"`));
   assert.ok(html.includes('target="_blank" rel="noopener noreferrer"'));
   assert.ok(html.includes("تواصل عبر واتساب"));
@@ -179,7 +179,7 @@ function liveRoute(data = liveList([liveService]), failure) {
 
 test("Live renders real published records, actual slugs/media and Backend ordering in the original cards", async () => {
   const route = liveRoute(liveList([{ ...liveService, displayOrder: 20 }, { ...liveService, id: "second", slug: "second-service", titleAr: "الخدمة الثانية", displayOrder: 1 }]));
-  const html = renderToStaticMarkup(await route.page());
+  const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({}) }));
   assert.deepEqual(route.calls, [{ url: "/services", params: { limit: 5, sort: "manual", page: 1 } }]);
   assert.equal((html.match(/data-service-card=/g) ?? []).length, 2);
   assert.ok(html.indexOf('data-service-card="real-service-slug"') < html.indexOf('data-service-card="second-service"'), "Do not re-sort or restore static service order");
@@ -191,7 +191,7 @@ test("Live renders real published records, actual slugs/media and Backend orderi
 test("Live empty, failed and malformed collections preserve Hero, static editorial process and closing CTA without fake services", async () => {
   for (const [data, failure, expected] of [[liveList(), undefined, "لا توجد خدمات منشورة حالياً"], [null, Error("offline"), "تعذّر تحميل الخدمات"], [{ items: [], pagination: { total: 2 } }, undefined, "تعذّر تحميل الخدمات"], [liveList([{ ...liveService, status: "DRAFT" }]), undefined, "تعذّر تحميل الخدمات"]]) {
     const route = liveRoute(data, failure);
-    const html = renderToStaticMarkup(await route.page());
+    const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({}) }));
     assert.ok(html.includes(expected));
     assert.equal((html.match(/data-service-card=/g) ?? []).length, 0);
     assert.ok(html.includes('id="services-title"'));
@@ -224,7 +224,7 @@ test("Partial records use available real text then exact same-service temporary 
 test("Live page counts remain balanced and pagination stays server-side with no all-catalog fetch", async () => {
   for (const count of [1, 2, 3, 4, 5]) {
     const route = liveRoute(liveList(Array.from({ length: count }, (_, index) => ({ ...liveService, id: `id-${index}`, slug: `service-${index}` }))));
-    const html = renderToStaticMarkup(await route.page());
+    const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({}) }));
     assert.equal((html.match(/data-service-card=/g) ?? []).length, count);
     assert.ok(html.includes("justify-center"));
     assert.ok(html.includes("[&amp;&gt;*]:grow-0"));

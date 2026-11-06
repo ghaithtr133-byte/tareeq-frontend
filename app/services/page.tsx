@@ -24,7 +24,11 @@ export const metadata = createPageMetadata("خدماتنا", "خدمات متك�
 const processIcons = [Headset, Target, FileText, Plane];
 export const dynamic = "force-dynamic";
 
-export default async function ServicesPage({ searchParams }: { searchParams?: Promise<RouteSearchParams> } = {}) {
+export default async function ServicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<RouteSearchParams>;
+}) {
   const demo = isPublicDemoMode();
   const page = demo ? 1 : servicesDirectoryPage((await searchParams)?.page);
   const result = await getServices({ limit: 5, sort: "manual", ...(demo ? {} : { page }) }).then((data) => demo ? data : parseServicesDirectory(data, page)).catch(() => null);
