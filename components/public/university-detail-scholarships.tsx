@@ -35,7 +35,7 @@ export function UniversityDetailScholarships({ id, slug, name, country, demo, in
   return <section data-university-scholarships aria-labelledby="university-scholarships-title" className="mt-6 rounded-2xl border bg-white p-4 sm:p-5">
     <h2 id="university-scholarships-title" className="text-xl font-bold leading-8 text-primary sm:text-2xl">المنح المرتبطة بهذه الجامعة</h2>
     <p className="mt-2 text-sm leading-7 text-muted-foreground">تختلف شروط الأهلية حسب المنحة؛ ارتباطها بالجامعة لا يعني شمول جميع تخصصاتها.</p>
-    {query.isFetching && !items.length ? <SkeletonResults kind="scholarship" count={3} label="جارٍ تحميل المنح المرتبطة…" /> : null}
+    {query.isPending && !items.length ? <SkeletonResults kind="scholarship" count={3} label="جارٍ تحميل المنح المرتبطة…" /> : null}
     {items.length ? <BalancedCardGrid columns={{ md: 2, xl: 3 }} gap={4} className="mt-4">{items.map((scholarship) => <ScholarshipDirectoryCard key={scholarship.id} scholarship={demo ? scholarship : { ...scholarship,
       university: scholarship.university ?? (name ? { id, slug, nameAr: name } : null),
       country: scholarship.country ?? (country && country.id === scholarship.countryId ? country : null),

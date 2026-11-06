@@ -112,19 +112,6 @@ test("site settings adapter is isolated in Demo, uses one Live GET, and rejects 
   assert.deepEqual(await getContactSettings(false), {});
 });
 
-test("static Contact shell retrieves public SiteSettings directly in the browser client", async () => {
-  const calls = [];
-  const local = loader({
-    "@/lib/api-client/client": { browserApiClient: { get: async (...args) => { calls.push(args); return { data: { success: true, data: { contactEmail: "info@example.test" } } }; } } },
-  });
-  const settings = await local("lib/api-client/site-settings-browser.ts").getBrowserContactSettings();
-  assert.equal(settings.contactEmail, "info@example.test");
-  assert.deepEqual(calls, [["/site-settings", { withCredentials: false, timeout: 15000 }]]);
-  const page = fs.readFileSync(path.resolve(__dirname, "..", "app/contact/page.tsx"), "utf8");
-  assert.equal(page.includes('force-dynamic'), false);
-  assert.equal(page.includes('getContactSettings'), false);
-});
-
 test("contact card stays visible with clearly labeled non-clickable placeholders and four disabled socials", () => {
   const { ContactInformationCard } = loader()("components/public/contact-cards.tsx");
   for (const settings of [{}, { contactEmail: "invalid", contactPhone: "bad", instagramUrl: "javascript:alert(1)" }]) {
@@ -162,17 +149,15 @@ const boundary = {
   "next/image": ({ src, alt, className }) => React.createElement("img", { src, alt, className }),
   "next/navigation": { useRouter: () => ({ refresh() {} }) },
 };
-test("static contact route preserves reference structure and delegates settings to an independent client region", () => {
-  const local = loader({ ...boundary,
-    "@/lib/public-content-mode": { isPublicDemoMode: () => true },
-    "@/components/public/contact-information-live": { ContactInformationLive: ({ demo }) => { assert.equal(demo, true); return React.createElement("section", { "data-live-contact-information": true }); } },
-    "@/components/public/contact-inquiry-form": { ContactInquiryForm: () => React.createElement("form", { "data-inquiry": true }) },
-  });
-  const html = renderToStaticMarkup(local("app/contact/page.tsx").default());
+test("contact route preserves reference structure, mobile order and settings-error independence", async () => {
+  for (const fail of [false, true]) {
+    const local = loader({ ...boundary, "@/lib/public-content-mode": { isPublicDemoMode: () => true }, "@/lib/api-client/site-settings": { getContactSettings: async (demo) => { assert.equal(demo, true); if (fail) throw Error("offline"); return {}; } }, "@/components/public/contact-inquiry-form": { ContactInquiryForm: () => React.createElement("form", { "data-inquiry": true }) } });
+    const html = renderToStaticMarkup(await local("app/contact/page.tsx").default());
     for (const value of ["contact-title", "contact-whatsapp-title", "data-inquiry", "lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]", "lg:flex-col", "order-1", "order-2", "order-3", "sm:w-[58%]"]) assert.ok(html.includes(value), value);
     assert.equal(html.includes("data-consultation-cta"), false);
-    assert.ok(html.includes("data-live-contact-information"));
+    assert.equal(html.includes("تعذر تحميل معلومات التواصل الإضافية"), fail);
     assert.equal(html.includes("info@tareeq"), false);
+  }
 });
 
 function formHarness(demo = false, post) {
@@ -315,14 +300,14 @@ test("real form-to-client path never resets or reports success on malformed acce
   } finally { global.FormData = originalData; global.requestAnimationFrame = originalFrame; }
 });
 
-test("Live static shell preserves form and configured WhatsApp while the client region owns settings state", () => {
+test("Live route isolates settings errors with retry, preserves form and configured WhatsApp without mode changes", async () => {
   for (const failed of [false, true]) {
     const local = loader({ ...boundary,
       "@/lib/public-content-mode": { isPublicDemoMode: () => false },
-      "@/components/public/contact-information-live": { ContactInformationLive: ({ demo }) => { assert.equal(demo, false); return React.createElement("section", null, `معلومات التواصل الأخرى${failed ? " تعذر تحميل معلومات التواصل الإضافية إعادة المحاولة" : ""}`); } },
+      "@/lib/api-client/server-client": { serverApiClient: { get: async (path) => { assert.equal(path, "/site-settings"); if (failed) throw Error("offline"); return { data: { success: true, data: { contactEmail: null, contactPhone: null, addressAr: null } } }; } } },
       "@/components/public/contact-inquiry-form": { ContactInquiryForm: ({ demo }) => { assert.equal(demo, false); return React.createElement("form", { "data-live-inquiry": true }); } },
     });
-    const html = renderToStaticMarkup(local("app/contact/page.tsx").default());
+    const html = renderToStaticMarkup(await local("app/contact/page.tsx").default());
     assert.ok(html.includes("data-live-inquiry"));
     assert.ok(html.includes(local("lib/whatsapp.ts").createWhatsappUrl()));
     assert.ok(html.includes("معلومات التواصل الأخرى"));

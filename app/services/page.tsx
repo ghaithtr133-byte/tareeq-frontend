@@ -3,18 +3,37 @@ import { innerPageHero } from "@/lib/inner-page-hero";
 import Link from "next/link";
 import { ChevronLeft, FileText, GraduationCap, Headset, MessageCircle, Plane, Target } from "lucide-react";
 import { Container } from "@/components/layout/container";
-import { Suspense } from "react";
-import { ServicesDirectoryLive } from "@/components/public/services-directory-live";
+import { ServiceOverviewCard } from "@/components/public/service-overview-card";
 import { ConsultationCta, consultationActionClass } from "@/components/public/consultation-cta";
-import { serviceProcess } from "@/lib/public-services";
+import { publicServices, serviceProcess } from "@/lib/public-services";
 import { createPageMetadata } from "@/lib/seo";
 import { createWhatsappUrl } from "@/lib/whatsapp";
-import { SkeletonResults } from "@/components/public/content-skeletons";
+import { getServices } from "@/lib/api-client/public-content";
+import { publishedServiceHref } from "@/lib/service-details";
+import { serviceDetailHref } from "@/lib/service-details";
+import { isPublicDemoMode } from "@/lib/public-content-mode";
+import { parseServicesDirectory, serviceOverviewFromLive, servicesDirectoryPage } from "@/lib/services-directory-live";
+import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
+import { EmptyState } from "@/components/ui/content-state";
+import { HomeSectionError } from "@/components/home/home-section-error";
+import { PaginationLinks } from "@/components/public/public-content";
+import { redirect } from "next/navigation";
+import type { RouteSearchParams } from "@/lib/public-search-params";
 
 export const metadata = createPageMetadata("خدماتنا", "خدمات متكاملة لدعم رحلتك الدراسية: القبول الجامعي، اختيار التخصص، المنح الدراسية، تجهيز الملف ومتابعة القبول.", { index: true, pathname: "/services" });
 const processIcons = [Headset, Target, FileText, Plane];
+export const dynamic = "force-dynamic";
 
-export default function ServicesPage() {
+export default async function ServicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<RouteSearchParams>;
+}) {
+  const demo = isPublicDemoMode();
+  const page = demo ? 1 : servicesDirectoryPage((await searchParams)?.page);
+  const result = await getServices({ limit: 5, sort: "manual", ...(demo ? {} : { page }) }).then((data) => demo ? data : parseServicesDirectory(data, page)).catch(() => null);
+  const published = result?.items ?? [];
+  if (!demo && result && page > Math.max(1, result.pagination.totalPages)) redirect(result.pagination.totalPages > 1 ? `/services?page=${result.pagination.totalPages}` : "/services");
   return <main className="bg-[#F8FAFD] pb-8 text-primary">
     <section aria-labelledby="services-title" className="relative isolate overflow-hidden border-b border-[#E2E9F0] bg-gradient-to-l from-white to-[#EDF4F9]">
       <div data-services-hero-art className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-1/2 opacity-35 md:w-[42%] md:opacity-100"><Image src="/images/services/services-hero.png" alt="قبعة تخرج وكتب وكرة أرضية" fill loading="eager" sizes="(min-width: 768px) 42vw, 50vw" className="object-contain object-bottom md:object-cover md:object-center" /><span aria-hidden="true" className="absolute inset-0 bg-gradient-to-l from-[#F8FAFD] via-transparent to-transparent" /></div>
@@ -26,7 +45,10 @@ export default function ServicesPage() {
 
     <Container>
       <section aria-label="خدماتنا التعليمية" className="py-6 sm:py-8">
-        <Suspense fallback={<SkeletonResults kind="service" count={5} label="جارٍ تحميل الخدمات المنشورة…" />}><ServicesDirectoryLive /></Suspense>
+        {demo ? <div data-services-grid className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">{publicServices.map((service) => <ServiceOverviewCard key={service.slug} service={service} publishedHref={publishedServiceHref(service.title, published)} />)}</div>
+          : !result ? <HomeSectionError title="تعذّر تحميل الخدمات" description="حدثت مشكلة أثناء جلب الخدمات المنشورة. يرجى المحاولة مجدداً." />
+          : !published.length ? <EmptyState title="لا توجد خدمات منشورة حالياً" description="ستظهر الخدمات هنا عند نشرها. يمكنك التواصل معنا للاستفسار." />
+          : <><BalancedCardGrid data-services-grid columns={{ md: 2, lg: 3, xl: 5 }} gap={4}>{published.map((service) => <ServiceOverviewCard key={service.id} service={serviceOverviewFromLive(service)} publishedHref={serviceDetailHref(service)} live />)}</BalancedCardGrid><PaginationLinks pathname="/services" params={{}} pagination={result.pagination} /></>}
       </section>
 
       <section aria-labelledby="services-process-title" className="pb-7">

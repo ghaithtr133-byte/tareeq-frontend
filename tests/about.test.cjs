@@ -86,19 +86,6 @@ test("Demo uses the established Demo source, not Live settings, without an inven
   assert.ok(result.services.value.length > 0);
 });
 
-test("static About shell uses a bounded public browser services request", async () => {
-  const calls = [];
-  const local = loader({
-    "@/lib/api-client/client": { browserApiClient: { get: async (...args) => { calls.push(args); return { data: { success: true, data: list([service]) } }; } } },
-  });
-  const services = await local("lib/api-client/public-services-browser.ts").getBrowserAboutServices();
-  assert.equal(services[0].titleAr, service.titleAr);
-  assert.deepEqual(calls, [["/services", { params: { limit: 3, sort: "manual" }, withCredentials: false, timeout: 15000 }]]);
-  const page = fs.readFileSync(path.resolve(__dirname, "..", "app/about/page.tsx"), "utf8");
-  assert.equal(page.includes('force-dynamic'), false);
-  assert.equal(page.includes('loadAboutPage'), false);
-});
-
 // These are presentation-slot tests, NOT fixtures for a nonexistent About API contract.
 test("presentation slots prefer supplied content, preserve values order and never duplicate story into vision/mission", () => {
   const local = loader(ui);
@@ -134,17 +121,15 @@ test("unsupported, empty, partial and failed profile presentation remain honest 
   }
 });
 
-test("static page preserves the RTL brand composition and delegates Live content to client regions", async () => {
+test("page renders RTL brand composition, real service links, isolated failures, shared CTA and safe WhatsApp", async () => {
   for (const failed of [false, true]) {
     const local = loader({ ...ui,
       "@/lib/public-content-mode": { isPublicDemoMode: () => false },
-      "@/components/public/about-live-content": {
-        AboutIdentityName: () => React.createElement("span", null, "— اسم من الإعدادات"),
-        AboutIdentityNotice: () => null,
-        AboutLiveServices: () => failed ? React.createElement("p", null, "تعذّر تحميل الخدمات") : React.createElement("a", { href: `/services/${service.slug}`, "data-about-service": service.id }, service.titleAr),
-      },
+      "@/lib/api-client/site-settings": { getContactSettings: async () => ({ academyNameAr: "اسم من الإعدادات" }) },
+      "@/lib/api-client/public-content": { getServices: async () => { if (failed) throw Error("offline"); return list([service]); } },
     });
-    const route = local("app/about/page.tsx"), html = renderToStaticMarkup(route.default());
+    const route = local("app/about/page.tsx");
+    const html = renderToStaticMarkup(await route.default());
     for (const value of ['dir="rtl"', "about-title", "data-about-decoration", "about-story-title", "about-support-title", "اسم من الإعدادات", 'href="/contact"', 'href="/services"', "data-consultation-cta", 'rel="noopener noreferrer"', "motion-reduce:transition-none", "md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]"]) assert.ok(html.includes(value), value);
     assert.ok(html.includes(local("lib/whatsapp.ts").createWhatsappUrl()));
     assert.equal(html.includes(`href="/services/${service.slug}"`), !failed);

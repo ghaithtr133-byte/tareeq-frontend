@@ -62,7 +62,7 @@ async function liveRender(payload, search = {}, calls = []) {
 const liveCountry = (index) => ({ id: `live-${index}`, slug: `live-country-${index}`, nameAr: `وجهة حقيقية ${index}`, featured: false, introductionAr: "وصف منشور", imageUrl: null, imageAltAr: null });
 const liveCollection = (items, pagination = {}) => ({ items, pagination: { page: 1, limit: 6, total: items.length, totalPages: Math.ceil(items.length / 6), ...pagination } });
 
-test.skip("legacy server-rendered destinations route coverage; replaced by client-shell coverage", async () => {
+test("Live uses the existing Countries client, preserves all filters and never activates Demo after failure", async () => {
   const calls = [];
   const html = await liveRender(liveCollection([liveCountry(1)]), { search: "وجهة", featured: "true", sort: "newest", page: "1" }, calls);
   assert.deepEqual(calls, [{ path: "/countries", config: { params: { search: "وجهة", featured: "true", sort: "newest", page: 1, limit: 6 } } }]);
@@ -81,7 +81,7 @@ test.skip("legacy server-rendered destinations route coverage; replaced by clien
   }
 });
 
-test.skip("legacy server-rendered destinations route coverage; replaced by client-shell coverage", async () => {
+test("Live public projections retain partial fields, neutral media and approved same-country temporary copy", async () => {
   const html = await liveRender(liveCollection([
     { id: "turkey", slug: "turkey", nameAr: "تركيا", featured: true, introductionAr: null, imageUrl: "javascript:alert(1)" },
     { id: "different", slug: "malaysia", nameAr: "اسم مختلف", introductionAr: "", imageUrl: null },
@@ -99,7 +99,7 @@ test.skip("legacy server-rendered destinations route coverage; replaced by clien
   assert.equal(html.includes("javascript:"), false);
 });
 
-test.skip("legacy server-rendered destinations route coverage; replaced by client-shell coverage", async () => {
+test("Zero to six Live records retain approved balanced grid, media proportions, flags, links and section states", async () => {
   for (let count = 0; count <= 6; count++) {
     const html = await liveRender(liveCollection(Array.from({ length: count }, (_, index) => liveCountry(index))));
     assert.equal((html.match(/<article\b/g) ?? []).length, count);
@@ -139,7 +139,7 @@ function resultsCounters(html) {
   return html.match(/<p\b[^>]*>تم العثور على <strong\b[^>]*>\d+<\/strong> وجهات دراسية<\/p>/g) ?? [];
 }
 
-test.skip("legacy server-rendered destinations route coverage; replaced by client-shell coverage", async () => {
+test("Compact destination hero uses the approved local artwork and preserves cards, routes and CTA", async () => {
   const calls = [];
   const html = await render({}, async (params) => { calls.push(params); return getDemoCountries(params); });
   assert.ok(fs.existsSync(path.resolve(__dirname, "../public/images/study-abroad/study-abroad-hero.png")));
@@ -157,7 +157,7 @@ test.skip("legacy server-rendered destinations route coverage; replaced by clien
   assert.deepEqual(calls, [{ search: undefined, featured: undefined, sort: "manual", page: undefined, limit: 6 }]);
 });
 
-test.skip("legacy server-rendered destinations route coverage; replaced by client-shell coverage", async () => {
+test("Directory keeps filter values, six-item pagination and separate empty/error states", async () => {
   const html = await render({ sort: "newest", page: "2" });
   assert.equal((html.match(/<article\b/g) ?? []).length, 1);
   assert.ok(html.includes('href="/study-abroad?sort=newest&amp;page=1"'));
@@ -175,11 +175,11 @@ test.skip("legacy server-rendered destinations route coverage; replaced by clien
   assert.ok(failed.includes("featured=true&amp;sort=newest&amp;page=2"));
 });
 
-test.skip("legacy server-rendered destinations route coverage; replaced by client-shell coverage", async () => {
+test("Out-of-range pagination still redirects to the last valid page with criteria intact", async () => {
   await assert.rejects(() => render({ page: "999", sort: "newest" }), /redirect:\/study-abroad\?sort=newest&page=2/);
 });
 
-test.skip("legacy server-rendered destinations route coverage; replaced by client-shell coverage", async () => {
+test("One counter preserves approved RTL copy, total matches rather than page size, and the Articles blue", async () => {
   const layout = fs.readFileSync(path.resolve(__dirname, "../app/layout.tsx"), "utf8");
   assert.match(layout, /<html\b[^>]*dir="rtl"/);
   for (const search of [{}, { page: "2" }, { sort: "newest" }, { search: "تركيا" }, { featured: "true" }]) {

@@ -1,18 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getContactSettings } from "@/lib/api-client/site-settings";
 import { Container } from "@/components/layout/container";
 import { ContactInquiryForm } from "@/components/public/contact-inquiry-form";
-import { ContactWhatsappCard } from "@/components/public/contact-cards";
-import { ContactInformationLive } from "@/components/public/contact-information-live";
+import { ContactInformationCard, ContactWhatsappCard } from "@/components/public/contact-cards";
+import { HomeSectionError } from "@/components/home/home-section-error";
+import type { ContactSettings } from "@/lib/contact";
 import { innerPageHero } from "@/lib/inner-page-hero";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata("تواصل معنا", "تواصل مع فريق طريق الأكاديمية عبر واتساب أو أرسل استفسارك حول الجامعات والوجهات الدراسية والمنح والخدمات.", { index: true, pathname: "/contact" });
 
-export default function ContactPage() {
+export default async function ContactPage() {
   const demo = isPublicDemoMode();
+  let settings: ContactSettings = {};
+  let settingsFailed = false;
+  try { settings = await getContactSettings(demo); } catch { settingsFailed = true; }
   return <main className="bg-[#F5F8FC] pb-8 pt-4 text-[#082B50] sm:pb-10">
     <Container className="max-w-7xl">
       <section aria-labelledby="contact-title" className="relative isolate overflow-hidden rounded-2xl bg-[#082B50] px-4 text-white sm:px-6">
@@ -26,7 +32,7 @@ export default function ContactPage() {
       <div data-contact-layout className="mt-5 grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
         <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-5">
           <div className="order-1 min-w-0"><ContactWhatsappCard /></div>
-          <div className="order-3 min-w-0 lg:order-2"><ContactInformationLive demo={demo} /></div>
+          <div className="order-3 min-w-0 lg:order-2"><ContactInformationCard settings={settings} demo={demo} />{settingsFailed ? <div className="mt-3"><HomeSectionError title="تعذر تحميل معلومات التواصل الإضافية" description="يمكنك إعادة المحاولة. يبقى نموذج الاستفسار وواتساب متاحين." /></div> : null}</div>
         </div>
         <div className="order-2 min-w-0 lg:col-start-1 lg:row-start-1"><ContactInquiryForm demo={demo} /></div>
       </div>
