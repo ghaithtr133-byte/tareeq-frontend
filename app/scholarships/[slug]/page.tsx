@@ -9,6 +9,7 @@ import { HomeSectionError } from "@/components/home/home-section-error";
 import { ScholarshipDetails } from "@/components/public/scholarship-details";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
+import { loadScholarshipFaqs } from "@/lib/api-client/scholarship-faq-actions";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
@@ -29,5 +30,6 @@ export default async function ScholarshipDetailPage({ params }: Props) {
     ]);
     return <ScholarshipDetails scholarship={scholarship} demo extras={getDemoScholarshipDetails(slug)} media={demoScholarshipMedia[slug]} />;
   }
-  return <ScholarshipDetails scholarship={scholarship} demo={false} />;
+  const faq = await loadScholarshipFaqs(scholarship.slug);
+  return <ScholarshipDetails scholarship={scholarship} demo={false} liveFaq={faq} />;
 }

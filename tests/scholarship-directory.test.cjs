@@ -214,25 +214,28 @@ test("Live joins real relationship IDs once, respects valid projections and neve
   assert.equal(missing.university.nameAr, "الجامعة المرتبطة");
 });
 
-function liveRoute({ data = pageData([liveRecord]), countries = pageData(liveCountries, 1, 50), universities = pageData(liveUniversities, 1, 50), failScholarships = false, failCountries = false } = {}) {
+const liveFacets = { studyLevels: [{ value: "MASTER", labelAr: "ماجستير", count: 3 }], fundingTypes: [{ value: "GOVERNMENT_FUNDED", labelAr: "تمويل حكومي", count: 2 }] };
+function liveRoute({ data = pageData([liveRecord]), countries = pageData(liveCountries, 1, 50), universities = pageData(liveUniversities, 1, 50), facets = liveFacets, failScholarships = false, failCountries = false, failFacets = false } = {}) {
   const calls = [];
   const scoped = loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/server-client": { serverApiClient: { get: async (url, config) => {
     calls.push({ url, params: config.params });
-    if ((url === "/scholarships" && failScholarships) || (url === "/countries" && failCountries)) throw Error("offline");
-    return { data: { success: true, data: url === "/scholarships" ? data : url === "/countries" ? countries : universities } };
+    if ((url === "/scholarships" && failScholarships) || (url === "/countries" && failCountries) || (url === "/scholarships/filter-options" && failFacets)) throw Error("offline");
+    return { data: { success: true, data: url === "/scholarships" ? data : url === "/countries" ? countries : url === "/scholarships/filter-options" ? facets : universities } };
   } } } });
   return { calls, page: scoped("app/scholarships/page.tsx").default };
 }
 test("Live page keeps server-side combinations/sort/page, renders published CLOSED cards and actual media/relations", async () => {
   const route = liveRoute({ data: pageData([liveRecord], 2, 12, 14) });
   const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({ page: "2", search: "منحة", country: "romania", university: "real-university", studyLevel: "MASTER", fundingType: "GOVERNMENT_FUNDED", applicationStatus: "CLOSED", featured: "true", sort: "deadline" }) }));
-  assert.equal(route.calls.length, 3);
+  assert.equal(route.calls.length, 4);
   const query = route.calls.find((row) => row.url === "/scholarships").params;
   assert.deepEqual(query, { page: 2, limit: 12, search: "منحة", featured: "true", country: "romania", university: "real-university", studyLevel: "MASTER", fundingType: "GOVERNMENT_FUNDED", applicationStatus: "CLOSED", sort: "deadline" });
   for (const text of ["منحة منشورة", "التقديم مغلق", "علم رومانيا", "الجامعة المرتبطة", "ماجستير", "تمويل حكومي", "https://media.example/real.jpg", "/scholarships/real-scholarship"]) assert.ok(html.includes(text), text);
   assert.equal((html.match(/<article\b/g) ?? []).length, 1);
   assert.ok(html.includes("data-balanced-cards"));
   assert.ok(html.includes("14"));
+  assert.ok(html.includes("ماجستير (3)"));
+  assert.ok(html.includes("تمويل حكومي (2)"));
   assert.doesNotMatch(html, /Fictional|الخيالية|تمويل حكومي كامل/);
 });
 
@@ -258,11 +261,18 @@ test("Live directory distinguishes empty, filtered-empty and failed/invalid data
   assert.equal(html.includes("علم رومانيا"), false);
 });
 
+test("Live scholarship facets retain actual values, Arabic labels and counts, while malformed facets fail in isolation", () => {
+  const parsed = liveModel.parseScholarshipFilterOptions(liveFacets);
+  assert.deepEqual(parsed, liveFacets);
+  for (const value of [{ studyLevels: [], fundingTypes: [{ value: "FULL", labelAr: "كامل", count: -1 }] }, { studyLevels: [{ value: "", labelAr: null, count: 0 }], fundingTypes: [] }, { studyLevels: [{ value: "MASTER", labelAr: null, count: 1 }, { value: "MASTER", labelAr: null, count: 1 }], fundingTypes: [] }]) assert.throws(() => liveModel.parseScholarshipFilterOptions(value));
+});
+
 test("Live lookup boundaries are visible, out-of-range pagination redirects preserve criteria, and inputs respect API lengths", async () => {
   const route = liveRoute({ universities: pageData(liveUniversities, 1, 50, 70) });
   const html = renderToStaticMarkup(await route.page({ searchParams: Promise.resolve({}) }));
   assert.ok(html.includes("أول 50 جامعة"));
-  assert.ok(html.includes('maxLength="120"'));
+  assert.ok(html.includes('id="scholarships-studyLevel"'));
+  assert.ok(html.includes('value="MASTER"'));
   const redirect = liveRoute({ data: pageData([], 8, 12, 14) });
   await assert.rejects(redirect.page({ searchParams: Promise.resolve({ page: "8", country: "romania", sort: "deadline" }) }), /REDIRECT:\/scholarships\?country=romania&sort=deadline&page=2/);
   const params = helpers.directoryScholarshipParams({ studyLevel: "a".repeat(300), fundingType: "b".repeat(300), country: "../bad", university: "x".repeat(121) });

@@ -49,11 +49,11 @@ function section(html, id) {
   return html.match(new RegExp(`<section[^>]*aria-labelledby="${id}"[^>]*>([\\s\\S]*?)<\\/section>`))?.[1] ?? "";
 }
 
-test("Hero uses one fully interactive internal link with the actual admission slug and keeps the destination CTA", async () => {
+test("Hero uses one fully interactive scholarships link and keeps the destination CTA", async () => {
   const calls = [];
   const html = await renderHome(homeLoader(undefined, calls));
   const hero = html.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
-  assert.ok(hero.includes('href="/services/university-admissions"'));
+  assert.ok(hero.includes('href="/scholarships"'));
   assert.ok(hero.includes('href="/study-abroad"'));
   assert.ok(hero.includes("ابدأ رحلتك"));
   assert.ok(hero.includes("استكشف الوجهات"));
@@ -67,10 +67,10 @@ test("Hero uses one fully interactive internal link with the actual admission sl
   assert.deepEqual(calls.find((item) => item.name === "getServices").args, [{ limit: 5, sort: "manual" }]);
 });
 
-test("Hero honors an arbitrary canonical published slug and falls back safely for absent, duplicate, draft, or failed data", async () => {
+test("Hero keeps the scholarships destination when services are absent, partial, or unavailable", async () => {
   const item = await demo.getDemoService("university-admissions");
   const html = await renderHome(homeLoader(async () => ({ items: [{ ...item, slug: "backend-canonical-admissions" }], pagination: { total: 1 } })));
-  assert.ok(html.includes('href="/services/backend-canonical-admissions"'));
+  assert.ok(html.includes('href="/scholarships"'));
   for (const getServices of [
     async () => ({ items: [], pagination: { total: 0 } }),
     async () => ({ items: [{ ...item, status: "DRAFT" }], pagination: { total: 1 } }),
@@ -79,7 +79,7 @@ test("Hero honors an arbitrary canonical published slug and falls back safely fo
   ]) {
     const fallback = await renderHome(homeLoader(getServices));
     const hero = fallback.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
-    assert.ok(hero.includes('href="/services"'));
+    assert.ok(hero.includes('href="/scholarships"'));
     assert.equal(hero.includes('href="/services/university-admission"'), false);
     assert.equal(hero.includes("wa.me"), false);
   }
@@ -175,6 +175,8 @@ test("Homepage spacing stays compact without replacing approved artwork or remov
   assert.equal((hero.match(/<strong/g) ?? []).length, 3);
   assert.equal(hero.includes("خدمات تعليمية"), false);
   assert.ok(hero.includes("flex-wrap justify-center"));
+  assert.ok(hero.includes("leading-[1.4]"));
+  assert.ok(hero.includes('href="/scholarships"'));
   assert.ok(hero.includes("grow-0 shrink-0 basis-[calc((100%_-_0.75rem)/2)]"));
   assert.ok(hero.includes("md:basis-[calc((100%_-_2.25rem)/4)]"));
   for (const icon of ["lucide-map-pinned", "lucide-graduation-cap", "lucide-circle-dollar-sign"]) assert.ok(hero.includes(icon));

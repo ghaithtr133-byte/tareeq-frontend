@@ -7,11 +7,15 @@ import { UniversityFilterScrollArea } from "@/components/public/university-filte
 import { ErrorState } from "@/components/ui/content-state";
 import { directoryFilterLabel } from "@/lib/university-directory-data";
 
-type Option = readonly [string, string];
+type Option = readonly [string, string, number?];
 type FilterValues = Record<string, string>;
 type FilterGroup = { key: string; label: string; options: readonly Option[]; unavailable?: string };
 const inputClass =
   "min-h-12 w-full rounded-lg border border-[#DCE4EC] bg-[#FCFDFE] px-3 text-sm text-[#082B50] transition-colors placeholder:text-[#8393A5] hover:border-[#BAC8D5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C8A253]";
+
+function optionLabel(label: string, count?: number) {
+  return typeof count === "number" ? `${label} (${count})` : label;
+}
 
 export function UniversityDirectoryFilters({
   values,
@@ -85,6 +89,15 @@ export function UniversityDirectoryFilters({
             className={inputClass}
           />
         </div>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-[#DCE4EC] bg-[#FCFDFE] px-3 text-sm font-bold text-[#082B50]">
+          <input
+            type="checkbox"
+            checked={draft.featured === "true"}
+            onChange={(event) => change("featured", event.target.checked ? "true" : "")}
+            className="size-4 rounded border-[#BAC8D5] text-[#17669C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253]"
+          />
+          الجامعات المميزة فقط
+        </label>
         {groups.map((group) => (
           <div key={group.key}>
             <label
@@ -103,9 +116,9 @@ export function UniversityDirectoryFilters({
             >
               <option value="">{group.unavailable ? "الخيارات غير متاحة حالياً" : "الكل"}</option>
               {draft[group.key] && !group.options.some(([value]) => value === draft[group.key]) ? <option value={draft[group.key]}>{directoryFilterLabel(group.key, draft[group.key])}</option> : null}
-              {group.options.map(([value, label]) => (
+              {group.options.map(([value, label, count]) => (
                 <option key={value} value={value}>
-                  {label}
+                  {optionLabel(label, count)}
                 </option>
               ))}
             </select>
@@ -192,14 +205,15 @@ export function UniversityDirectoryFilters({
         aria-label="الفلاتر النشطة"
       >
         {active.map(([key, value]) => {
+          const selectedOption = groups
+            .find((group) => group.key === key)
+            ?.options.find(([option]) => option === value);
           const label =
             key === "featured"
               ? value === "true"
                 ? "جامعات مميزة"
                 : "جامعات غير مميزة"
-              : (groups
-                  .find((group) => group.key === key)
-                  ?.options.find(([option]) => option === value)?.[1] ?? directoryFilterLabel(key, value));
+              : (selectedOption ? optionLabel(selectedOption[1], selectedOption[2]) : directoryFilterLabel(key, value));
           return (
             <button
               key={key}

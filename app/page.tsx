@@ -20,7 +20,7 @@ import { HomeContainer as Container, HomeLink as Link } from "@/components/home/
 import { FeaturedUniversitiesCarousel } from "@/components/home/featured-universities-carousel";
 import { HomeFaq } from "@/components/home/home-faq";
 import { TrustExperience } from "@/components/home/trust-experience";
-import { loadHomeSection } from "@/lib/api-client/homepage";
+import { loadHomeSection, loadPublishedContentStatistics } from "@/lib/api-client/homepage";
 import { HomeSectionError } from "@/components/home/home-section-error";
 import { EmptyState } from "@/components/ui/content-state";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
@@ -32,7 +32,6 @@ import { ArrowLeftIcon } from "@/components/ui/icons";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
 import { createWhatsappUrl } from "@/lib/whatsapp";
-import { publishedServiceHref } from "@/lib/service-details";
 export const metadata = createPageMetadata(
   "طريق الأكاديمية",
   "استشارات تعليمية وتوجيه للدراسة في الخارج.",
@@ -228,10 +227,11 @@ function DestinationFlag({ slug }: { slug?: string }) {
 export default async function Home() {
   const demoMode = isPublicDemoMode();
   const journey = getHomeJourney(demoMode);
-  const [countryResult, universityResult, scholarshipResult, serviceResult, articleResult, faqResult] = await Promise.all([
+  const [countryResult, universityResult, scholarshipResult, serviceResult, articleResult, faqResult, publishedContentStatistics] = await Promise.all([
     loadHomeSection("countries", demoMode), loadHomeSection("universities", demoMode),
     loadHomeSection("scholarships", demoMode), loadHomeSection("services", demoMode),
     loadHomeSection("articles", demoMode), loadHomeSection("faqs", demoMode),
+    loadPublishedContentStatistics(demoMode),
   ]);
   // Collection projections expose countryId, not joined country metadata. Reuse only
   // the bounded destination response; never fetch every country or infer a relation.
@@ -241,18 +241,14 @@ export default async function Home() {
   const scholarships = scholarshipResult.items.map((item) => scholarshipCard(item.country ? item : withCountry(item)));
   const services = serviceResult.items.map(serviceCard);
   const articles = articleResult.items.map((item) => articleCard(item.country ? item : withCountry(item)));
-  // The public /services contract returns only published entries but omits status.
-  const admissionHref = serviceResult.kind === "partial" ? "/services" : publishedServiceHref("القبول الجامعي", serviceResult.items.map((item) => ({ ...item, status: "PUBLISHED" as const }))) ?? "/services";
   const heroCards = [
-    // Only this query is unfiltered. Featured university/scholarship totals are
-    // subset counts, not published catalogue totals; keep those slots unavailable.
-    { label: "وجهات دراسية", Icon: MapPinned, count: !demoMode && (countryResult.kind === "success" || countryResult.kind === "empty") ? countryResult.total : undefined },
-    { label: "جامعات منشورة", Icon: GraduationCap },
-    { label: "منح وبرامج", Icon: CircleDollarSign },
+    { label: "وجهات دراسية", Icon: MapPinned, count: publishedContentStatistics?.publishedCountries },
+    { label: "جامعات منشورة", Icon: GraduationCap, count: publishedContentStatistics?.publishedUniversities },
+    { label: "منح وبرامج", Icon: CircleDollarSign, count: publishedContentStatistics ? publishedContentStatistics.publishedScholarships + publishedContentStatistics.publishedUniversityPrograms : undefined },
   ];
   return (
     <main className="overflow-x-clip bg-[#FAF9F6]">
-      <HomeHero admissionHref={admissionHref} heroCards={heroCards} />
+      <HomeHero heroCards={heroCards} />
 
       {(
         <section
@@ -453,7 +449,10 @@ export default async function Home() {
           </ol>
         </Container>
       </section>
-      <TrustExperience />
+      <TrustExperience statistics={publishedContentStatistics ? {
+        universities: String(publishedContentStatistics.publishedUniversities),
+        destinations: String(publishedContentStatistics.publishedCountries),
+      } : undefined} />
       {(
         <section
           className="bg-white py-12 sm:py-16"

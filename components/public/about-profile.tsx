@@ -1,4 +1,5 @@
 import { BookOpen, Compass, Eye, HeartHandshake, ShieldCheck, Sparkles, Target } from "lucide-react";
+import Image from "next/image";
 import { EmptyState } from "@/components/ui/content-state";
 import { BalancedCardGrid } from "@/components/ui/balanced-card-grid";
 import { HomeSectionError } from "@/components/home/home-section-error";
@@ -14,15 +15,15 @@ export function AboutProfile({ profile }: { profile: AboutProfileState }) {
   const values = temporaryValues ? aboutTemporaryContent.values : content.values!;
   return <div className="space-y-8 sm:space-y-10">
     {profile.status === "error" ? <HomeSectionError title="تعذّر تحميل نبذة الأكاديمية" description="يرجى المحاولة مجدداً. تبقى خيارات التواصل متاحة." />
-      : profile.status !== "ready" ? <EmptyState title="الملف التعريفي غير متاح حالياً" description="النصوص الموسومة أدناه مواضع تحريرية مؤقتة، وليست معلومات مؤسسية معتمدة." /> : null}
+      : profile.status !== "ready" ? <EmptyState title={profile.status === "unpublished" ? "صفحة من نحن غير منشورة حالياً" : "الملف التعريفي غير متاح حالياً"} description="النصوص الموسومة أدناه مواضع تحريرية مؤقتة، وليست معلومات مؤسسية معتمدة." /> : null}
     <section aria-labelledby="about-story-title" className={`${panel} border-s-4 border-s-[#C8A253]`}>
-      <div className="flex items-center gap-3"><span className={goldIcon}><BookOpen className="size-6" aria-hidden="true" /></span><div><p className="text-xs leading-6 text-[#946D2C]">خلف كل رحلة حكاية</p><h2 id="about-story-title" className="text-2xl font-bold leading-10">قصتنا</h2></div></div>
-      <p data-about-story className="mt-4 max-w-4xl whitespace-pre-line text-base leading-9 text-[#52647A] [overflow-wrap:anywhere]">{profile.status === "error" ? "" : aboutText(content.story, "story")}</p>
+      <div className="flex items-center gap-3"><span className={goldIcon}><BookOpen className="size-6" aria-hidden="true" /></span><div><p className="text-xs leading-6 text-[#946D2C]">خلف كل رحلة حكاية</p><h2 id="about-story-title" className="text-2xl font-bold leading-10">{content.introductionTitle || "قصتنا"}</h2></div></div>
+      <div className={content.introImageUrl ? "mt-4 grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(12rem,0.7fr)]" : ""}><p data-about-story className="max-w-4xl whitespace-pre-line text-base leading-9 text-[#52647A] [overflow-wrap:anywhere]">{profile.status === "error" ? "" : aboutText(content.introduction, "story")}</p>{content.introImageUrl ? <div data-about-intro-image className="relative aspect-[4/3] overflow-hidden rounded-xl border border-[#E0E7EF] bg-secondary"><Image src={content.introImageUrl} alt={content.introImageAltAr ?? ""} fill unoptimized={!content.introImageUrl.startsWith("/")} className="object-cover" /></div> : null}</div>
     </section>
     <section aria-labelledby="about-direction-title">
       <h2 id="about-direction-title" className="mb-4 text-2xl font-bold leading-10">رؤيتنا ورسالتنا</h2>
       <div className="grid items-stretch gap-4 md:grid-cols-2">
-        {[{ title: "رؤيتنا", value: content.vision, slot: "vision" as const, icon: Eye }, { title: "رسالتنا", value: content.mission, slot: "mission" as const, icon: Target }].map(({ title, value, slot, icon: Icon }) => <article key={slot} className={panel}>
+        {[{ title: content.visionTitle || "رؤيتنا", value: content.vision, slot: "vision" as const, icon: Eye }, { title: content.missionTitle || "رسالتنا", value: content.mission, slot: "mission" as const, icon: Target }].map(({ title, value, slot, icon: Icon }) => <article key={slot} className={panel}>
           <span className={goldIcon}><Icon className="size-6" aria-hidden="true" /></span><h3 className="mt-3 text-xl font-bold leading-8">{title}</h3>
           {profile.status !== "error" ? <p className="mt-2 whitespace-pre-line text-sm leading-8 text-[#52647A] [overflow-wrap:anywhere]">{aboutText(value, slot)}</p> : null}
         </article>)}

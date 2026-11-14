@@ -45,6 +45,12 @@ export type Country = {
   imageUrl: string | null;
   imageAltAr: string | null;
   imageAltEn: string | null;
+  overviewImageUrl?: string | null;
+  overviewImageAltAr?: string | null;
+  studyLanguageAr?: string | null;
+  tuitionSummaryAr?: string | null;
+  admissionSummaryAr?: string | null;
+  applicationDatesSummaryAr?: string | null;
   displayOrder: number;
   status: PublicationStatus;
   createdAt: string;
@@ -169,7 +175,18 @@ type SearchParams = { search?: string };
 type FeaturedParams = { featured?: FeaturedFilter };
 
 export type CountryListParams = PaginationParams & SearchParams & FeaturedParams & { sort?: "manual" | "newest" };
-export type UniversityListParams = PaginationParams & SearchParams & FeaturedParams & { country?: string; sort?: "newest" | "name" };
+export type UniversityStudyLevel = "FOUNDATION" | "DIPLOMA" | "BACHELORS" | "MASTERS" | "PHD";
+export type UniversityTeachingLanguage = "ARABIC" | "ENGLISH" | "FRENCH" | "GERMAN" | "TURKISH" | "ROMANIAN" | "RUSSIAN" | "SPANISH" | "ITALIAN";
+export type UniversityType = "PUBLIC" | "PRIVATE";
+export type UniversityListParams = PaginationParams & SearchParams & FeaturedParams & {
+  country?: string;
+  major?: string;
+  studyLevel?: UniversityStudyLevel;
+  language?: UniversityTeachingLanguage;
+  city?: string;
+  universityType?: UniversityType;
+  sort?: "newest" | "name";
+};
 export type ScholarshipListParams = PaginationParams & SearchParams & FeaturedParams & {
   country?: string;
   university?: string;
@@ -178,6 +195,8 @@ export type ScholarshipListParams = PaginationParams & SearchParams & FeaturedPa
   applicationStatus?: ScholarshipApplicationStatus;
   sort?: "newest" | "deadline";
 };
+export type ScholarshipFilterOption = { value: string; labelAr: string | null; count: number };
+export type ScholarshipFilterOptions = { studyLevels: ScholarshipFilterOption[]; fundingTypes: ScholarshipFilterOption[] };
 export type ServiceListParams = PaginationParams & FeaturedParams & { sort?: "manual" | "newest" };
 export type ArticleListParams = PaginationParams & SearchParams & FeaturedParams & { country?: string; sort?: "newest" };
 
@@ -191,6 +210,7 @@ export const getCountry = (slug: string) => isPublicDemoMode() ? getDemoCountry(
 export const getUniversities = (params: UniversityListParams = {}) => isPublicDemoMode() ? getDemoUniversities(params) : getPublic<PublicList<University>>("/universities", params);
 export const getUniversity = (slug: string) => isPublicDemoMode() ? getDemoUniversity(slug) : getPublic<University>(`/universities/${encodeURIComponent(slug)}`);
 export const getScholarships = (params: ScholarshipListParams = {}) => isPublicDemoMode() ? getDemoScholarships(params) : getPublic<PublicList<Scholarship>>("/scholarships", params);
+export const getScholarshipFilterOptions = () => getPublic<ScholarshipFilterOptions>("/scholarships/filter-options");
 export const getScholarship = (slug: string) => isPublicDemoMode() ? getDemoScholarship(slug) : getPublic<Scholarship>(`/scholarships/${encodeURIComponent(slug)}`);
 export const getServices = (params: ServiceListParams = {}) => isPublicDemoMode() ? getDemoServices(params) : getPublic<PublicList<Service>>("/services", params);
 export const getService = (slug: string) => isPublicDemoMode() ? getDemoService(slug) : getPublic<Service>(`/services/${encodeURIComponent(slug)}`);

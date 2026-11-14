@@ -41,12 +41,18 @@ export function LiveUniversityPrograms({ slug, name, initial }: { slug: string; 
   </>;
 }
 
+function sourceAndVerification(sourceUrl: string | null, verifiedAt: string | null) {
+  if (!sourceUrl && !verifiedAt) return null;
+  const verified = verifiedAt ? `تم التحقق: ${new Intl.DateTimeFormat("ar", { dateStyle: "medium" }).format(new Date(verifiedAt))}` : null;
+  return <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-6 text-muted-foreground">{sourceUrl ? <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded font-bold text-primary underline underline-offset-4 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">المصدر الرسمي</a> : null}{verified ? <span>{verified}</span> : null}</div>;
+}
+
 export function LiveUniversityAdmissions({ slug, initial }: { slug: string; initial: LiveDetailSections["admissions"] }) {
   const query = useQuery({ queryKey: ["university-detail-admissions", slug], gcTime: 0, staleTime: 60_000, enabled: initial.ok, initialData: initial.ok ? initial.data : undefined, queryFn: () => unwrap(loadUniversityAdmissions(slug)) });
   return <>
     {query.isFetching && !query.data ? <SkeletonResults kind="university" count={2} label="جارٍ تحميل شروط القبول…" /> : null}
     {query.isError || (!initial.ok && !query.data && !query.isFetching) ? <ErrorState className="mt-4" title="تعذّر تحميل شروط القبول" description="يرجى إعادة المحاولة لتحميل المتطلبات المنشورة لهذه الجامعة." onRetry={() => { void query.refetch(); }} retrying={query.isFetching} /> : null}
-    {query.data?.length ? <ul className="mt-4 space-y-3">{query.data.map((item) => <li key={item.id} className="rounded-xl border bg-muted/30 p-4 text-sm leading-8 text-muted-foreground"><h3 className="font-bold text-primary">{item.label}</h3><p className="whitespace-pre-line">{item.content}</p></li>)}</ul> : query.data ? <EmptyState className="mt-4" title="لا توجد شروط قبول منشورة حالياً" description="لم تُنشر متطلبات لهذه الجامعة بعد. راجع المصدر الرسمي أو استفسر عبر بطاقة التواصل." /> : null}
+    {query.data?.length ? <ul className="mt-4 space-y-3">{query.data.map((item) => <li key={item.id} className="rounded-xl border bg-muted/30 p-4 text-sm leading-8 text-muted-foreground"><h3 className="font-bold text-primary">{item.label}</h3><p className="whitespace-pre-line">{item.content}</p>{sourceAndVerification(item.officialSourceUrl, item.verifiedAt)}</li>)}</ul> : query.data ? <EmptyState className="mt-4" title="لا توجد شروط قبول منشورة حالياً" description="لم تُنشر متطلبات لهذه الجامعة بعد. راجع المصدر الرسمي أو استفسر عبر بطاقة التواصل." /> : null}
   </>;
 }
 

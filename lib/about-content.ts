@@ -1,14 +1,23 @@
-/** Presentation slots, NOT a Backend schema. No About endpoint exists in the audited OpenAPI.
- * A future approved contract must be mapped explicitly; never pass an arbitrary API object here.
- */
+/** Presentation slots are mapped explicitly from the public About contract; values remain unsupported. */
 export type AboutCopy = {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImageUrl?: string | null;
+  heroImageAltAr?: string | null;
+  introductionTitle?: string;
   introduction?: string;
-  story?: string;
+  introImageUrl?: string | null;
+  introImageAltAr?: string | null;
+  visionTitle?: string;
   vision?: string;
+  missionTitle?: string;
   mission?: string;
+  ctaTitle?: string;
+  ctaDescription?: string;
+  ctaButtonLabel?: string;
   values?: { title: string; description: string }[];
 };
-export type AboutProfileState = { status: "ready"; content: AboutCopy } | { status: "unsupported" | "empty" | "error" };
+export type AboutProfileState = { status: "ready"; content: AboutCopy } | { status: "unsupported" | "unpublished" | "empty" | "error" };
 
 // Proposed editorial placeholders only: not official policies, business facts or Demo records.
 export const aboutTemporaryContent = {

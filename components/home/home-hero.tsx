@@ -13,8 +13,7 @@ const loadingCards = [
 ];
 
 /** Keep the approved value slots mounted even when verified totals are unavailable. */
-export function HomeHero({ admissionHref = "/services", heroCards = loadingCards, pending = false }: {
-  admissionHref?: string;
+export function HomeHero({ heroCards = loadingCards, pending = false }: {
   heroCards?: { label: string; Icon: LucideIcon; count?: number }[];
   pending?: boolean;
 }) {
@@ -49,7 +48,7 @@ export function HomeHero({ admissionHref = "/services", heroCards = loadingCards
                 </p>
                 <h1
                   id="hero-title"
-                  className="mt-3 max-w-[34rem] text-[2.2rem] font-extrabold leading-[1.16] tracking-[-0.04em] text-[#082B50] sm:text-5xl xl:max-w-[38rem] xl:text-[clamp(3.6rem,3.4vw,4rem)]"
+                  className="mt-3 max-w-[34rem] text-[2.2rem] font-extrabold leading-[1.4] tracking-[-0.04em] text-[#082B50] sm:text-5xl xl:max-w-[38rem] xl:text-[clamp(3.6rem,3.4vw,4rem)]"
                 >
                   {homeEditorial.heroTitle}
                 </h1>
@@ -62,7 +61,7 @@ export function HomeHero({ admissionHref = "/services", heroCards = loadingCards
                     size="lg"
                     className="h-13 w-full cursor-pointer rounded-lg bg-[#082B50] px-8 text-base font-bold text-white shadow-[0_12px_24px_-14px_rgba(8,43,80,0.75)] hover:bg-[#0D3E70] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#C8A253] focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none sm:w-auto"
                   >
-                    <Link href={admissionHref}>ابدأ رحلتك <ArrowLeftIcon className="size-4" /></Link>
+                    <Link href="/scholarships">ابدأ رحلتك <ArrowLeftIcon className="size-4" /></Link>
                   </Button>
                   <Button
                     asChild

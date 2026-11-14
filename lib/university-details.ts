@@ -15,6 +15,8 @@ export function universityTab(value: string | null): UniversityTab {
 export type UniversityProgram = {
   id: string; name: string; level: string; faculty: string | null;
   language: string | null; duration: string | null;
+  nameEn?: string | null; academicMajor?: string | null;
+  officialSourceUrl?: string | null; verifiedAt?: string | null;
   tuition: { amount: number; currency: string; period?: string; academicYear?: string } | null;
   tuitionHistory?: NonNullable<UniversityProgram["tuition"]>[];
 };

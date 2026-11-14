@@ -38,37 +38,45 @@ function loader(overrides = {}) {
 }
 const ui = {
   "next/link": ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children),
+  "next/image": ({ src, alt, ...props }) => { delete props.fill; delete props.unoptimized; return React.createElement("img", { src, alt, ...props }); },
   "next/navigation": { useRouter: () => ({ refresh() {} }) },
 };
 const list = (items) => ({ items, pagination: { page: 1, limit: 3, total: items.length, totalPages: items.length ? 1 : 0 } });
 const service = { id: "service-one", slug: "academic-guidance", titleAr: "خدمة منشورة", summaryAr: "ملخص حقيقي للخدمة", status: undefined };
+const about = { id: "about-one", heroTitleAr: "عنوان البطل", heroSubtitleAr: "وصف البطل", heroImageUrl: "https://media.example/hero.webp", heroImageAltAr: "صورة البطل", introTitleAr: "عنوان المقدمة", introBodyAr: "مقدمة حقيقية", introImageUrl: "https://media.example/intro.webp", introImageAltAr: "صورة المقدمة", missionTitleAr: "رسالة حقيقية", missionBodyAr: "نص الرسالة", visionTitleAr: "رؤية حقيقية", visionBodyAr: "نص الرؤية", ctaTitleAr: "عنوان الدعوة", ctaDescriptionAr: "وصف الدعوة", ctaButtonLabelAr: "تواصل منشور", seoTitleAr: "SEO حقيقي", seoDescriptionAr: "وصف SEO", publishedAt: "2026-11-10T12:00:00Z" };
 
-test("Live uses only documented SiteSettings and bounded Services clients; it never guesses an About endpoint", async () => {
+test("Live uses the documented About endpoint with SiteSettings and bounded Services clients", async () => {
   const calls = [];
   const local = loader({
     "@/lib/public-content-mode": { isPublicDemoMode: () => false },
-    "@/lib/api-client/server-client": { serverApiClient: { get: async (url) => { calls.push(url); assert.equal(url, "/site-settings"); return { data: { success: true, data: { academyNameAr: "اسم الجهة الحقيقي" } } }; } } },
+    "@/lib/api-client/server-client": { serverApiClient: { get: async (url) => { calls.push(url); if (url === "/about") return { data: { success: true, data: about } }; assert.equal(url, "/site-settings"); return { data: { success: true, data: { academyNameAr: "اسم الجهة الحقيقي" } } }; } } },
     "@/lib/api-client/public-content": { getServices: async (params) => { calls.push(params); return list([service]); } },
   });
   const result = await local("lib/api-client/about-page.ts").loadAboutPage();
-  assert.deepEqual(calls, ["/site-settings", { limit: 3, sort: "manual" }]);
+  assert.deepEqual(calls, ["/about", "/site-settings", { limit: 3, sort: "manual" }]);
   assert.equal(result.demo, false);
-  assert.equal(result.profile.status, "unsupported");
+  assert.equal(result.profile.status, "ready");
+  assert.equal(result.profile.content.heroTitle, about.heroTitleAr);
+  assert.equal(result.profile.content.introduction, about.introBodyAr);
+  assert.equal(result.profile.content.ctaButtonLabel, about.ctaButtonLabelAr);
   assert.equal(result.identity.value.academyNameAr, "اسم الجهة الحقيقي");
   assert.equal(result.services.value[0].titleAr, service.titleAr);
   assert.equal(result.services.value[0].status, "PUBLISHED");
 });
 
-test("Live errors, empty lists and invalid/unpublished services remain distinct with no Demo fallback", async () => {
+test("Unpublished About is distinct from transport errors, while services retain their independent states", async () => {
+  class ApiError extends Error { constructor(status) { super("API failure"); this.status = status; } }
   for (const raw of [list([]), list([{ ...service, status: "DRAFT" }]), list([{ ...service, slug: "../unsafe" }]), { items: [] }, Error("network")]) {
     const local = loader({
       "@/lib/public-content-mode": { isPublicDemoMode: () => false },
+      "@/lib/api-client/error": { ApiError },
+      "@/lib/api-client/server-client": { serverApiClient: { get: async (url) => { if (url === "/about") throw new ApiError(404); throw Error("identity offline"); } } },
       "@/lib/api-client/site-settings": { getContactSettings: async () => { throw Error("identity offline"); } },
       "@/lib/api-client/public-content": { getServices: async () => { if (raw instanceof Error) throw raw; return raw; } },
     });
     const result = await local("lib/api-client/about-page.ts").loadAboutPage();
     assert.equal(result.identity.status, "rejected");
-    assert.equal(result.profile.status, "unsupported");
+    assert.equal(result.profile.status, "unpublished");
     if (raw.items?.length === 0 && raw.pagination) { assert.equal(result.services.status, "fulfilled"); assert.deepEqual(result.services.value, []); }
     else assert.equal(result.services.status, "rejected");
   }
@@ -86,25 +94,24 @@ test("Demo uses the established Demo source, not Live settings, without an inven
   assert.ok(result.services.value.length > 0);
 });
 
-// These are presentation-slot tests, NOT fixtures for a nonexistent About API contract.
-test("presentation slots prefer supplied content, preserve values order and never duplicate story into vision/mission", () => {
+test("presentation slots map published content, preserve values order and never duplicate introduction into vision/mission", () => {
   const local = loader(ui);
   const { AboutProfile } = local("components/public/about-profile.tsx");
-  const content = { introduction: "نبذة معتمدة", story: "قصة معتمدة", vision: "رؤية معتمدة", mission: "رسالة معتمدة", values: [{ title: "قيمة ثانية", description: "وصف ثان" }, { title: "قيمة أولى", description: "وصف أول" }] };
+  const content = { introductionTitle: "مقدمة معتمدة", introduction: "قصة معتمدة", introImageUrl: "https://media.example/intro.webp", introImageAltAr: "صورة", visionTitle: "رؤيتنا الحقيقية", vision: "رؤية معتمدة", missionTitle: "رسالتنا الحقيقية", mission: "رسالة معتمدة", values: [{ title: "قيمة ثانية", description: "وصف ثان" }, { title: "قيمة أولى", description: "وصف أول" }] };
   const html = renderToStaticMarkup(React.createElement(AboutProfile, { profile: { status: "ready", content } }));
-  for (const value of [content.story, content.vision, content.mission]) assert.equal(html.split(value).length - 1, 1);
+  for (const value of [content.introduction, content.vision, content.mission]) assert.equal(html.split(value).length - 1, 1);
   assert.equal(html.includes("غير متوفر حالياً"), false);
   assert.ok(html.indexOf("قيمة ثانية") < html.indexOf("قيمة أولى"));
   assert.ok(html.includes("data-balanced-cards"));
-  assert.equal(html.includes("<img"), false, "No optional photo or unavailable-photo container is invented");
+  assert.ok(html.includes('data-about-intro-image="true"'));
   const empty = renderToStaticMarkup(React.createElement(AboutProfile, { profile: { status: "ready", content: { values: [] } } }));
   assert.ok(empty.includes("القيم المعتمدة غير متاحة حالياً"));
   assert.equal(empty.includes("الشفافية (غير متوفر حالياً)"), false, "An explicit empty collection must not gain filler values");
 });
 
-test("unsupported, empty, partial and failed profile presentation remain honest and preserve section headings", () => {
+test("unpublished, empty, partial and failed profile presentation remain honest and preserve section headings", () => {
   const { AboutProfile } = loader(ui)("components/public/about-profile.tsx");
-  for (const profile of [{ status: "unsupported" }, { status: "empty" }, { status: "error" }, { status: "ready", content: { story: "النص المتاح" } }]) {
+  for (const profile of [{ status: "unsupported" }, { status: "unpublished" }, { status: "empty" }, { status: "error" }, { status: "ready", content: { introduction: "النص المتاح" } }]) {
     const html = renderToStaticMarkup(React.createElement(AboutProfile, { profile }));
     for (const id of ["about-story-title", "about-direction-title", "about-values-title"]) assert.ok(html.includes(id));
     if (profile.status === "error") {
@@ -116,6 +123,7 @@ test("unsupported, empty, partial and failed profile presentation remain honest 
       assert.ok(html.includes("غير متوفر حالياً"));
       assert.ok(html.includes("ليست سياسات رسمية"));
       if (profile.status === "ready") assert.equal(html.includes("تفاصيل نشأة الأكاديمية"), false);
+      else if (profile.status === "unpublished") assert.ok(html.includes("صفحة من نحن غير منشورة حالياً"));
       else assert.ok(html.includes("الملف التعريفي غير متاح حالياً"));
     }
   }
@@ -125,18 +133,20 @@ test("page renders RTL brand composition, real service links, isolated failures,
   for (const failed of [false, true]) {
     const local = loader({ ...ui,
       "@/lib/public-content-mode": { isPublicDemoMode: () => false },
-      "@/lib/api-client/site-settings": { getContactSettings: async () => ({ academyNameAr: "اسم من الإعدادات" }) },
+      "@/lib/api-client/server-client": { serverApiClient: { get: async (url) => { if (url === "/about") return { data: { success: true, data: about } }; if (url === "/site-settings") return { data: { success: true, data: { academyNameAr: "اسم من الإعدادات" } } }; throw Error("unexpected request"); } } },
       "@/lib/api-client/public-content": { getServices: async () => { if (failed) throw Error("offline"); return list([service]); } },
     });
     const route = local("app/about/page.tsx");
     const html = renderToStaticMarkup(await route.default());
-    for (const value of ['dir="rtl"', "about-title", "data-about-decoration", "about-story-title", "about-support-title", "اسم من الإعدادات", 'href="/contact"', 'href="/services"', "data-consultation-cta", 'rel="noopener noreferrer"', "motion-reduce:transition-none", "md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]"]) assert.ok(html.includes(value), value);
+    for (const value of ['dir="rtl"', "about-title", "data-about-decoration", "data-about-intro-image", "about-story-title", "about-support-title", "اسم من الإعدادات", about.heroTitleAr, about.ctaButtonLabelAr, 'href="/contact"', 'href="/services"', "data-consultation-cta", 'rel="noopener noreferrer"', "motion-reduce:transition-none", "md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]"]) assert.ok(html.includes(value), value);
     assert.ok(html.includes(local("lib/whatsapp.ts").createWhatsappUrl()));
     assert.equal(html.includes(`href="/services/${service.slug}"`), !failed);
     assert.equal(html.includes("تعذّر تحميل الخدمات"), failed);
     assert.equal(html.includes("لا توجد خدمات منشورة حالياً"), false);
-    assert.deepEqual(route.metadata.robots, { index: false, follow: false });
-    assert.equal(html.includes("<img"), false);
+    const metadata = await route.generateMetadata();
+    assert.equal(metadata.title, about.seoTitleAr);
+    assert.equal(metadata.description, about.seoDescriptionAr);
+    assert.ok(html.includes("<img"));
   }
 });
 

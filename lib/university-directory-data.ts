@@ -11,8 +11,9 @@ export function directoryFilterLabel(key: string, value: string) {
   return labels && Object.hasOwn(labels, value) ? labels[value as keyof typeof labels] : value;
 }
 export type DirectoryUniversity = University & { universityType?: keyof typeof directoryUniversityTypes | null; city?: { nameAr?: string } | null };
-export type LiveUniversityParams = UniversityListParams & { major?: string; studyLevel?: keyof typeof directoryStudyLevels; language?: keyof typeof directoryLanguages; city?: string; universityType?: keyof typeof directoryUniversityTypes };
-export type DirectoryFilterGroup = { key: string; label: string; options: readonly (readonly [string, string])[]; unavailable?: string };
+export type LiveUniversityParams = UniversityListParams;
+export type DirectoryFilterOption = readonly [value: string, label: string, count?: number];
+export type DirectoryFilterGroup = { key: string; label: string; options: readonly DirectoryFilterOption[]; unavailable?: string };
 const slug = (value: unknown) => typeof value === "string" && value.length >= 2 && value.length <= 120 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) ? value : undefined;
 function enumValue<T extends Record<string, string>>(value: unknown, labels: T): keyof T | undefined {
   return typeof value === "string" && Object.hasOwn(labels, value) ? value as keyof T : undefined;
@@ -84,13 +85,16 @@ export function parseUniversityFacets(value: unknown): DirectoryFilterGroup[] {
     const rows = data?.[source];
     if (!Array.isArray(rows)) throw Error("Invalid directory facets");
     const seen = new Set<string>();
-    const options = rows.map((row) => {
+    const options: DirectoryFilterOption[] = [];
+    for (const row of rows) {
       if (!row || typeof row.value !== "string" || seen.has(row.value) || !Number.isInteger(row.count) || row.count < 0) throw Error("Invalid facet option");
-      const optionLabel = labels ? (Object.hasOwn(labels, row.value) ? labels[row.value as keyof typeof labels] : undefined) : (slug(row.value) && typeof row.nameAr === "string" ? row.nameAr.trim() : undefined);
-      if (!optionLabel) throw Error("Invalid facet label");
+      const optionLabel = labels ? (Object.hasOwn(labels, row.value) ? labels[row.value as keyof typeof labels] : undefined) : (slug(row.value) && typeof row.nameAr === "string" && row.nameAr.trim() ? row.nameAr.trim() : undefined);
+      // Cities and majors without published editorial labels must not become
+      // misleading raw-slug options. Keep the remaining Backend facets usable.
+      if (!optionLabel) continue;
       seen.add(row.value);
-      return [row.value, optionLabel] as const;
-    });
+      options.push([row.value, optionLabel, row.count]);
+    }
     return { key, label, options, unavailable: options.length ? undefined : "لا توجد خيارات منشورة لهذه المعايير حالياً" };
   });
 }

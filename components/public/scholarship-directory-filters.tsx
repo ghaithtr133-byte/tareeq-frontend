@@ -24,7 +24,7 @@ import {
   type ScholarshipFilterValues,
 } from "@/lib/scholarship-directory";
 
-type Option = { value: string; label: string };
+type Option = { value: string; label: string; count?: number };
 const controlClass =
   "h-11 w-full min-w-0 rounded-lg border border-[#DCE4EC] bg-white px-3 text-sm text-primary placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent";
 const labels: Record<ScholarshipFilterKey, string> = {
@@ -43,6 +43,7 @@ export function ScholarshipDirectoryFilters({
   countries,
   universities,
   demoOptions,
+  filterOptions,
   optionError,
   lookupNotices = [],
   children,
@@ -51,6 +52,7 @@ export function ScholarshipDirectoryFilters({
   countries: Option[];
   universities: Option[];
   demoOptions?: { studyLevel: Option[]; fundingType: Option[] };
+  filterOptions?: { studyLevel: Option[]; fundingType: Option[] };
   optionError: boolean;
   lookupNotices?: string[];
   children: ReactNode;
@@ -89,11 +91,12 @@ export function ScholarshipDirectoryFilters({
     if (debounce) timer.current = setTimeout(() => navigate(next), 450);
     else navigate(next);
   }
-  const options = {
+  const facets = filterOptions ?? demoOptions;
+  const options: Record<Exclude<ScholarshipFilterKey, "search">, Option[]> = {
     country: countries,
     university: universities,
-    studyLevel: demoOptions?.studyLevel ?? [],
-    fundingType: demoOptions?.fundingType ?? [],
+    studyLevel: facets?.studyLevel ?? [],
+    fundingType: facets?.fundingType ?? [],
     applicationStatus: [
       { value: "OPEN", label: "مفتوح" },
       { value: "CLOSED", label: "مغلق" },
@@ -125,7 +128,7 @@ export function ScholarshipDirectoryFilters({
         ) : null}
         {items.map((item) => (
           <option key={item.value} value={item.value}>
-            {item.label}
+            {item.label}{typeof item.count === "number" ? ` (${item.count})` : ""}
           </option>
         ))}
         {!items.length && (key === "country" || key === "university") ? <option value="" disabled>{optionError ? "تعذّر تحميل الخيارات" : "لا توجد خيارات منشورة ضمن القائمة المحملة"}</option> : null}
@@ -195,7 +198,7 @@ export function ScholarshipDirectoryFilters({
                 className="grid min-w-0 gap-2 text-xs font-bold text-muted-foreground"
               >
                 {labels[key]}
-                {demoOptions ? (
+                {facets ? (
                   select(key, "الكل")
                 ) : (
                   <input
@@ -253,7 +256,7 @@ export function ScholarshipDirectoryFilters({
             </div>
           </div>
         </div>
-        {!demoOptions && advanced ? <p className="mt-2 text-xs leading-6 text-muted-foreground">لا تتوفر قائمة خيارات شاملة للمرحلة والتمويل حالياً. أدخل القيمة الأصلية في المصدر، وليست ترجمتها العربية.</p> : null}
+        {!facets && advanced ? <p className="mt-2 text-xs leading-6 text-muted-foreground">تعذّر تحميل خيارات المرحلة والتمويل. يمكنك متابعة البحث بالقيمة الأصلية في المصدر.</p> : null}
         {lookupNotices.map((notice) => <p key={notice} className="mt-2 text-xs leading-6 text-muted-foreground">{notice}</p>)}
         {optionError ? (
           <ErrorState className="mt-3" title="تعذّر تحميل بعض خيارات التصفية" description="يمكنك متابعة البحث أو إعادة محاولة تحميل الخيارات؛ النتائج المتاحة محفوظة." onRetry={() => startTransition(() => router.refresh())} retrying={pending} />

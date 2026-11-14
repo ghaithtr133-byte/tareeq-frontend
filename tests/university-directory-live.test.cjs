@@ -68,7 +68,7 @@ test("Live uses supported combined filters, canonical enum values, real dynamic 
   assert.equal(params.limit, 6);
   assert.deepEqual(calls[3].config.params, { universitySearch: "طب", universityCountry: "romania", universityMajor: "medicine", universityStudyLevel: "BACHELORS", universityLanguage: "ENGLISH", universityCity: "bucharest", universityType: "PRIVATE", universityFeatured: "true", page: 1, limit: 4, sort: "newest" });
   assert.equal("page" in calls[2].config.params, false);
-  for (const value of ["رومانيا", "الطب", "بكالوريوس", "الإنجليزية", "بوخارست", "خاصة", "مدينة حقيقية", "نبذة حقيقية"]) assert.ok(html.includes(value), value);
+  for (const value of ["رومانيا", "الطب (1)", "بكالوريوس (1)", "الإنجليزية (1)", "بوخارست (1)", "خاصة (1)", "مدينة حقيقية", "نبذة حقيقية"]) assert.ok(html.includes(value), value);
   assert.ok(html.includes('href="/universities/real-university-1"'));
   assert.ok(html.includes("page=1"));
   assert.ok(html.includes("major=medicine"));
@@ -190,6 +190,21 @@ test("Facet empty/failed states stay visible without fictional options; country 
   assert.ok(failed.includes("إعادة المحاولة"));
 });
 
+test("facets retain Backend counts and omit individual city or major rows that lack a published Arabic label", async () => {
+  const html = await render({}, {
+    "/universities/filter-options": {
+      majors: [{ value: "medicine", nameAr: "الطب", count: 3 }, { value: "unlabeled-major", nameAr: "", count: 2 }],
+      studyLevels: [{ value: "BACHELORS", count: 3 }],
+      languages: [{ value: "ENGLISH", count: 3 }],
+      cities: [{ value: "bucharest", nameAr: "بوخارست", count: 2 }, { value: "unlabeled-city", nameAr: " ", count: 1 }],
+      universityTypes: [{ value: "PUBLIC", count: 3 }],
+    },
+  });
+  for (const value of ["الطب (3)", "بكالوريوس (3)", "الإنجليزية (3)", "بوخارست (2)", "حكومية (3)"]) assert.ok(html.includes(value), value);
+  assert.equal(html.includes("unlabeled-major"), false);
+  assert.equal(html.includes("unlabeled-city"), false);
+});
+
 test("Partial records retain location/media/type/description slots and real fields replace temporary content", async () => {
   const missing = await render({}, { "/universities": list([{ id: "unknown", slug: "unknown-university", nameAr: "جامعة مختلفة" }]) });
   for (const label of ["الدولة", "المدينة", "نوع الجامعة", "نبذة الجامعة"]) assert.ok(missing.includes(`${label} (غير متوفر حالياً)`));
@@ -247,6 +262,8 @@ test("Sidebar filters/reset/sort and mobile dialog preserve interaction and rese
   assert.ok(pushes.at(-1).includes("country=romania"));
   assert.ok(pushes.at(-1).includes("major=engineering"));
   assert.equal(pushes.at(-1).includes("page="), false);
+  walk(tree, (node) => node.type === "input" && node.props.type === "checkbox")[0].props.onChange({ target: { checked: true } });
+  assert.ok(pushes.at(-1).includes("featured=true"));
   walk(tree, (node) => node.type === "button" && text(node).includes("مسح الفلاتر"))[0].props.onClick();
   assert.equal(pushes.at(-1), "/universities");
   const modal = walk(tree, (node) => node.type === "dialog")[0]; modal.props.ref.current = dialog;

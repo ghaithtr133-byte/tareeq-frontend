@@ -120,12 +120,13 @@ test("shared page structure has one scholarship section and FAQ outside all pane
     assert.ok(html.includes(createWhatsappUrl(`مرحبًا، أود الاستفسار عن الدراسة في ${university.nameAr}.`)));
   }
 });
-test("Homepage and university FAQ import the same accessible disclosure, preserving first-open, styles and reduced motion", () => {
+test("Homepage and university FAQ import the same accessible disclosure, preserving independent open questions and reduced motion", () => {
   const local = loader(ui);
   const { FaqAccordion } = local("components/public/faq-accordion.tsx");
   const html = renderToStaticMarkup(React.createElement(FaqAccordion, { name: "test", items: [{ question: "سؤال ١", answer: "جواب ١" }, { question: "سؤال ٢", answer: "جواب ٢" }] }));
   assert.equal((html.match(/<summary/g) ?? []).length, 2);
   assert.equal((html.match(/open=""/g) ?? []).length, 1);
+  assert.equal(html.includes(' name="test"'), false, "FAQ disclosures must not be grouped by the native details name attribute");
   assert.ok(html.includes("motion-reduce:transition-none"));
   const homeSource = fs.readFileSync(path.resolve(__dirname, "../components/home/home-faq.tsx"), "utf8");
   const detailSource = fs.readFileSync(path.resolve(__dirname, "../components/public/university-details.tsx"), "utf8");
@@ -171,7 +172,7 @@ test("related scholarship component preserves successful empty section, isolates
 });
 
 const livePage = (items = [], limit = 12, page = 1, total = items.length) => ({ items, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
-const programRecord = { id: "p1", nameAr: "برنامج منشور", nameEn: null, facultyNameAr: "كلية العلوم", studyLevel: "BACHELORS", languages: ["ENGLISH", "ARABIC"], durationValue: 4, durationUnit: "YEARS", tuition: { amount: "0.00", currency: "EUR", billingPeriod: "YEAR", academicYear: "2026/2027" }, tuitionFees: [{ amount: "2500.00", currency: "EUR", billingPeriod: "SEMESTER", academicYear: "2025/2026" }] };
+const programRecord = { id: "p1", nameAr: "برنامج منشور", nameEn: "Published specialization", academicMajor: { id: "major-1", slug: "science", nameAr: "العلوم", nameEn: "Science", category: null }, facultyNameAr: "كلية العلوم", studyLevel: "BACHELORS", languages: ["ENGLISH", "ARABIC"], durationValue: 4, durationUnit: "YEARS", officialSourceUrl: "https://example.edu/programs/p1", verifiedAt: "2026-10-01T00:00:00.000Z", tuition: { amount: "0.00", currency: "EUR", billingPeriod: "YEAR", academicYear: "2026/2027" }, tuitionFees: [{ amount: "2500.00", currency: "EUR", billingPeriod: "SEMESTER", academicYear: "2025/2026" }] };
 
 test("Live detail validates exact identity, published projection, optional media, safe links and real country lookup", async () => {
   const base = await demo.getDemoUniversity("university-bucharest");
@@ -208,6 +209,10 @@ test("Live programs map exact names, multiple languages, zero and historical tui
   assert.equal(parsed.items[0].tuition.amount, 0);
   assert.equal(parsed.items[0].tuition.period, "سنوياً");
   assert.equal(parsed.items[0].tuitionHistory[0].academicYear, "2025/2026");
+  assert.equal(parsed.items[0].nameEn, "Published specialization");
+  assert.equal(parsed.items[0].academicMajor, "العلوم");
+  assert.equal(parsed.items[0].officialSourceUrl, "https://example.edu/programs/p1");
+  assert.equal(parsed.items[0].verifiedAt, "2026-10-01T00:00:00.000Z");
   const partial = live.parseDetailPrograms(livePage([{ id: "partial" }])).items[0];
   for (const field of ["name", "faculty", "level", "language", "duration"]) assert.ok(partial[field].includes("(غير متوفر حالياً)"));
   assert.equal(partial.tuition, null);
@@ -221,18 +226,25 @@ test("Live programs map exact names, multiple languages, zero and historical tui
   assert.ok(html.includes("table-fixed"));
   assert.ok(html.includes("data-program-cards"));
   assert.ok(html.includes("data-balanced-cards"));
+  assert.ok(html.includes("المصدر الرسمي"));
   assert.equal(html.includes("خيالية"), false);
 });
 
-test("Live admission scopes stay distinct; gallery has its own source; FAQs reject GLOBAL and other scopes", () => {
+test("Live admission scopes retain official verification; gallery is localized and sorted by display order; FAQs reject GLOBAL and other scopes", () => {
   const live = load("lib/university-detail-live.ts");
-  const admissions = live.parseDetailAdmissions({ university: [{ id: "a1", scope: "UNIVERSITY", contentAr: "شرط عام" }], studyLevels: [{ id: "a2", scope: "STUDY_LEVEL", studyLevel: "MASTERS", contentAr: "شرط مرحلة" }], programs: [{ id: "a3", scope: "PROGRAM", programId: "p1", program: { id: "p1", nameAr: "برنامج محدد" }, contentAr: "شرط برنامج" }] });
+  const admissions = live.parseDetailAdmissions({ university: [{ id: "a1", scope: "UNIVERSITY", contentAr: "شرط عام", officialSourceUrl: "https://example.edu/admission", verifiedAt: "2026-10-01T00:00:00.000Z" }], studyLevels: [{ id: "a2", scope: "STUDY_LEVEL", studyLevel: "MASTERS", contentAr: "شرط مرحلة" }], programs: [{ id: "a3", scope: "PROGRAM", programId: "p1", program: { id: "p1", nameAr: "برنامج محدد" }, contentAr: "شرط برنامج" }] });
   assert.deepEqual(admissions.map((item) => item.content), ["شرط عام", "شرط مرحلة", "شرط برنامج"]);
   assert.ok(admissions[1].label.includes("ماجستير"));
   assert.ok(admissions[2].label.includes("برنامج محدد"));
+  assert.equal(admissions[0].officialSourceUrl, "https://example.edu/admission");
+  assert.equal(admissions[0].verifiedAt, "2026-10-01T00:00:00.000Z");
   assert.throws(() => live.parseDetailAdmissions({ university: [{ id: "bad", scope: "PROGRAM" }], studyLevels: [], programs: [] }));
   assert.deepEqual(live.parseDetailGallery({ items: [] }), []);
-  assert.equal(live.parseDetailGallery({ items: [{ id: "g1", imageUrl: null }] })[0].src, null);
+  const gallery = live.parseDetailGallery({ items: [{ id: "g2", imageUrl: null, altEn: "English campus", displayOrder: 2 }, { id: "g1", imageUrl: "https://example.edu/photo.jpg", altAr: "صورة الحرم", displayOrder: 1 }] });
+  assert.deepEqual(gallery.map((item) => item.id), ["g1", "g2"]);
+  assert.equal(gallery[1].src, null);
+  assert.equal(gallery[1].alt, "English campus");
+  assert.throws(() => live.parseDetailGallery({ items: [{ id: "bad", imageUrl: "https://example.edu/photo.jpg" }] }));
   const faq = { id: "f1", scope: "UNIVERSITY", questionAr: "سؤال الجامعة", answerAr: "إجابة الجامعة" };
   assert.equal(live.parseDetailFaqs(livePage([faq], 5)).items[0].question, "سؤال الجامعة");
   for (const scope of ["GLOBAL", "COUNTRY", "SERVICE"]) assert.throws(() => live.parseDetailFaqs(livePage([{ ...faq, scope }], 5)));

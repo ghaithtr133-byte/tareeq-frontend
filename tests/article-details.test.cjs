@@ -124,6 +124,18 @@ test("recommendation cards omit unpublished scholarships and preserve closed sta
   assert.ok(latest.includes("رسم أكاديمي بديل"));
 });
 
+test("article recommendations render every published related scholarship and retain applicationStatus when no effective status is supplied", () => {
+  const { ScholarshipRecommendationList } = viewLoad("components/public/article-recommendations.tsx");
+  const { parseArticleScholarships } = load("lib/article-detail-live.ts");
+  const rows = Array.from({ length: 4 }, (_, index) => ({ ...demo.publicDemoContent.scholarships[index], id: `related-${index}`, slug: `related-${index}`, status: undefined, effectiveApplicationStatus: null, applicationStatus: index % 2 ? "CLOSED" : "OPEN" }));
+  const parsed = parseArticleScholarships(rows);
+  assert.deepEqual(parsed.map((item) => item.applicationStatus), ["OPEN", "CLOSED", "OPEN", "CLOSED"]);
+  const html = renderToStaticMarkup(React.createElement(ScholarshipRecommendationList, { scholarships: parsed, live: true }));
+  assert.equal((html.match(/data-related-scholarship=/g) ?? []).length, 4);
+  assert.ok(html.includes("التقديم مفتوح"));
+  assert.ok(html.includes("التقديم مغلق"));
+});
+
 test("all consultation links use the configured WhatsApp destination and have no application form", () => {
   const { ArticleConsultation } = viewLoad("components/public/article-consultation.tsx");
   const { createWhatsappUrl } = viewLoad("lib/whatsapp.ts");

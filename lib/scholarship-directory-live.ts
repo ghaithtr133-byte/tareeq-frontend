@@ -1,10 +1,28 @@
-import type { Country, PublicList, Scholarship, University } from "@/lib/api-client/public-content";
+import type { Country, PublicList, Scholarship, ScholarshipFilterOption, ScholarshipFilterOptions, University } from "@/lib/api-client/public-content";
 import { homeImageUrl } from "@/lib/homepage-data";
 
 export type DirectoryLiveScholarship = Scholarship & { imageUrl?: string | null; imageAltAr?: string | null };
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const slug = (value: unknown) => typeof value === "string" && value.length >= 2 && value.length <= 120 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 export const scholarshipUnavailable = (label: string) => `${label} (غير متوفر حالياً)`;
+
+/** Public facet values are request values; Arabic labels and counts are presentation metadata only. */
+export function parseScholarshipFilterOptions(value: unknown): ScholarshipFilterOptions {
+  const data = value as Record<string, unknown>;
+  const parse = (key: "studyLevels" | "fundingTypes"): ScholarshipFilterOption[] => {
+    if (!Array.isArray(data?.[key])) throw Error("Invalid scholarship filter options");
+    const seen = new Set<string>();
+    return data[key].map((item) => {
+      if (!item || typeof item !== "object") throw Error("Invalid scholarship filter option");
+      const row = item as Record<string, unknown>;
+      const value = text(row.value), count = row.count;
+      if (!value || value.length > 120 || seen.has(value) || typeof count !== "number" || !Number.isSafeInteger(count) || count < 0 || (row.labelAr !== null && row.labelAr !== undefined && typeof row.labelAr !== "string")) throw Error("Invalid scholarship filter option");
+      seen.add(value);
+      return { value, labelAr: text(row.labelAr) || null, count };
+    });
+  };
+  return { studyLevels: parse("studyLevels"), fundingTypes: parse("fundingTypes") };
+}
 
 // Backend controls application status. Publication and local clocks never imply OPEN/CLOSED.
 export function directoryApplicationStatus(item: Scholarship) {

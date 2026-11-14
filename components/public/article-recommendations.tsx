@@ -25,7 +25,7 @@ export function ArticleRecommendationList({ articles, live = false, failed = fal
 }
 
 export function ScholarshipRecommendationList({ scholarships, media = {}, live = false, failed = false }: { scholarships: ArticleScholarship[]; media?: Record<string, { src: string; alt: string }>; live?: boolean; failed?: boolean }) {
-  const published = scholarships.filter((item) => item.status === "PUBLISHED").slice(0, 3);
+  const published = scholarships.filter((item) => item.status === "PUBLISHED");
   if (!published.length && !live) return null;
   return <section aria-labelledby="related-scholarships-title" className={panel}>
     <h2 id="related-scholarships-title" className="mb-3 flex items-start gap-2 text-base font-bold leading-8 text-primary xl:text-lg"><GraduationCap className="mt-1 size-5 shrink-0 text-[#B68B3D]" aria-hidden="true" />المنح المرتبطة بهذا الموضوع</h2>

@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import {
   getCountries,
   getScholarships,
+  getScholarshipFilterOptions,
   getUniversities,
   type Country,
   type University,
@@ -24,7 +25,7 @@ import {
 import type { RouteSearchParams } from "@/lib/public-search-params";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
-import { parseScholarshipDirectory, scholarshipLookup, joinScholarshipDirectory } from "@/lib/scholarship-directory-live";
+import { parseScholarshipDirectory, parseScholarshipFilterOptions, scholarshipLookup, joinScholarshipDirectory } from "@/lib/scholarship-directory-live";
 import { EmptyState } from "@/components/ui/content-state";
 import { HomeSectionError } from "@/components/home/home-section-error";
 
@@ -43,10 +44,11 @@ export default async function ScholarshipsPage({
   const params = directoryScholarshipParams(await searchParams);
   const values = scholarshipFilterValues(params);
   const demo = isPublicDemoMode();
-  const [scholarships, countries, universities] = await Promise.allSettled([
+  const [scholarships, countries, universities, scholarshipFacets] = await Promise.allSettled([
     getScholarships(params).then((data) => demo ? data : parseScholarshipDirectory(data, params.page ?? 1)),
     getCountries({ limit: 50, sort: "manual" }).then((data) => demo ? data : scholarshipLookup<Country>(data)),
     getUniversities({ limit: 50, sort: "name" }).then((data) => demo ? data : scholarshipLookup<University>(data)),
+    demo ? Promise.resolve(null) : getScholarshipFilterOptions().then(parseScholarshipFilterOptions),
   ]);
   const result =
     scholarships.status === "fulfilled" ? scholarships.value : null;
@@ -159,10 +161,15 @@ export default async function ScholarshipsPage({
               : []
           }
           demoOptions={demoOptions}
+          filterOptions={scholarshipFacets.status === "fulfilled" && scholarshipFacets.value ? {
+            studyLevel: scholarshipFacets.value.studyLevels.map((item) => ({ value: item.value, label: item.labelAr ?? item.value, count: item.count })),
+            fundingType: scholarshipFacets.value.fundingTypes.map((item) => ({ value: item.value, label: item.labelAr ?? item.value, count: item.count })),
+          } : undefined}
           lookupNotices={lookupNotices}
           optionError={
             countries.status === "rejected" ||
-            universities.status === "rejected"
+            universities.status === "rejected" ||
+            (!demo && scholarshipFacets.status === "rejected")
           }
         >
           <section

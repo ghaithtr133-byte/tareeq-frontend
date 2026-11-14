@@ -46,13 +46,23 @@ const records = {
   articles: [{ id: "article-live", slug: "published-reading", titleAr: "مقال من السجل", summaryAr: null, publishedAt: "invalid-date", coverImageUrl: "javascript:alert(1)" }],
   faqs: [{ id: "faq-live", scope: "GLOBAL", questionAr: "سؤال منشور من الخادم؟", answerAr: "إجابة منشورة من الخادم." }],
 };
+const publishedContentStatistics = {
+  publishedContent: {
+    publishedCountries: 7,
+    publishedUniversities: 13,
+    publishedScholarships: 5,
+    publishedUniversityPrograms: 3,
+  },
+};
 const collection = (items) => ({ items, pagination: { page: 1, limit: 12, total: items.length, totalPages: items.length ? 1 : 0 } });
 function liveLoader(overrides = {}, calls = []) {
   return loader({ ...ui, "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/public-content": new Proxy({}, { get() { throw Error("Live must not load Demo content"); } }),
     "@/lib/api-client/server-client": { serverApiClient: { get: async (path, config) => {
       calls.push({ path, config });
       const section = path.slice(1);
-      const value = section in overrides ? overrides[section] : collection(records[section]);
+      const value = section === "statistics"
+        ? ("statistics" in overrides ? overrides.statistics : publishedContentStatistics)
+        : (section in overrides ? overrides[section] : collection(records[section]));
       if (value instanceof Error) throw value;
       return { data: { success: true, data: value } };
     } } },
@@ -60,11 +70,11 @@ function liveLoader(overrides = {}, calls = []) {
 }
 async function home(local) { return renderToStaticMarkup(await local("app/page.tsx").default()); }
 
-test("Live Homepage uses six bounded published endpoints, never Demo data, and preserves canonical service navigation", async () => {
+test("Live Homepage uses server-calculated published statistics with bounded content endpoints and canonical service navigation", async () => {
   const calls = [], local = liveLoader({}, calls);
   const html = await home(local);
-  assert.equal(calls.length, 6);
-  assert.deepEqual(calls.map((x) => x.path), ["/countries", "/universities", "/scholarships", "/services", "/articles", "/faqs"]);
+  assert.equal(calls.length, 7);
+  assert.deepEqual(calls.map((x) => x.path), ["/countries", "/universities", "/scholarships", "/services", "/articles", "/faqs", "/statistics"]);
   assert.deepEqual(calls.find((x) => x.path === "/faqs").config.params, { scope: "GLOBAL", limit: 6 });
   for (const call of calls) assert.equal(call.config.timeout, 12000);
   for (const path of ["/services/admissions-published", "/universities/live-university", "/scholarships/live-scholarship", "/articles/published-reading"]) assert.ok(html.includes('href="' + path + '"'), path);
@@ -75,8 +85,22 @@ test("Live Homepage uses six bounded published endpoints, never Demo data, and p
   const hero = html.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
   assert.equal((hero.match(/<strong/g) ?? []).length, 3);
   assert.equal(hero.includes("خدمات تعليمية"), false);
-  assert.ok(hero.includes(">1</strong>"));
-  assert.equal((hero.match(/العدد \(غير متوفر حالياً\)/g) ?? []).length, 2);
+  for (const count of [7, 13, 8]) assert.ok(hero.includes(`>${count}</strong>`), count);
+  assert.equal((hero.match(/العدد \(غير متوفر حالياً\)/g) ?? []).length, 0);
+  const trust = html.match(/<section[^>]*aria-labelledby="trust-experience-title"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.ok(trust.includes(">13</span>"));
+  assert.ok(trust.includes(">7</span>"));
+  assert.ok(trust.includes("عدد سنوات الخبرة (غير متوفر حالياً)"));
+  assert.ok(trust.includes("عدد الطلاب (غير متوفر حالياً)"));
+});
+
+test("statistics failures retain the approved unavailable slots without reusing collection page totals", async () => {
+  const html = await home(liveLoader({ statistics: Error("statistics offline") }));
+  const hero = html.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
+  assert.equal((hero.match(/العدد \(غير متوفر حالياً\)/g) ?? []).length, 3);
+  const trust = html.match(/<section[^>]*aria-labelledby="trust-experience-title"[^>]*>([\s\S]*?)<\/section>/)[1];
+  for (const label of ["عدد سنوات الخبرة", "عدد الجامعات", "عدد الوجهات", "عدد الطلاب"]) assert.ok(trust.includes(`${label} (غير متوفر حالياً)`));
+  for (const text of ["statistics offline", "ENOTFOUND", "undefined", "NaN"]) assert.equal(html.includes(text), false);
 });
 
 test("every approved section and heading stays visible with contextual empty states and no fake content", async () => {
@@ -94,7 +118,7 @@ test("every approved section and heading stays visible with contextual empty sta
   assert.ok(html.includes('id="journey-title"'));
   assert.ok(html.includes('id="consultation-title"'));
   const hero = html.match(/<section[^>]*id="intro"[\s\S]*?<\/section>/)[0];
-  assert.ok(hero.includes(">0</strong>"));
+  assert.ok(hero.includes(">7</strong>"));
 });
 
 test("network, timeout, 5xx and invalid response failures are isolated with retry and no raw errors", async () => {
@@ -125,7 +149,7 @@ test("public projections keep unavailable field slots, join country ids without 
   assert.equal(html.includes("تمويل كامل"), false);
   assert.equal(html.includes("javascript:"), false);
   assert.equal(html.includes("Invalid Date"), false);
-  assert.equal(calls.length, 6);
+  assert.equal(calls.length, 7);
   assert.ok(html.includes("غير متوفر حالياً"));
   assert.ok(html.includes("ملخص المقال (غير متوفر حالياً)"));
   assert.equal((html.match(/data-trust-value=/g) ?? []).length, 4);
@@ -146,7 +170,7 @@ test("missing card fields use approved same-record text or descriptive labels, n
   }, calls));
   for (const text of ["حكومية (غير متوفر حالياً)", "وارسو (غير متوفر حالياً)", "بولندا (غير متوفر حالياً)", "نوع الجامعة (غير متوفر حالياً)", "المدينة (غير متوفر حالياً)", "الدولة (غير متوفر حالياً)", "استكشف الدراسة والجامعات في تركيا (غير متوفر حالياً)", "مساعدتك في القبول والتسجيل (غير متوفر حالياً)", "نوع التمويل (غير متوفر حالياً)", "المرحلة الدراسية (غير متوفر حالياً)", "حالة التقديم (غير متوفر حالياً)", "دولة المنحة (غير متوفر حالياً)", "تاريخ النشر (غير متوفر حالياً)", "الصورة (غير متوفر حالياً)"]) assert.ok(html.includes(text), text);
   assert.equal(html.includes("إسطنبول (غير متوفر حالياً)"), false);
-  assert.equal(calls.length, 6);
+  assert.equal(calls.length, 7);
   const { homeCardText, approvedHomeCardCopy } = base("lib/homepage-card-content.ts");
   assert.equal(approvedHomeCardCopy("universities", "university-of-warsaw", "جامعة أخرى"), undefined);
   assert.equal(approvedHomeCardCopy("universities", "unknown", "جامعة وارسو"), undefined);
@@ -165,7 +189,7 @@ test("Live Journey restores approved editorial copy, marks only missing steps an
   const calls = [];
   const html = await home(liveLoader({}, calls));
   const journey = html.match(/<section[^>]*aria-labelledby="journey-title"[^>]*>([\s\S]*?)<\/section>/)[1];
-  assert.equal(calls.length, 6);
+  assert.equal(calls.length, 7);
   assert.equal((journey.match(/<li/g) ?? []).length, 4);
   for (const number of ["01", "02", "03", "04"]) assert.ok(journey.includes(number));
   for (const token of ["journey-background.png", "lg:grid-cols-4", "md:grid-cols-2", "rounded-full", "border-s", "md:border-t"]) assert.ok(journey.includes(token));

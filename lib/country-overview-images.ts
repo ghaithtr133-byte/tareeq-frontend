@@ -5,10 +5,10 @@ import { join } from "node:path";
 export type CountryOverviewImage = {
   src: string;
   alt: string;
-  author: string;
-  source: string;
-  license: string;
-  licenseUrl: string;
+  author?: string;
+  source?: string;
+  license?: string;
+  licenseUrl?: string;
 };
 
 // Explicit local editorial assets, keyed by canonical Country slug, not inferred

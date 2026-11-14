@@ -8,6 +8,7 @@ import { ErrorState } from "@/components/ui/content-state";
 import { CountryDetails } from "@/components/public/country-details";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
+import { countryInformation } from "@/lib/country-detail-content";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
@@ -30,9 +31,9 @@ export default async function DestinationPage({ params }: Props) {
   // Facts and guide lack structured API fields. Country-specific FAQs do have
   // a documented endpoint; failures remain isolated from the country content.
   const demoDetails = isPublicDemoMode() ? (await import("@/lib/mocks/country-details-fixtures")).getDemoCountryDetails(country) : null;
-  // Overview media is optional. No dedicated public Backend field is approved
-  // yet, so Live must not substitute local/Demo artwork for an Admin image.
-  const overviewImage = demoDetails?.overviewImage ?? null;
+  // Overview media is optional. Live uses only the documented country field;
+  // publication attribution is not part of that contract, so none is invented.
+  const overviewImage = demoDetails?.overviewImage ?? (country.overviewImageUrl ? { src: country.overviewImageUrl, alt: country.overviewImageAltAr || "وصف صورة النظرة العامة (غير متوفر حالياً)" } : null);
   const faqs = isPublicDemoMode() ? undefined : await getCountryFaqs(country);
-  return <CountryDetails country={country} demoDetails={demoDetails} overviewImage={overviewImage} faqResult={faqs} />;
+  return <CountryDetails country={country} demoDetails={demoDetails} overviewImage={overviewImage} information={demoDetails ? undefined : countryInformation(country)} faqResult={faqs} />;
 }

@@ -14,9 +14,16 @@ export const getPublishedCountry = cache(async (slug: string): Promise<Country> 
   if (!value || typeof value !== "object") throw new Error("Invalid country response");
   const item = value as Record<string, unknown>;
   const text = (key: string) => typeof item[key] === "string" ? item[key].trim() : "";
+  // The current published response groups these contract fields under
+  // studentFacts; accept the documented flattened projection as well.
+  const studentFacts = item.studentFacts && typeof item.studentFacts === "object" ? item.studentFacts as Record<string, unknown> : {};
+  const fact = (key: string) => text(key) || (typeof studentFacts[key] === "string" ? studentFacts[key].trim() : "") || null;
   if (item.status !== undefined && item.status !== "PUBLISHED") throw new ApiError(404, "Unpublished country");
   if (!text("id") || !text("nameAr") || !countrySlugIsValid(text("slug"))) throw new Error("Invalid country identity");
-  return { ...item, id: text("id"), nameAr: text("nameAr"), slug: text("slug"), introductionAr: text("introductionAr"), detailsAr: text("detailsAr"), imageUrl: homeImageUrl(item.imageUrl) ?? null, imageAltAr: text("imageAltAr") || null, seoTitleAr: text("seoTitleAr") || null, seoDescriptionAr: text("seoDescriptionAr") || null, publishedAt: typeof item.publishedAt === "string" && Number.isFinite(Date.parse(item.publishedAt)) ? item.publishedAt : null } as Country;
+  return { ...item, id: text("id"), nameAr: text("nameAr"), slug: text("slug"), introductionAr: text("introductionAr"), detailsAr: text("detailsAr"), imageUrl: homeImageUrl(item.imageUrl) ?? null, imageAltAr: text("imageAltAr") || null,
+    overviewImageUrl: homeImageUrl(item.overviewImageUrl) ?? null, overviewImageAltAr: text("overviewImageAltAr") || null,
+    studyLanguageAr: fact("studyLanguageAr"), tuitionSummaryAr: fact("tuitionSummaryAr"), admissionSummaryAr: fact("admissionSummaryAr"), applicationDatesSummaryAr: fact("applicationDatesSummaryAr"),
+    seoTitleAr: text("seoTitleAr") || null, seoDescriptionAr: text("seoDescriptionAr") || null, publishedAt: typeof item.publishedAt === "string" && Number.isFinite(Date.parse(item.publishedAt)) ? item.publishedAt : null } as Country;
 });
 
 export type CountryFaqResult = { kind: "success" | "empty" | "error"; items: { question: string; answer: string }[] };

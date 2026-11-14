@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, Bookmark, Building2, CalendarDays, Check, ClipboardList, Coins, Diamond, ExternalLink, FileText, GraduationCap, Info, ShieldCheck, Star } from "lucide-react";
+import { ArrowLeft, Bookmark, Building2, CalendarDays, Check, CircleHelp, ClipboardList, Coins, Diamond, ExternalLink, FileText, GraduationCap, Info, ShieldCheck, Star } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { ScholarshipCountryFlag } from "@/components/public/scholarship-country-flag";
 import { ScholarshipAssistance, ScholarshipAssistanceButton } from "@/components/public/scholarship-assistance";
@@ -14,6 +14,8 @@ import { ScholarshipDetailImage } from "@/components/public/scholarship-detail-i
 import { directoryApplicationStatus, directoryScholarshipLabel, scholarshipUnavailable } from "@/lib/scholarship-directory-live";
 import { scholarshipDetailSource, unavailableScholarshipBenefits, unavailableScholarshipRequirements, unavailableScholarshipSteps, type ScholarshipDetailRecord } from "@/lib/scholarship-detail-live";
 import { HomeSectionError } from "@/components/home/home-section-error";
+import { ScholarshipLiveFaq } from "@/components/public/scholarship-live-faq";
+import type { ScholarshipFaqResult } from "@/lib/scholarship-detail-live";
 
 type InfoItem = { label: string; value: ReactNode; icon: ReactNode };
 function Information({ items }: { items: InfoItem[] }) {
@@ -25,19 +27,20 @@ function Information({ items }: { items: InfoItem[] }) {
   </dl>;
 }
 
-function SectionHeading({ children, icon }: { children: ReactNode; icon: ReactNode }) {
-  return <h2 className="mb-3 flex items-center gap-2.5 text-lg font-bold leading-8 text-primary sm:text-xl"><span className="shrink-0 text-[#B88C3F]">{icon}</span>{children}</h2>;
+function SectionHeading({ children, icon, id }: { children: ReactNode; icon: ReactNode; id?: string }) {
+  return <h2 id={id} className="mb-3 flex items-center gap-2.5 text-lg font-bold leading-8 text-primary sm:text-xl"><span className="shrink-0 text-[#B88C3F]">{icon}</span>{children}</h2>;
 }
 
 function CheckList({ items }: { items: string[] }) {
   return <ul className="grid gap-x-5 gap-y-2 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex items-start gap-2 text-sm leading-7 text-muted-foreground"><span className="mt-1.5 grid size-4 shrink-0 place-items-center rounded-full bg-[#BD9347] text-white"><Check className="size-3" aria-hidden="true" /></span>{item}</li>)}</ul>;
 }
 
-export function ScholarshipDetails({ scholarship, demo, extras, media }: {
+export function ScholarshipDetails({ scholarship, demo, extras, media, liveFaq }: {
   scholarship: ScholarshipDetailRecord;
   demo: boolean;
   extras?: DemoScholarshipDetails;
   media?: { src: string; alt: string; position?: string };
+  liveFaq?: ScholarshipFaqResult;
 }) {
   const applicationStatus = demo ? scholarshipStatus(scholarship) : directoryApplicationStatus(scholarship);
   const open = applicationStatus === "OPEN";
@@ -50,9 +53,11 @@ export function ScholarshipDetails({ scholarship, demo, extras, media }: {
   const deadline = scholarshipDeadline(scholarship.verifiedDeadline);
   const status = <span className={open ? "text-[#14783D]" : "text-[#5C6573]"}>{statusLabel}</span>;
   const description = detail?.descriptionAr ?? (scholarship.descriptionAr || scholarshipUnavailable("نبذة المنحة"));
-  const benefits = demo ? detail?.benefits ?? [] : unavailableScholarshipBenefits;
-  const requirements = demo ? detail?.requirements ?? [] : unavailableScholarshipRequirements;
-  const steps = demo ? detail?.steps ?? [] : unavailableScholarshipSteps;
+  const publishedBenefits = scholarship.benefitsAr ?? [], publishedRequirements = scholarship.requirementItemsAr ?? [], publishedSteps = scholarship.applicationStepsAr ?? [];
+  const benefits = demo ? detail?.benefits ?? [] : publishedBenefits.length ? publishedBenefits : unavailableScholarshipBenefits;
+  const requirements = demo ? detail?.requirements ?? [] : publishedRequirements.length ? publishedRequirements : unavailableScholarshipRequirements;
+  const steps = demo ? detail?.steps ?? [] : publishedSteps.length ? publishedSteps : unavailableScholarshipSteps;
+  const hasPublishedSteps = !demo && publishedSteps.length > 0;
   const items: InfoItem[] = [
     { label: "الدولة", value: scholarship.country ? <Link href={`/study-abroad/${scholarship.country.slug}`} className="inline-flex items-center gap-2 rounded-sm hover:underline"><ScholarshipCountryFlag slug={scholarship.country.slug} name={scholarship.country.nameAr} />{scholarship.country.nameAr}</Link> : demo ? "غير محددة" : <span className="inline-flex items-center gap-2"><ScholarshipCountryFlag slug="" name="الدولة" />{scholarshipUnavailable("الدولة")}</span>, icon: <Building2 className="size-4" aria-hidden="true" /> },
     ...(scholarship.university ? [{ label: "الجامعة / الجهة", value: <Link href={`/universities/${scholarship.university.slug}`} className="rounded-sm hover:underline">{scholarship.university.nameAr}</Link>, icon: <Building2 className="size-4" aria-hidden="true" /> }] : !demo && scholarship.universityId ? [{ label: "الجامعة / الجهة", value: scholarshipUnavailable("الجامعة"), icon: <Building2 className="size-4" aria-hidden="true" /> }] : []),
@@ -95,7 +100,8 @@ export function ScholarshipDetails({ scholarship, demo, extras, media }: {
             {benefits.length ? <section className="mt-5 border-t border-[#E6ECF3] pt-5"><SectionHeading icon={<Diamond className="size-5" aria-hidden="true" />}>مزايا المنحة</SectionHeading><CheckList items={benefits} /></section> : null}
             <section className="mt-5 border-t border-[#E6ECF3] pt-5"><SectionHeading icon={<ClipboardList className="size-5" aria-hidden="true" />}>شروط التقديم</SectionHeading><p className="whitespace-pre-line text-sm leading-8 text-muted-foreground sm:text-base">{detail?.requirementsAr ?? (scholarship.requirementsAr || (demo ? "لم تُنشر متطلبات إضافية لهذه المنحة." : scholarshipUnavailable("شروط التقديم")))}</p>{requirements.length ? <div className="mt-3"><CheckList items={requirements} /></div> : null}</section>
             {allowed || (!demo && applicationStatus === null) ? <ConsultationCta id="scholarship-context-cta" variant="contextual" className="mt-4" titleId="scholarship-context-title" title="مو متأكد إذا كنت تستوفي شروط المنحة؟" description="فريقنا جاهز لمراجعة استفسارك ومساعدتك في فهم متطلبات التقديم." action={allowed ? <ScholarshipAssistanceButton className={consultationActionClass}>احصل على مساعدة</ScholarshipAssistanceButton> : <span role="button" aria-disabled="true" className={consultationActionClass}>طلب المساعدة غير متاح حالياً</span>} /> : null}
-            {steps.length ? <section className="mt-5 border-t border-[#E6ECF3] pt-5"><SectionHeading icon={<ClipboardList className="size-5" aria-hidden="true" />}>خطوات التقديم</SectionHeading><p className="mb-3 text-xs leading-6 text-muted-foreground">{demo ? "مسار توضيحي خيالي، وليس تعليمات تقديم رسمية." : scholarshipUnavailable("تعليمات التقديم الرسمية")}</p><ol className="grid grid-cols-2 gap-4 sm:grid-cols-4">{steps.map((step, index) => <li key={step} className="flex items-start gap-2 text-xs leading-6 text-primary"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#173F6B] font-bold text-white" aria-hidden="true">{index + 1}</span>{step}</li>)}</ol></section> : null}
+            {steps.length ? <section className="mt-5 border-t border-[#E6ECF3] pt-5"><SectionHeading icon={<ClipboardList className="size-5" aria-hidden="true" />}>خطوات التقديم</SectionHeading><p className="mb-3 text-xs leading-6 text-muted-foreground">{demo ? "مسار توضيحي خيالي، وليس تعليمات تقديم رسمية." : hasPublishedSteps ? "خطوات تقديم منشورة." : scholarshipUnavailable("تعليمات التقديم الرسمية")}</p><ol className="grid grid-cols-2 gap-4 sm:grid-cols-4">{steps.map((step, index) => <li key={step} className="flex items-start gap-2 text-xs leading-6 text-primary"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#173F6B] font-bold text-white" aria-hidden="true">{index + 1}</span>{step}</li>)}</ol></section> : null}
+            {!demo ? <section data-scholarship-faq className="mt-5 border-t border-[#E6ECF3] pt-5" aria-labelledby="scholarship-faq-title"><SectionHeading id="scholarship-faq-title" icon={<CircleHelp className="size-5" aria-hidden="true" />}>الأسئلة الشائعة عن المنحة</SectionHeading><div className="mt-3"><ScholarshipLiveFaq slug={scholarship.slug} initial={liveFaq ?? { ok: false }} /></div></section> : null}
           </article>
         </div>
 

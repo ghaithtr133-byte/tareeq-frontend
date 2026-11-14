@@ -66,8 +66,8 @@ test("every Demo country has associated facts/FAQs and its own image and filtere
   }
 });
 
-test("Live renders only real fields, never Demo facts/FAQ; duplicated overview and missing images are handled safely", async () => {
-  const country = { ...data.publicDemoContent.countries[1], slug: "تركيا-الدراسة", introductionAr: "نص واحد", detailsAr: "نص واحد", imageUrl: null };
+test("Live renders only real fields, including the published nested student facts, never Demo facts/FAQ", async () => {
+  const country = { ...data.publicDemoContent.countries[1], slug: "تركيا-الدراسة", introductionAr: "نص واحد", detailsAr: "نص واحد", imageUrl: null, studentFacts: { studyLanguageAr: "لغة منشورة", tuitionSummaryAr: "رسوم منشورة", admissionSummaryAr: "قبول منشور", applicationDatesSummaryAr: "مواعيد منشورة" } };
   const html = renderToStaticMarkup(await route(false, country).default(props));
   assert.equal((html.match(/نص واحد/g) ?? []).length, 1);
   assert.equal(html.includes('id="country-information-title"'), true);
@@ -77,6 +77,7 @@ test("Live renders only real fields, never Demo facts/FAQ; duplicated overview a
   assert.equal((html.match(/data-country-guide-panel/g) ?? []).length, 3);
   assert.equal(html.includes("خطة بحث توضيحية"), false);
   assert.equal(html.includes("التركية أو الإنجليزية"), false);
+  for (const text of ["لغة منشورة", "رسوم منشورة", "قبول منشور", "مواعيد منشورة"]) assert.ok(html.includes(text), text);
   assert.ok(html.includes(`/universities?${new URLSearchParams({ country: country.slug })}`));
   const metadata = await route(false, country).generateMetadata(props);
   assert.equal(metadata.description, country.seoDescriptionAr);
@@ -203,8 +204,10 @@ test("Optional overview media controls only its column; required Hero media alwa
   assert.ok(withImage.includes(image.src));
   assert.ok(populated.includes('src="https://example.test/romania-hero.jpg"'));
   assert.equal(populated.includes("صورة الدولة (غير متوفر حالياً)"), false);
-  const unknownField = renderToStaticMarkup(await route(false, { ...country, overviewImageUrl: image.src }).default(props));
-  assert.equal(unknownField.includes(image.src), false, "Do not consume an unapproved response field");
+  const publicOverview = renderToStaticMarkup(await route(false, { ...country, overviewImageUrl: image.src, overviewImageAltAr: image.alt }).default(props));
+  assert.ok(publicOverview.includes(image.src), "Use the documented public overview image field");
+  assert.ok(publicOverview.includes(image.alt));
+  assert.equal(publicOverview.includes("تحويل واقتصاص للعرض"), false, "Do not invent attribution metadata that the public API does not provide");
 });
 
 test("country CTA reuses the readable shared overlay and keeps the secondary action border", () => {
@@ -216,18 +219,18 @@ test("country CTA reuses the readable shared overlay and keeps the secondary act
   assert.ok(source.includes('aspect-[2/1] overflow-hidden rounded-2xl'));
 });
 
-test("Study guide preserves its section on empty data and exposes independent native keyboard-accessible disclosures", () => {
+test("Study guide preserves its section on empty data and keeps all available panels visible", () => {
   const { CountryStudyGuide } = loader(boundary)("components/public/country-study-guide.tsx");
   const empty = renderToStaticMarkup(React.createElement(CountryStudyGuide, { countryName: "تركيا", panels: [{ title: "غير متاح", introduction: " ", steps: [" "] }] }));
   assert.ok(empty.includes('id="country-guide-title"'));
   assert.ok(empty.includes("محتوى الدليل غير متاح حالياً"));
   const panels = fixtures.getDemoCountryDetails(data.publicDemoContent.countries[1]).guide;
   const html = renderToStaticMarkup(React.createElement(CountryStudyGuide, { countryName: "تركيا", panels }));
-  assert.equal((html.match(/<details\b/g) ?? []).length, 3);
-  assert.equal((html.match(/<summary\b/g) ?? []).length, 3);
-  assert.equal(html.includes(' open=""'), false);
-  assert.equal(html.includes(' name="'), false, "Guide panels may remain open independently");
-  assert.ok(html.includes("motion-reduce:transition-none"));
+  assert.equal((html.match(/<article\b/g) ?? []).length, 3);
+  assert.equal(html.includes("<details"), false);
+  assert.equal(html.includes("<summary"), false);
+  const source = fs.readFileSync(path.resolve(__dirname, "../components/public/country-study-guide.tsx"), "utf8");
+  assert.equal(source.includes("ChevronDown"), false);
 });
 
 test("Country information keeps all four original slots for zero to four available facts", () => {
@@ -244,6 +247,8 @@ test("Country information keeps all four original slots for zero to four availab
   }
   assert.equal(meaningfulCountryInformation([{ title: "", value: "x" }, { title: "x", value: " " }]).length, 0);
   assert.equal(meaningfulCountryInformation([facts[0], facts[0]]).length, 1);
+  const { countryInformation } = local("lib/country-detail-content.ts");
+  assert.deepEqual(countryInformation({ ...country, studyLanguageAr: "الرومانية والإنجليزية", tuitionSummaryAr: "رسوم منشورة", admissionSummaryAr: "متطلبات منشورة", applicationDatesSummaryAr: "مواعيد منشورة" }).map((item) => item.value), ["الرومانية والإنجليزية", "رسوم منشورة", "متطلبات منشورة", "مواعيد منشورة"]);
 });
 
 test("Student facts and guide have distinct content, never extract unsupported facts from detailsAr", async () => {

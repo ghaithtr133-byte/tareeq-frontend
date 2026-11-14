@@ -5,8 +5,8 @@ import { directoryLanguages, directoryStudyLevels } from "@/lib/university-direc
 
 export type DetailUniversity = University & { universityType?: "PUBLIC" | "PRIVATE" | null; cityId?: string | null; city?: { id: string; nameAr: string } | null };
 export type DetailResult<T> = { ok: true; data: T } | { ok: false };
-export type AdmissionItem = { id: string; label: string; content: string };
-export type GalleryItem = { id: string; src: string | null; alt: string };
+export type AdmissionItem = { id: string; label: string; content: string; officialSourceUrl: string | null; verifiedAt: string | null };
+export type GalleryItem = { id: string; src: string | null; alt: string; displayOrder: number };
 export type UniversityFaq = { id: string; question: string; answer: string };
 export type LiveDetailSections = {
   programs: DetailResult<PublicList<UniversityProgram>>;
@@ -72,12 +72,19 @@ function tuition(value: unknown): UniversityProgram["tuition"] {
   const periods: Record<string, string> = { YEAR: "سنوياً", SEMESTER: "فصلياً", FULL_PROGRAM: "لكامل مدة التخصص" };
   return { amount, currency: String(fee.currency), period: periods[String(fee.billingPeriod)], academicYear: detailText(fee.academicYear) || undefined };
 }
+function verifiedAt(value: unknown) {
+  const date = detailText(value);
+  return date && Number.isFinite(Date.parse(date)) ? date : null;
+}
 export function parseDetailPrograms(value: unknown) {
   return detailList<UniversityProgram>(value, (row) => ({
     id: String(row.id), name: detailText(row.nameAr) || detailText(row.nameEn) || detailText((row.academicMajor as { nameAr?: string } | null)?.nameAr) || detailUnavailable("اسم التخصص"),
+    nameEn: detailText(row.nameEn) || null,
+    academicMajor: detailText((row.academicMajor as { nameAr?: string; nameEn?: string } | null)?.nameAr) || detailText((row.academicMajor as { nameEn?: string } | null)?.nameEn) || null,
     level: localized(row.studyLevel, directoryStudyLevels, "المستوى الدراسي"), faculty: detailText(row.facultyNameAr) || detailText(row.facultyNameEn) || detailUnavailable("الكلية"),
     language: Array.isArray(row.languages) && row.languages.length ? row.languages.map((item) => localized(item, directoryLanguages, "لغة الدراسة")).join("، ") : detailUnavailable("لغة الدراسة"),
     duration: typeof row.durationValue === "number" && row.durationValue > 0 && ["MONTHS", "YEARS"].includes(String(row.durationUnit)) ? `${row.durationValue} ${row.durationUnit === "YEARS" ? "سنوات" : "أشهر"}` : detailUnavailable("مدة الدراسة"),
+    officialSourceUrl: detailWebsite(row.officialSourceUrl), verifiedAt: verifiedAt(row.verifiedAt),
     tuition: tuition(row.tuition),
     // Keep all verified academic-year schedules; do not replace missing current tuition with an arbitrary historic fee.
     tuitionHistory: Array.isArray(row.tuitionFees) ? row.tuitionFees.map(tuition).filter((fee) => fee !== null) : [],
@@ -92,7 +99,7 @@ export function parseDetailAdmissions(value: unknown): AdmissionItem[] {
       const program = row.program as { id?: string; nameAr?: string; nameEn?: string } | null;
       if (scope === "PROGRAM" && (!detailText(row.programId) || (program && program.id !== row.programId))) throw Error("Invalid admission program");
       return { id: String(row.id), label: scope === "STUDY_LEVEL" ? `${label}: ${localized(row.studyLevel, directoryStudyLevels, "المستوى الدراسي")}` : scope === "PROGRAM" ? `${label}: ${detailText(program?.nameAr) || detailText(program?.nameEn) || detailUnavailable("اسم التخصص")}` : label,
-        content: detailText(row.contentAr) || detailUnavailable("شروط القبول") };
+        content: detailText(row.contentAr) || detailUnavailable("شروط القبول"), officialSourceUrl: detailWebsite(row.officialSourceUrl), verifiedAt: verifiedAt(row.verifiedAt) };
     });
   });
 }
@@ -101,8 +108,10 @@ export function parseDetailGallery(value: unknown): GalleryItem[] {
   if (!Array.isArray(data?.items)) throw Error("Invalid gallery");
   return data.items.map((row) => {
     if (!row || !detailText(row.id) || (row.status !== undefined && row.status !== "PUBLISHED")) throw Error("Invalid gallery item");
-    return { id: String(row.id), src: homeImageUrl(row.imageUrl) ?? null, alt: detailText(row.altAr) || "صورة الجامعة" };
-  });
+    const displayOrder = row.displayOrder;
+    if (typeof displayOrder !== "number" || !Number.isSafeInteger(displayOrder) || displayOrder < 0) throw Error("Invalid gallery order");
+    return { id: String(row.id), src: homeImageUrl(row.imageUrl) ?? null, alt: detailText(row.altAr) || detailText(row.altEn) || "صورة الجامعة", displayOrder };
+  }).sort((left, right) => left.displayOrder - right.displayOrder || left.id.localeCompare(right.id));
 }
 export function parseDetailFaqs(value: unknown) {
   return detailList<UniversityFaq>(value, (row) => {

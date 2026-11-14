@@ -31,8 +31,10 @@ export function parseArticleScholarships(value: unknown): ArticleScholarship[] {
     seen.add(row.id);
     const country = row.country;
     if (country != null && (!text(country.id) || !validArticleSlug(country.slug) || !text(country.nameAr))) throw Error("Invalid related country");
+    const applicationStatus = row.applicationStatus === "OPEN" || row.applicationStatus === "CLOSED" ? row.applicationStatus : undefined;
     return { id: row.id, slug: row.slug, titleAr: homeCardText(text(row.titleAr), "اسم المنحة"), status: "PUBLISHED", country: country ?? null,
-      imageUrl: articleImageSource(text(row.imageUrl) || null), effectiveApplicationStatus: row.effectiveApplicationStatus === "OPEN" || row.effectiveApplicationStatus === "CLOSED" ? row.effectiveApplicationStatus : null } as ArticleScholarship;
+      imageUrl: articleImageSource(text(row.imageUrl) || null), applicationStatus,
+      effectiveApplicationStatus: row.effectiveApplicationStatus === "OPEN" || row.effectiveApplicationStatus === "CLOSED" ? row.effectiveApplicationStatus : null } as ArticleScholarship;
   });
 }
 export function parseLatestArticles(value: unknown, currentId: string, currentSlug: string): Article[] {

@@ -68,11 +68,11 @@ export function CountryDetails({ country, demoDetails, overviewImage, informatio
         <div className="relative aspect-[2/1] overflow-hidden rounded-2xl bg-[#EAF0F6]">
           <Image src={overviewImage.src} alt={overviewImage.alt} fill sizes="(min-width: 1600px) 570px, (min-width: 768px) 36vw, 100vw" className="object-cover object-[center_25%]" />
         </div>
-        <figcaption className="mt-2 text-xs leading-6 text-[#52647A]">
+        {overviewImage.author && overviewImage.source && overviewImage.license && overviewImage.licenseUrl ? <figcaption className="mt-2 text-xs leading-6 text-[#52647A]">
           الصورة: <a href={overviewImage.source} target="_blank" rel="noreferrer" className={`rounded-sm underline underline-offset-2 hover:text-[#082B50] ${focus}`}><bdi>{overviewImage.author}</bdi></a>
           {" · "}<a href={overviewImage.licenseUrl} target="_blank" rel="noreferrer" className={`rounded-sm underline underline-offset-2 hover:text-[#082B50] ${focus}`}><bdi>{overviewImage.license}</bdi></a>
           {" · تحويل واقتصاص للعرض"}
-        </figcaption>
+        </figcaption> : null}
       </figure> : null}
       </Container>
     </section>

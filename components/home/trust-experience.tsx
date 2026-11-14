@@ -6,8 +6,8 @@ import { createWhatsappUrl } from "@/lib/whatsapp";
 import { homeEditorial } from "@/lib/homepage-content";
 import { homeCardText } from "@/lib/homepage-card-content";
 
-// Presentation slots only: the public API currently has no verified statistics contract.
-// Wire confirmed Backend values here when that contract exists; never use Demo figures.
+// Only mapped server-calculated catalog totals belong in these matching slots.
+// Experience and student claims remain unavailable until the Backend supplies verified metrics.
 export type TrustStatistics = { experience?: string; universities?: string; destinations?: string; students?: string };
 
 export function TrustExperience({ statistics = {} }: { statistics?: TrustStatistics }) {

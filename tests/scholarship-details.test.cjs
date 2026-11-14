@@ -257,6 +257,21 @@ test("Live detail media and partial content keep all approved slots without borr
   for (const label of ["اسم المنحة", "نبذة المنحة", "شروط التقديم", "نوع التمويل", "المستوى الدراسي", "صورة المنحة", "موعد التقديم"]) assert.ok(missing.includes(`${label} (غير متوفر حالياً)`), label);
 });
 
+test("Verified public structured scholarship items populate the existing benefit, requirement and application-step sections", () => {
+  const data = detailHelpers.parseScholarshipDetail({ ...projected,
+    benefitsAr: ["تغطية منشورة", " ", "تغطية منشورة"],
+    requirementItemsAr: ["وثيقة منشورة"],
+    applicationStepsAr: ["الخطوة المنشورة الأولى", "الخطوة المنشورة الثانية"],
+  }, projected.slug);
+  assert.deepEqual(data.benefitsAr, ["تغطية منشورة"]);
+  assert.deepEqual(data.requirementItemsAr, ["وثيقة منشورة"]);
+  assert.deepEqual(data.applicationStepsAr, ["الخطوة المنشورة الأولى", "الخطوة المنشورة الثانية"]);
+  const html = render(data, false);
+  for (const text of [...data.benefitsAr, ...data.requirementItemsAr, ...data.applicationStepsAr, "خطوات تقديم منشورة."]) assert.ok(html.includes(text), text);
+  assert.equal(html.includes("تغطية الرسوم الدراسية (غير متوفر حالياً)"), false);
+  assert.equal(html.includes("خطوة التقديم الأولى (غير متوفر حالياً)"), false);
+});
+
 test("Published detail adapter uses the existing client and only necessary bounded real relationship lookups", async () => {
   const calls = [];
   let record = { ...projected, countryId: "c1" };
@@ -311,4 +326,31 @@ test("Invalid/unknown/unpublished scholarships are not substituted, and explicit
   await assert.rejects(api.getPublishedScholarshipDetail("unknown-scholarship"), { status: 404 });
   error = new ApiError(503, "offline");
   await assert.rejects(api.getPublishedScholarshipDetail(projected.slug), { status: 503 });
+});
+
+test("SCHOLARSHIP FAQs use their scoped public endpoint, preserve display order and append later pages", async () => {
+  const collection = (items = [], page = 1, total = items.length) => ({ items, pagination: { page, limit: 5, total, totalPages: Math.ceil(total / 5) } });
+  let response = collection([
+    { id: "faq-2", scope: "SCHOLARSHIP", questionAr: "السؤال الثاني", answerAr: "الإجابة الثانية", displayOrder: 2 },
+    { id: "faq-1", scope: "SCHOLARSHIP", questionAr: "السؤال الأول", answerAr: "الإجابة الأولى", displayOrder: 1 },
+  ]);
+  const calls = [];
+  const scoped = loader({ "@/lib/public-content-mode": { isPublicDemoMode: () => false }, "@/lib/api-client/server-client": { serverApiClient: { get: async (url, config) => { calls.push({ url, config }); return { data: { success: true, data: response } }; } } } });
+  const { loadScholarshipFaqs } = scoped("lib/api-client/scholarship-faq-actions.ts");
+  const result = await loadScholarshipFaqs("real-scholarship");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.data.items.map((item) => item.id), ["faq-1", "faq-2"]);
+  assert.deepEqual(calls[0], { url: "/scholarships/real-scholarship/faqs", config: { params: { page: 1, limit: 5 }, timeout: 12000 } });
+  response = collection([{ id: "wrong", scope: "GLOBAL", questionAr: "x", answerAr: "y", displayOrder: 1 }]);
+  assert.equal((await loadScholarshipFaqs("real-scholarship")).ok, false);
+  const captures = [];
+  let state;
+  const client = loader({ "next/link": ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children), "next/image": ({ src, alt, className }) => React.createElement("img", { src, alt, className }), "next/navigation": { useRouter: () => ({ refresh() {} }) }, "@tanstack/react-query": { useInfiniteQuery: (options) => { captures.push(options); return state ?? { data: options.initialData, hasNextPage: false }; } } });
+  const Component = client("components/public/scholarship-live-faq.tsx").ScholarshipLiveFaq;
+  state = { data: { pages: [collection([{ id: "f1", question: "واحد", answer: "أ", displayOrder: 2 }]), collection([{ id: "f1", question: "واحد", answer: "أ", displayOrder: 2 }, { id: "f2", question: "اثنان", answer: "ب", displayOrder: 1 }], 2, 7)] }, hasNextPage: true };
+  const html = renderToStaticMarkup(React.createElement(Component, { slug: "real-scholarship", initial: { ok: false } }));
+  assert.equal((html.match(/<summary/g) ?? []).length, 2);
+  assert.ok(html.indexOf("اثنان") < html.indexOf("واحد"));
+  assert.deepEqual(captures.at(-1).queryKey, ["scholarship-detail-faq", "real-scholarship"]);
+  assert.equal(captures.at(-1).getNextPageParam(collection([], 1, 6)), 2);
 });

@@ -1,12 +1,23 @@
 import type { CountryInformationItem } from "@/components/public/country-information";
 import type { CountryStudyGuidePanel } from "@/components/public/country-study-guide";
 import { homeCardText } from "@/lib/homepage-card-content";
+import type { Country } from "@/lib/api-client/public-content";
 
 export const countryFactTitles = ["لغة الدراسة", "التكاليف الدراسية", "متطلبات القبول", "مواعيد التقديم"] as const;
 
 // Frontend presentation slots, not fields inferred from detailsAr or a future API.
 export function completeCountryFacts(items: readonly CountryInformationItem[] = []) {
   return countryFactTitles.map((title) => ({ title, value: homeCardText(items.find((item) => item.title === title || (title === "مواعيد التقديم" && item.title === "مواعيد الدراسة"))?.value, title) }));
+}
+
+/** Map only documented public country facts; never infer facts from the overview. */
+export function countryInformation(country: Country): CountryInformationItem[] {
+  return [
+    { title: "لغة الدراسة", value: country.studyLanguageAr ?? "" },
+    { title: "التكاليف الدراسية", value: country.tuitionSummaryAr ?? "" },
+    { title: "متطلبات القبول", value: country.admissionSummaryAr ?? "" },
+    { title: "مواعيد التقديم", value: country.applicationDatesSummaryAr ?? "" },
+  ];
 }
 
 const approvedCountryNames: Record<string, string> = {
