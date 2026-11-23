@@ -10,7 +10,7 @@ export const ARTICLE_TICKER_PAGE_SIZE = 4;
  * Demo and Live selection stays entirely within lib/api-client/public-content.ts.
  */
 export async function getArticleTickerPage(page = 1): Promise<ArticleTickerPage> {
-  const result = await getArticles({ page, limit: ARTICLE_TICKER_PAGE_SIZE, sort: "newest" });
+  const result = await getArticles({ page, limit: ARTICLE_TICKER_PAGE_SIZE, featured: "true", sort: "newest" });
 
   return {
     items: toArticleTickerItems(result.items),

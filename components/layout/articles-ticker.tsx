@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { FileText, Menu } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Container } from "@/components/layout/container";
 import {
@@ -16,12 +16,17 @@ import {
 type Props = { initialPage: ArticleTickerPage };
 
 const nextPageDelay = 600;
+// Matches the current 40-second desktop pass while keeping the same pixel speed elsewhere.
+const tickerPixelsPerSecond = 32;
 
 export function ArticlesTicker({ initialPage }: Props) {
   const [items, setItems] = useState<ArticleTickerItem[]>(initialPage.items);
-  const [isRailReady, setIsRailReady] = useState(initialPage.totalPages <= initialPage.page);
   const [interactionPaused, setInteractionPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [groupRepeats, setGroupRepeats] = useState(1);
+  const [marqueeDuration, setMarqueeDuration] = useState(40);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -53,8 +58,6 @@ export function ArticlesTicker({ initialPage }: Props) {
         }
       } catch (error) {
         if ((error as DOMException).name !== "AbortError") return;
-      } finally {
-        if (!stopped) setIsRailReady(true);
       }
     }
 
@@ -65,47 +68,81 @@ export function ArticlesTicker({ initialPage }: Props) {
     };
   }, [initialPage.page, initialPage.totalPages]);
 
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+    if (!viewport || !track || items.length < 2) return;
+
+    const updateRepeats = () => {
+      const singleGroupWidth = track.scrollWidth / (2 * groupRepeats);
+      if (!Number.isFinite(singleGroupWidth) || singleGroupWidth <= 0) return;
+
+      const requiredRepeats = Math.max(1, Math.ceil(viewport.clientWidth / singleGroupWidth));
+      setGroupRepeats((current) => (current === requiredRepeats ? current : requiredRepeats));
+
+      const duration = Math.round((track.scrollWidth / 2 / tickerPixelsPerSecond) * 10) / 10;
+      setMarqueeDuration((current) => (current === duration ? current : duration));
+    };
+
+    updateRepeats();
+    const observer = new ResizeObserver(updateRepeats);
+    observer.observe(viewport);
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, [groupRepeats, items.length]);
+
   if (!items.length) return null;
 
-  const tickerRail = createArticleTickerRail(items);
+  const shouldAnimate = items.length > 1;
+  const tickerRail = shouldAnimate
+    ? createArticleTickerRail(Array.from({ length: groupRepeats }, () => items).flat())
+    : [];
 
   return (
     <section
       className="overflow-hidden border-b border-[#C8A253]/35 bg-[#082B50] text-white"
-      aria-label="أحدث المقالات المنشورة"
-      onMouseEnter={() => setInteractionPaused(true)}
-      onMouseLeave={() => setInteractionPaused(false)}
+      aria-label="مقالات مختارة"
       onFocusCapture={() => setInteractionPaused(true)}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setInteractionPaused(false);
       }}
     >
       <Container className="flex h-9 items-stretch">
-        <span className="flex shrink-0 items-center gap-2 pe-3 text-[0.625rem] font-extrabold tracking-[0.12em] text-[#F5D98E] sm:pe-5 sm:text-[0.6875rem]">
+        <span className="flex shrink-0 items-center gap-2 pe-2 text-[0.625rem] font-extrabold tracking-[0.12em] text-[#F5D98E] sm:pe-2 sm:text-[0.6875rem]">
           <Menu className="size-3 shrink-0" aria-hidden="true" />
-          <span>أحدث المقالات</span>
+          <span>مقالات مختارة</span>
         </span>
-        <div className="flex min-w-0 flex-1 items-center ps-1 sm:ps-3">
-          <div className="min-w-0 flex-1 overflow-hidden" dir="ltr">
-            <div className={`flex w-max items-center whitespace-nowrap motion-reduce:animate-none ${isRailReady ? "animate-[ticker-marquee_75s_linear_infinite]" : ""} ${interactionPaused || reducedMotion ? "[animation-play-state:paused]" : ""}`}>
-              {tickerRail.map((item) => (
-                <span key={`${item.id}-${item.copy}`} className="flex items-center">
-                  {item.copy === 0 ? (
-                    <Link href={`/articles/${item.slug}`} className="flex items-center gap-2 px-5 text-xs font-bold leading-5 text-white/90 transition-colors hover:text-[#F5D98E] focus-visible:text-[#F5D98E]" dir="rtl">
+        <div className="flex min-w-0 flex-1 items-center">
+          {shouldAnimate ? (
+            <div ref={viewportRef} className="flex min-w-0 flex-1 items-center justify-start overflow-hidden" dir="rtl">
+              <div
+                ref={trackRef}
+                className={`flex w-max shrink-0 items-center whitespace-nowrap motion-reduce:animate-none animate-[ticker-marquee_linear_infinite] ${interactionPaused || reducedMotion ? "[animation-play-state:paused]" : ""}`}
+                style={{ animationDuration: `${marqueeDuration}s` }}
+              >
+                {tickerRail.map((item, index) => (
+                  <span key={`${item.id}-${item.copy}-${index}`} className="flex items-center">
+                    <Link
+                      href={`/articles/${item.slug}`}
+                      className={`flex items-center gap-2 text-xs font-bold leading-5 text-white/90 transition-colors hover:text-[#F5D98E] focus-visible:text-[#F5D98E] ${index % items.length === 0 ? "px-3" : "px-5"}`}
+                      dir="rtl"
+                      aria-hidden={item.copy === 1 || undefined}
+                      tabIndex={item.copy === 1 ? -1 : undefined}
+                    >
                       {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" className="size-5 rounded object-cover" loading="lazy" /> : <span className="grid size-5 place-items-center rounded bg-white/10 text-[#F5D98E]"><FileText className="size-3" aria-hidden="true" /></span>}
                       {item.titleAr}
                     </Link>
-                  ) : (
-                    <span className="flex items-center gap-2 px-5 text-xs font-bold leading-5 text-white/90" dir="rtl" aria-hidden="true">
-                      {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" className="size-5 rounded object-cover" loading="lazy" /> : <span className="grid size-5 place-items-center rounded bg-white/10 text-[#F5D98E]"><FileText className="size-3" aria-hidden="true" /></span>}
-                      {item.titleAr}
-                    </span>
-                  )}
-                  <span className="size-1 rounded-full bg-[#C8A253]" aria-hidden="true" />
-                </span>
-              ))}
+                    <span className="size-1 rounded-full bg-[#C8A253]" aria-hidden="true" />
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <Link href={`/articles/${items[0].slug}`} className="flex min-w-0 items-center gap-2 px-3 text-xs font-bold leading-5 text-white/90 transition-colors hover:text-[#F5D98E] focus-visible:text-[#F5D98E]" dir="rtl">
+              {items[0].coverImageUrl ? <img src={items[0].coverImageUrl} alt="" className="size-5 shrink-0 rounded object-cover" loading="lazy" /> : <span className="grid size-5 shrink-0 place-items-center rounded bg-white/10 text-[#F5D98E]"><FileText className="size-3" aria-hidden="true" /></span>}
+              <span className="truncate">{items[0].titleAr}</span>
+            </Link>
+          )}
         </div>
       </Container>
     </section>

@@ -111,10 +111,13 @@ test("shared page structure has one scholarship section and FAQ outside all pane
     assert.ok(html.includes('aria-selected="true" aria-controls="university-panel-overview"'));
     assert.equal((html.match(/data-university-scholarships/g) ?? []).length, 1);
     assert.ok(html.indexOf("data-university-scholarships") > html.indexOf('id="university-panel-gallery"'));
+    assert.equal(html.includes("xl:sticky"), false);
+    assert.equal(html.includes("xl:grid-cols-[minmax(0,1fr)_15rem]"), false);
+    assert.ok(html.indexOf('id="university-contact-title"') > html.indexOf("data-university-panels"));
     assert.equal(html.includes("معلومات أساسية"), false);
     assert.equal(html.includes("نبذة سريعة عن الجامعة"), false);
     assert.equal((html.match(/data-university-faq/g) ?? []).length, demoMode ? 1 : 0);
-    if (demoMode) assert.ok(html.indexOf("data-university-faq") > html.indexOf("data-university-scholarships"));
+    if (demoMode) { assert.ok(html.indexOf("data-university-faq") > html.indexOf("data-university-scholarships")); assert.ok(html.includes("/images/faq/faq-teacher.png")); }
     else { assert.equal(html.includes("تخصصات ورسوم خيالية"), false); assert.ok(html.includes("لا تتوفر حاليًا بيانات منشورة عن التخصصات")); }
     const { createWhatsappUrl } = local("lib/whatsapp.ts");
     assert.ok(html.includes(createWhatsappUrl(`مرحبًا، أود الاستفسار عن الدراسة في ${university.nameAr}.`)));

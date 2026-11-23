@@ -17,12 +17,12 @@ export type ArticleTickerRailItem = ArticleTickerItem & {
   copy: 0 | 1;
 };
 
-type TickerArticleSource = ArticleTickerItem & { status: string };
+type TickerArticleSource = ArticleTickerItem & { status?: string; featured?: boolean };
 
-/** Keep the ticker limited to records the public API marks as published. */
+/** Public article lists are published-only projections; retain only explicitly featured records. */
 export function toArticleTickerItems(articles: readonly TickerArticleSource[]): ArticleTickerItem[] {
   return articles
-    .filter((article) => article.status === "PUBLISHED" && article.slug && article.titleAr)
+    .filter((article) => (article.status === undefined || article.status === "PUBLISHED") && article.featured === true && article.slug && article.titleAr)
     .map(({ id, slug, titleAr, publishedAt, coverImageUrl, coverImageAltAr }) => ({ id, slug, titleAr, publishedAt, coverImageUrl, coverImageAltAr }));
 }
 

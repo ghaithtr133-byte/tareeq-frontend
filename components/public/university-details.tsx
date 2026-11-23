@@ -24,7 +24,6 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
 }) {
   const search = useSearchParams();
   const active = universityTab(search.get("tab"));
-  const root = useRef<HTMLDivElement>(null);
   const tabs = useRef<HTMLDivElement>(null);
   const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const offset = useRef(88);
@@ -35,7 +34,6 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
     function measure() {
       const pinnedTicker = ticker && ["fixed", "sticky"].includes(getComputedStyle(ticker).position);
       offset.current = (header?.getBoundingClientRect().height ?? 72) + (pinnedTicker ? ticker!.getBoundingClientRect().height : 0) + 16;
-      root.current?.style.setProperty("--university-header-offset", `${offset.current}px`);
     }
     measure();
     const observer = new ResizeObserver(measure);
@@ -51,7 +49,7 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
     if (rect && rect.top < offset.current) window.scrollTo({ top: window.scrollY + rect.top - offset.current, behavior: "instant" });
   }
   const whatsapp = createWhatsappUrl(`مرحبًا، أود الاستفسار عن الدراسة في ${university.nameAr}.`);
-  return <div ref={root} className="[--university-header-offset:6rem]">
+  return <div>
     <div ref={tabs} role="tablist" aria-label="معلومات الجامعة" aria-orientation="horizontal" className="flex overflow-x-auto rounded-xl border bg-white p-1 shadow-sm">
       {universityTabs.map((tab, index) => { const Icon = icons[tab.id]; return <button key={tab.id} ref={(element) => { tabButtons.current[index] = element; }} id={`university-tab-${tab.id}`} role="tab" type="button" aria-selected={active === tab.id} aria-controls={`university-panel-${tab.id}`} tabIndex={active === tab.id ? 0 : -1} onClick={() => choose(tab.id)} onKeyDown={(event) => {
         let next: number | undefined;
@@ -62,7 +60,7 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
         if (next !== undefined) { event.preventDefault(); tabButtons.current[next]?.focus(); }
       }} className={`flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border-b-[3px] px-4 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-accent sm:px-6 md:flex-1 ${active === tab.id ? "bg-primary text-white" : "text-primary hover:bg-muted"}`} style={{ borderBottomColor: active === tab.id ? "var(--accent)" : "transparent" }}><Icon className="size-5 shrink-0" aria-hidden="true" />{tab.label}</button>; })}
     </div>
-    <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_15rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
+    <div className="mt-5 space-y-6">
       <div className="min-w-0">
         <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5" data-university-panels>
           {universityTabs.map((tab) => <div key={tab.id} id={`university-panel-${tab.id}`} role="tabpanel" aria-labelledby={`university-tab-${tab.id}`} tabIndex={0} hidden={active !== tab.id} className="rounded-lg focus-visible:outline-2 focus-visible:outline-accent">
@@ -75,7 +73,7 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
         <UniversityDetailScholarships key={`${demo}-${university.id}`} id={university.id} slug={university.slug} name={university.nameAr} country={university.country} demo={demo} initial={initialScholarships} />
         {showFaq ? <section data-university-faq className="relative mt-6 overflow-hidden rounded-2xl bg-[#FFFDF9] p-4 sm:p-6" aria-labelledby="university-faq-title"><p className="inline-flex items-center gap-2 rounded-full bg-[#FBF5E9] px-4 py-2 text-sm font-bold text-[#A47B2D]"><MessageCircleQuestion className="size-5" aria-hidden="true" />الأسئلة الشائعة</p><h2 id="university-faq-title" className="mb-6 mt-4 text-2xl font-bold leading-[1.35] text-[#082B50]">الأسئلة الشائعة عن الجامعة</h2><DetailFaqLayout>{live ? <LiveUniversityFaqs slug={university.slug} initial={live.faqs} /> : <FaqAccordion items={content.faqs} name={`university-faq-${university.id}`} />}</DetailFaqLayout></section> : null}
       </div>
-      <ConsultationCta as="aside" variant="contextual" titleId="university-contact-title" className="xl:sticky xl:top-[var(--university-header-offset)]" title="لديك استفسار عن الجامعة؟" description="تواصل مع فريق طريق للحصول على إرشاد مناسب حول الجامعة والتخصصات وشروط القبول." note="استشارة إرشادية وليست طلب قبول رسميًا." action={
+      <ConsultationCta as="section" variant="contextual" titleId="university-contact-title" title="لديك استفسار عن الجامعة؟" description="تواصل مع فريق طريق للحصول على إرشاد مناسب حول الجامعة والتخصصات وشروط القبول." note="استشارة إرشادية وليست طلب قبول رسميًا." action={
         <a data-university-whatsapp href={whatsapp} target="_blank" rel="noopener noreferrer" className={consultationActionClass}><MessageCircle className="size-5" aria-hidden="true" />استفسر عبر واتساب<span className="sr-only">(يفتح في نافذة جديدة)</span></a>
       } />
     </div>

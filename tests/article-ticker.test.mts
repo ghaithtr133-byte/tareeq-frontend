@@ -3,17 +3,19 @@ import test from "node:test";
 
 import { createArticleTickerRail, mergeArticleTickerItems, tickerPage, toArticleTickerItems } from "../lib/article-ticker.ts";
 
-test("the article ticker keeps published records and never repeats a later page", () => {
+test("the article ticker accepts featured published Public projections and rejects drafts or non-featured articles", () => {
   const firstPage = toArticleTickerItems([
-    { id: "one", slug: "one", titleAr: "المقال الأول", publishedAt: "2026-10-03T00:00:00.000Z", status: "PUBLISHED" },
-    { id: "draft", slug: "draft", titleAr: "مسودة", publishedAt: null, status: "DRAFT" },
+    { id: "one", slug: "one", titleAr: "المقال الأول", publishedAt: "2026-10-03T00:00:00.000Z", status: "PUBLISHED", featured: true },
+    { id: "projection", slug: "projection", titleAr: "مقال من الإسقاط العام", publishedAt: null, featured: true },
+    { id: "draft", slug: "draft", titleAr: "مسودة", publishedAt: null, status: "DRAFT", featured: true },
+    { id: "regular", slug: "regular", titleAr: "مقال عادي", publishedAt: null, featured: false },
   ]);
   const merged = mergeArticleTickerItems(firstPage, [
     { id: "one", slug: "one", titleAr: "المقال الأول", publishedAt: "2026-10-03T00:00:00.000Z" },
     { id: "two", slug: "two", titleAr: "المقال الثاني", publishedAt: "2026-10-02T00:00:00.000Z" },
   ]);
 
-  assert.deepEqual(merged.map((item) => item.id), ["one", "two"]);
+  assert.deepEqual(merged.map((item) => item.id), ["one", "projection", "two"]);
 });
 
 test("the article ticker accepts only positive bounded page parameters", () => {
