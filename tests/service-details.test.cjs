@@ -122,7 +122,8 @@ test("Live generic slugs use API content with no Demo steps, benefits or FAQ and
   });
   const html = renderToStaticMarkup(await local("app/services/[slug]/page.tsx").default({ params: Promise.resolve({ slug: service.slug }) }));
   assert.equal(fixtureCalls, 0);
-  for (const marker of ["data-service-steps", "data-service-benefits", "data-service-faq"]) assert.ok(html.includes(marker));
+  for (const marker of ["data-service-steps", "data-service-benefits"]) assert.ok(html.includes(marker));
+  assert.equal(html.includes("data-service-faq"), false);
   assert.equal(html.includes("/university-admission-hero.png"), false);
   assert.ok(html.includes("مراحل الخدمة (غير متوفر حالياً)"));
   assert.ok(html.includes("صورة الخدمة (غير متوفر حالياً)"));

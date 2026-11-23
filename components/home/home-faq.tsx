@@ -7,7 +7,7 @@ import { HomeContainer as Container, HomeLink as Link } from "@/components/home/
 import { createWhatsappUrl } from "@/lib/whatsapp";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 
-export function HomeFaq({ questions, state }: { questions: readonly { question: string; answer: string }[]; state?: ReactNode }) {
+export function HomeFaq({ questions, state, showServicesLink = true }: { questions: readonly { question: string; answer: string }[]; state?: ReactNode; showServicesLink?: boolean }) {
   return (
     <section className="relative isolate overflow-hidden bg-[#FFFDF9] py-12 sm:py-14" aria-labelledby="home-faq-title">
       <div className="pointer-events-none absolute -start-32 -top-52 size-[34rem] rounded-full border-[3rem] border-[#C8A253]/5" aria-hidden="true" />
@@ -47,12 +47,12 @@ export function HomeFaq({ questions, state }: { questions: readonly { question: 
               >
                 <MessageCircle className="size-5" aria-hidden="true" /> تواصل عبر واتساب
               </a>
-              <Link
+              {showServicesLink ? <Link
                 href="/services"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#C8A253] px-5 py-3 font-bold text-[#082B50] transition-colors hover:bg-[#FBF5E9] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#082B50] motion-reduce:transition-none"
               >
                 عرض الخدمات <ArrowLeft className="size-5" aria-hidden="true" />
-              </Link>
+              </Link> : null}
             </div>
           </aside>
 

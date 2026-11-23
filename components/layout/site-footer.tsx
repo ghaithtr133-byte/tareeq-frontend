@@ -33,8 +33,9 @@ const footerSections: Array<{ id: FooterSectionId; label: string; links: FooterL
   },
 ];
 
-export function SiteFooter() {
+export function SiteFooter({ showServices = true }: { showServices?: boolean }) {
   const [openMobileSection, setOpenMobileSection] = useState<FooterSectionId | null>(null);
+  const visibleSections = showServices ? footerSections : footerSections.map((section) => ({ ...section, links: section.links.filter((link) => link.href !== "/services") }));
 
   return (
     <footer id="contact" className="relative overflow-hidden bg-[#041F3C] text-primary-foreground">
@@ -51,7 +52,7 @@ export function SiteFooter() {
         </div>
 
         <div className="md:hidden">
-          {footerSections.map((section) => {
+          {visibleSections.map((section) => {
             const isOpen = openMobileSection === section.id;
             const panelId = `footer-${section.id}`;
 
@@ -77,7 +78,7 @@ export function SiteFooter() {
           })}
         </div>
 
-        {footerSections.map((section) => (
+        {visibleSections.map((section) => (
           <nav key={section.id} aria-label={section.label} className="hidden md:block">
             <p className="text-sm font-bold text-[#F5D98E]">{section.label}</p>
             <div className="mt-2"><FooterLinks links={section.links} /></div>

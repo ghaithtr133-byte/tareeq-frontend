@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { serverApiClient } from "@/lib/api-client/server-client";
 import { homeError, homeQueries, parseHomeList, type HomeEntities, type HomeResult, type HomeSection } from "@/lib/homepage-data";
 
@@ -50,7 +51,7 @@ async function demoCollection(section: HomeSection) {
   }
 }
 
-export async function loadHomeSection<K extends HomeSection>(section: K, demo: boolean): Promise<HomeResult<HomeEntities[K]>> {
+async function loadHomeSectionUncached<K extends HomeSection>(section: K, demo: boolean): Promise<HomeResult<HomeEntities[K]>> {
   try {
     if (demo) return parseHomeList(section, await demoCollection(section));
     const response = await serverApiClient.get(`/${section}`, { params: homeQueries[section], timeout: 12_000 });
@@ -58,3 +59,6 @@ export async function loadHomeSection<K extends HomeSection>(section: K, demo: b
     return parseHomeList(section, response.data.data);
   } catch { return homeError<HomeEntities[K]>(); }
 }
+
+/** Axios requests are not automatically memoized; share this exact section request within one SSR render. */
+export const loadHomeSection = cache(loadHomeSectionUncached);

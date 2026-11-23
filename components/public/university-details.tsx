@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { BookOpen, ClipboardList, GraduationCap, Images, Info, MessageCircle, MessageCircleQuestion } from "lucide-react";
 import type { PublicList, Scholarship, University } from "@/lib/api-client/public-content";
 import { FaqAccordion } from "@/components/public/faq-accordion";
+import { DetailFaqLayout } from "@/components/public/detail-faq-layout";
 import { UniversityDirectoryImage } from "@/components/public/university-directory-image";
 import { UniversityDetailScholarships } from "@/components/public/university-detail-scholarships";
 import { UniversityPrograms } from "@/components/public/university-programs";
@@ -27,6 +28,7 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
   const tabs = useRef<HTMLDivElement>(null);
   const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const offset = useRef(88);
+  const showFaq = demo ? content.faqs.length > 0 : !live || !live.faqs.ok || live.faqs.data.pagination.total > 0;
   useEffect(() => {
     const header = document.querySelector<HTMLElement>("header.sticky");
     const ticker = document.querySelector<HTMLElement>('[aria-label="أحدث المقالات المنشورة"]');
@@ -71,7 +73,7 @@ export function UniversityDetails({ university, content, demo, initialScholarshi
           </div>)}
         </div>
         <UniversityDetailScholarships key={`${demo}-${university.id}`} id={university.id} slug={university.slug} name={university.nameAr} country={university.country} demo={demo} initial={initialScholarships} />
-        {content.faqs.length || live ? <section data-university-faq className="relative mt-6 overflow-hidden rounded-2xl bg-[#FFFDF9] p-4 sm:p-6" aria-labelledby="university-faq-title"><p className="inline-flex items-center gap-2 rounded-full bg-[#FBF5E9] px-4 py-2 text-sm font-bold text-[#A47B2D]"><MessageCircleQuestion className="size-5" aria-hidden="true" />الأسئلة الشائعة</p><h2 id="university-faq-title" className="mb-6 mt-4 text-2xl font-bold leading-[1.35] text-[#082B50]">الأسئلة الشائعة عن الجامعة</h2>{live ? <LiveUniversityFaqs slug={university.slug} initial={live.faqs} /> : <FaqAccordion items={content.faqs} name={`university-faq-${university.id}`} />}</section> : null}
+        {showFaq ? <section data-university-faq className="relative mt-6 overflow-hidden rounded-2xl bg-[#FFFDF9] p-4 sm:p-6" aria-labelledby="university-faq-title"><p className="inline-flex items-center gap-2 rounded-full bg-[#FBF5E9] px-4 py-2 text-sm font-bold text-[#A47B2D]"><MessageCircleQuestion className="size-5" aria-hidden="true" />الأسئلة الشائعة</p><h2 id="university-faq-title" className="mb-6 mt-4 text-2xl font-bold leading-[1.35] text-[#082B50]">الأسئلة الشائعة عن الجامعة</h2><DetailFaqLayout>{live ? <LiveUniversityFaqs slug={university.slug} initial={live.faqs} /> : <FaqAccordion items={content.faqs} name={`university-faq-${university.id}`} />}</DetailFaqLayout></section> : null}
       </div>
       <ConsultationCta as="aside" variant="contextual" titleId="university-contact-title" className="xl:sticky xl:top-[var(--university-header-offset)]" title="لديك استفسار عن الجامعة؟" description="تواصل مع فريق طريق للحصول على إرشاد مناسب حول الجامعة والتخصصات وشروط القبول." note="استشارة إرشادية وليست طلب قبول رسميًا." action={
         <a data-university-whatsapp href={whatsapp} target="_blank" rel="noopener noreferrer" className={consultationActionClass}><MessageCircle className="size-5" aria-hidden="true" />استفسر عبر واتساب<span className="sr-only">(يفتح في نافذة جديدة)</span></a>

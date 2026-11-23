@@ -15,6 +15,7 @@ import { directoryApplicationStatus, directoryScholarshipLabel, scholarshipUnava
 import { scholarshipDetailSource, unavailableScholarshipBenefits, unavailableScholarshipRequirements, unavailableScholarshipSteps, type ScholarshipDetailRecord } from "@/lib/scholarship-detail-live";
 import { HomeSectionError } from "@/components/home/home-section-error";
 import { ScholarshipLiveFaq } from "@/components/public/scholarship-live-faq";
+import { DetailFaqLayout } from "@/components/public/detail-faq-layout";
 import type { ScholarshipFaqResult } from "@/lib/scholarship-detail-live";
 
 type InfoItem = { label: string; value: ReactNode; icon: ReactNode };
@@ -46,6 +47,7 @@ export function ScholarshipDetails({ scholarship, demo, extras, media, liveFaq }
   const open = applicationStatus === "OPEN";
   const statusLabel = open ? "التقديم مفتوح" : applicationStatus === "CLOSED" ? "التقديم مغلق" : scholarshipUnavailable("حالة التقديم");
   const allowed = canRequestScholarshipAssistance(scholarship);
+  const showFaq = !demo && (liveFaq?.ok !== true || liveFaq.data.pagination.total > 0);
   // Pending Backend fields are deliberately NOT read from the Live record.
   const detail = demo ? extras : undefined;
   const illustration = demo ? media : undefined;
@@ -101,7 +103,7 @@ export function ScholarshipDetails({ scholarship, demo, extras, media, liveFaq }
             <section className="mt-5 border-t border-[#E6ECF3] pt-5"><SectionHeading icon={<ClipboardList className="size-5" aria-hidden="true" />}>شروط التقديم</SectionHeading><p className="whitespace-pre-line text-sm leading-8 text-muted-foreground sm:text-base">{detail?.requirementsAr ?? (scholarship.requirementsAr || (demo ? "لم تُنشر متطلبات إضافية لهذه المنحة." : scholarshipUnavailable("شروط التقديم")))}</p>{requirements.length ? <div className="mt-3"><CheckList items={requirements} /></div> : null}</section>
             {allowed || (!demo && applicationStatus === null) ? <ConsultationCta id="scholarship-context-cta" variant="contextual" className="mt-4" titleId="scholarship-context-title" title="مو متأكد إذا كنت تستوفي شروط المنحة؟" description="فريقنا جاهز لمراجعة استفسارك ومساعدتك في فهم متطلبات التقديم." action={allowed ? <ScholarshipAssistanceButton className={consultationActionClass}>احصل على مساعدة</ScholarshipAssistanceButton> : <span role="button" aria-disabled="true" className={consultationActionClass}>طلب المساعدة غير متاح حالياً</span>} /> : null}
             {steps.length ? <section className="mt-5 border-t border-[#E6ECF3] pt-5"><SectionHeading icon={<ClipboardList className="size-5" aria-hidden="true" />}>خطوات التقديم</SectionHeading><p className="mb-3 text-xs leading-6 text-muted-foreground">{demo ? "مسار توضيحي خيالي، وليس تعليمات تقديم رسمية." : hasPublishedSteps ? "خطوات تقديم منشورة." : scholarshipUnavailable("تعليمات التقديم الرسمية")}</p><ol className="grid grid-cols-2 gap-4 sm:grid-cols-4">{steps.map((step, index) => <li key={step} className="flex items-start gap-2 text-xs leading-6 text-primary"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#173F6B] font-bold text-white" aria-hidden="true">{index + 1}</span>{step}</li>)}</ol></section> : null}
-            {!demo ? <section data-scholarship-faq className="mt-5 border-t border-[#E6ECF3] pt-5" aria-labelledby="scholarship-faq-title"><SectionHeading id="scholarship-faq-title" icon={<CircleHelp className="size-5" aria-hidden="true" />}>الأسئلة الشائعة عن المنحة</SectionHeading><div className="mt-3"><ScholarshipLiveFaq slug={scholarship.slug} initial={liveFaq ?? { ok: false }} /></div></section> : null}
+            {showFaq ? <section data-scholarship-faq className="mt-5 border-t border-[#E6ECF3] pt-5" aria-labelledby="scholarship-faq-title"><SectionHeading id="scholarship-faq-title" icon={<CircleHelp className="size-5" aria-hidden="true" />}>الأسئلة الشائعة عن المنحة</SectionHeading><DetailFaqLayout><ScholarshipLiveFaq slug={scholarship.slug} initial={liveFaq ?? { ok: false }} /></DetailFaqLayout></section> : null}
           </article>
         </div>
 

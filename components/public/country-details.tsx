@@ -5,6 +5,7 @@ import { ConsultationCta, consultationActionClass } from "@/components/public/co
 import type { Country } from "@/lib/api-client/public-content";
 import { Container } from "@/components/layout/container";
 import { CountryFaq } from "@/components/public/country-faq";
+import { DetailFaqLayout } from "@/components/public/detail-faq-layout";
 import { ScholarshipCountryFlag } from "@/components/public/scholarship-country-flag";
 import { StudyAbroadImage } from "@/components/public/study-abroad-image";
 import { createWhatsappUrl } from "@/lib/whatsapp";
@@ -28,6 +29,7 @@ export function CountryDetails({ country, demoDetails, overviewImage, informatio
   const facts = completeCountryFacts(information ?? demoDetails?.facts ?? []);
   const guide = demoDetails?.guide ?? unavailableCountryGuide(country.slug, country.nameAr);
   const faqs = demoDetails?.faqs ?? faqResult?.items ?? [];
+  const showFaq = demoDetails ? faqs.length > 0 : faqResult?.kind !== "empty";
   return <main className="bg-[#F8FAFC] text-[#082B50]">
     <section aria-labelledby="country-title" className="relative isolate overflow-hidden border-b border-[#E7ECF2] bg-[#F3F7FA]">
       <div className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-full bg-[#EAF0F6] opacity-20 md:w-[54%] md:opacity-100">
@@ -81,15 +83,14 @@ export function CountryDetails({ country, demoDetails, overviewImage, informatio
 
     <CountryStudyGuide countryName={country.nameAr} panels={guide} demo={!!demoDetails} />
 
-    <section aria-labelledby="country-faq-title" className="py-6 sm:py-8">
+    {showFaq ? <section aria-labelledby="country-faq-title" className="py-6 sm:py-8">
       <Container>
         <h2 id="country-faq-title" className="text-2xl font-bold leading-[1.5] sm:text-3xl">أسئلة شائعة حول الدراسة في {country.nameAr}</h2>
-        <div className="mt-5 grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_11rem] lg:gap-8">
+        <DetailFaqLayout>
           {faqResult?.kind === "error" ? <ErrorState title="تعذر تحميل أسئلة هذه الدولة" description="يرجى المحاولة مجدداً؛ باقي معلومات الدولة ما زالت متاحة." action={<a href={`/study-abroad/${encodeURIComponent(country.slug)}`}>إعادة المحاولة</a>} /> : faqs.length ? <CountryFaq key={country.id} items={faqs} name={`country-${country.id}-faq`} /> : <EmptyState title="لا توجد أسئلة منشورة لهذه الدولة حالياً" description={`ستظهر هنا الأسئلة المرتبطة بالدراسة في ${country.nameAr} عند نشرها.`} />}
-          <Image src="/images/faq/faq-help.png" alt="" width={176} height={176} sizes="176px" className="mx-auto hidden h-auto w-full max-w-44 object-contain lg:block" />
-        </div>
+        </DetailFaqLayout>
       </Container>
-    </section>
+    </section> : null}
 
     <Container className="pb-8 pt-2">
       <ConsultationCta titleId="country-contact-title" title={<>هل تفكر بالدراسة في {country.nameAr}؟</>} description={<>تواصل مع فريق طريق للحصول على إرشاد حول الدراسة في {country.nameAr} والجامعات والتخصصات المناسبة لك.</>} backgroundImage="/images/study-abroad/destinations-cta.png" action={

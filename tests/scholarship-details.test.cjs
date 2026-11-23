@@ -114,6 +114,14 @@ function render(record, isDemo, props = {}) {
   return renderToStaticMarkup(React.createElement(QueryClientProvider, { client: new QueryClient() }, React.createElement(ScholarshipDetails, { scholarship: record, demo: isDemo, ...props })));
 }
 
+test("Live Scholarship FAQ section is omitted only for a confirmed empty first page", () => {
+  const empty = { ok: true, data: { items: [], pagination: { page: 1, limit: 5, total: 0, totalPages: 0 } } };
+  const published = { ok: true, data: { items: [{ id: "faq-1", question: "سؤال منشور", answer: "إجابة منشورة", displayOrder: 1 }], pagination: { page: 1, limit: 5, total: 1, totalPages: 1 } } };
+  assert.equal(render(scholarship, false, { liveFaq: empty }).includes("data-scholarship-faq"), false);
+  assert.ok(render(scholarship, false, { liveFaq: published }).includes("data-scholarship-faq"));
+  assert.ok(render(scholarship, false, { liveFaq: { ok: false } }).includes("data-scholarship-faq"));
+});
+
 test("open Demo renders three triggers and one associated form with clearly fictional rich content", () => {
   const html = render(scholarship, true, { extras: getDemoScholarshipDetails(scholarship.slug), media: { src: "/images/trust/library-globe.jpg", alt: "صورة توضيحية" } });
   assert.equal((html.match(/aria-controls="scholarship-assistance-dialog"/g) ?? []).length, 3);

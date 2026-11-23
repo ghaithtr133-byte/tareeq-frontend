@@ -113,7 +113,7 @@ test("shared page structure has one scholarship section and FAQ outside all pane
     assert.ok(html.indexOf("data-university-scholarships") > html.indexOf('id="university-panel-gallery"'));
     assert.equal(html.includes("معلومات أساسية"), false);
     assert.equal(html.includes("نبذة سريعة عن الجامعة"), false);
-    assert.equal((html.match(/data-university-faq/g) ?? []).length, 1);
+    assert.equal((html.match(/data-university-faq/g) ?? []).length, demoMode ? 1 : 0);
     if (demoMode) assert.ok(html.indexOf("data-university-faq") > html.indexOf("data-university-scholarships"));
     else { assert.equal(html.includes("تخصصات ورسوم خيالية"), false); assert.ok(html.includes("لا تتوفر حاليًا بيانات منشورة عن التخصصات")); }
     const { createWhatsappUrl } = local("lib/whatsapp.ts");

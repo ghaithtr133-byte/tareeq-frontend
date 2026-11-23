@@ -71,7 +71,7 @@ test("Live renders only real fields, including the published nested student fact
   const html = renderToStaticMarkup(await route(false, country).default(props));
   assert.equal((html.match(/نص واحد/g) ?? []).length, 1);
   assert.equal(html.includes('id="country-information-title"'), true);
-  assert.equal(html.includes('id="country-faq-title"'), true);
+  assert.equal(html.includes('id="country-faq-title"'), false);
   assert.equal(html.includes('id="country-guide-title"'), true);
   assert.equal((html.match(/data-country-fact/g) ?? []).length, 4);
   assert.equal((html.match(/data-country-guide-panel/g) ?? []).length, 3);
@@ -292,7 +292,8 @@ test("Country FAQs use only the canonical current-country endpoint; empty, inval
   assert.ok(html.includes(faq.answerAr));
   assert.equal(html.includes("كيف أبدأ البحث عن جامعة"), false);
   const empty = renderToStaticMarkup(await route(false, country).default(props));
-  assert.ok(empty.includes("لا توجد أسئلة منشورة لهذه الدولة حالياً"));
+  assert.equal(empty.includes('id="country-faq-title"'), false);
+  assert.equal(empty.includes("لا توجد أسئلة منشورة لهذه الدولة حالياً"), false);
   assert.equal(empty.includes('role="alert"'), false);
   for (const bad of [Error("offline"), { items: [null], pagination: { total: 1 } }, { items: [{ ...faq, scope: "GLOBAL" }], pagination: { total: 1 } }, { items: [{ ...faq, countryId: "another-country" }], pagination: { total: 1 } }, { items: [], pagination: { total: 2 } }]) {
     const failed = renderToStaticMarkup(await route(false, country, undefined, bad).default(props));

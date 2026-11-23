@@ -103,13 +103,14 @@ test("statistics failures retain the approved unavailable slots without reusing 
   for (const text of ["statistics offline", "ENOTFOUND", "undefined", "NaN"]) assert.equal(html.includes(text), false);
 });
 
-test("every approved section and heading stays visible with contextual empty states and no fake content", async () => {
+test("only Services and FAQs disappear on confirmed empty collections; other approved sections retain contextual empty states", async () => {
   const empty = Object.fromEntries(Object.keys(records).map((key) => [key, collection([])]));
   const html = await home(liveLoader(empty));
   assert.ok(html.includes("لا توجد وجهات منشورة حالياً"));
-  assert.ok(html.includes("لا توجد خدمات منشورة حالياً"));
-  for (const id of ["destinations-title", "services-title", "universities-title", "scholarships-title", "articles-title", "home-faq-title"]) assert.equal(html.includes('id="' + id + '"'), true, id);
-  for (const text of ["لا توجد جامعات مميزة حالياً", "لا توجد منح مميزة حالياً", "لا توجد مقالات منشورة حالياً", "لا توجد أسئلة شائعة منشورة حالياً"]) assert.ok(html.includes(text), text);
+  for (const id of ["destinations-title", "universities-title", "scholarships-title", "articles-title"]) assert.equal(html.includes('id="' + id + '"'), true, id);
+  for (const id of ["services-title", "home-faq-title"]) assert.equal(html.includes('id="' + id + '"'), false, id);
+  for (const text of ["لا توجد خدمات منشورة حالياً", "لا توجد أسئلة شائعة منشورة حالياً"]) assert.equal(html.includes(text), false, text);
+  for (const text of ["لا توجد جامعات مميزة حالياً", "لا توجد منح مميزة حالياً", "لا توجد مقالات منشورة حالياً"]) assert.ok(html.includes(text), text);
   assert.ok(html.includes("عرض جميع المنح"));
   assert.ok(html.includes("عرض جميع المقالات"));
   assert.equal(html.includes('role="alert"'), false);
@@ -234,8 +235,8 @@ test("FAQ scope and essential text are validated; successful empty FAQs never re
   assert.equal(result.items.length, 1);
   assert.equal(result.kind, "partial");
   const empty = await home(liveLoader({ faqs: collection([]) }));
-  assert.ok(empty.includes("home-faq-title"));
-  assert.ok(empty.includes("لا توجد أسئلة شائعة منشورة حالياً"));
+  assert.equal(empty.includes("home-faq-title"), false);
+  assert.equal(empty.includes("لا توجد أسئلة شائعة منشورة حالياً"), false);
   assert.equal(empty.includes("كيف أختار الجامعة المناسبة؟"), false);
 });
 

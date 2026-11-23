@@ -358,7 +358,7 @@ export default async function Home() {
           </Container>
         </section>
       )}
-      {(
+      {serviceResult.kind !== "empty" ? (
         <section
           className="bg-white py-12 sm:py-14"
           aria-labelledby="services-title"
@@ -405,7 +405,7 @@ export default async function Home() {
             </>) : <HomeCollectionState result={serviceResult} section="services" />}
           </Container>
         </section>
-      )}
+      ) : null}
       <section
         className="relative isolate overflow-hidden rounded-[1.5rem] bg-[#082B50] text-white"
         aria-labelledby="journey-title"
@@ -600,7 +600,7 @@ export default async function Home() {
           </Container>
         </section>
       )}
-      <HomeFaq questions={faqResult.items.map((item) => ({ question: item.questionAr, answer: item.answerAr }))} state={!faqResult.items.length ? <HomeCollectionState result={faqResult} section="faqs" /> : undefined} />
+      {faqResult.kind !== "empty" ? <HomeFaq questions={faqResult.items.map((item) => ({ question: item.questionAr, answer: item.answerAr }))} state={!faqResult.items.length ? <HomeCollectionState result={faqResult} section="faqs" /> : undefined} showServicesLink={serviceResult.kind !== "empty"} /> : null}
       <div className="bg-[#FFFDF9] pb-0 pt-4 sm:pt-6">
         <Container>
           <ConsultationCta titleId="consultation-title" eyebrow="خطوتك التالية" title="مستعد لبدء رحلتك الدراسية؟" description="ابدأ رحلتك نحو الدراسة في الخارج، وتواصل معنا لنساعدك في اتخاذ الخطوة التالية." backgroundImage="/images/footer/footer-skyline.png" action={

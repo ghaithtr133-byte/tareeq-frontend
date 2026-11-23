@@ -34,7 +34,7 @@ function loader(overrides = {}) {
 const base = loader();
 const demo = base("lib/mocks/public-demo-content.ts");
 const ui = {
-  "next/navigation": { useRouter: () => ({ refresh() {} }) },
+  "next/navigation": { usePathname: () => "/", useRouter: () => ({ refresh() {} }) },
   "next/link": ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children),
   "next/image": ({ src, alt, className, draggable }) => React.createElement("img", { src, alt, className, draggable }),
 };
@@ -229,4 +229,16 @@ test("Shared Footer has two coherent groups, unique routes and one official What
   assert.equal((html.match(/aria-expanded="false"/g) ?? []).length, 2);
   assert.ok(html.includes("©"));
   assert.ok(html.includes("min-h-11"));
+  const withoutServices = renderToStaticMarkup(React.createElement(local("components/layout/site-footer.tsx").SiteFooter, { showServices: false }));
+  assert.equal(withoutServices.includes('href="/services"'), false);
+});
+
+test("Shared Header omits only the Services route when the published Services collection is confirmed empty", () => {
+  const local = loader(ui);
+  const Header = local("components/layout/site-header.tsx").SiteHeader;
+  const visible = renderToStaticMarkup(React.createElement(Header));
+  const withoutServices = renderToStaticMarkup(React.createElement(Header, { showServices: false }));
+  assert.ok(visible.includes('href="/services"'));
+  assert.equal(withoutServices.includes('href="/services"'), false);
+  for (const href of ["/study-abroad", "/universities", "/scholarships", "/articles"]) assert.ok(withoutServices.includes(`href="${href}"`), href);
 });

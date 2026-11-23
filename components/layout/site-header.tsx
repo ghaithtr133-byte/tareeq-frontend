@@ -21,12 +21,13 @@ const navigation = [
   { href: "/articles", label: "المقالات" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ showServices = true }: { showServices?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstNavigationLinkRef = useRef<HTMLAnchorElement>(null);
   const pathname = usePathname();
+  const visibleNavigation = showServices ? navigation : navigation.filter((item) => item.href !== "/services");
 
   function closeMenu(restoreFocus = false) {
     setIsOpen(false);
@@ -90,7 +91,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="التنقل الرئيسي">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined} className={cn("rounded-md px-3 py-2 text-[0.9375rem] font-bold transition-colors duration-150 focus-visible:bg-[#F1F5F9] xl:px-4 2xl:text-base", isActive ? "bg-[#F1F5F9] text-[#082B50]" : "text-[#52647A] hover:bg-[#F1F5F9] hover:text-[#082B50]")}>
@@ -123,7 +124,7 @@ export function SiteHeader() {
       <div id="mobile-navigation" aria-hidden={!isOpen} className={cn("absolute end-4 top-full z-[60] mt-3 w-[min(21rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-primary-foreground/15 bg-primary p-2 shadow-[0_24px_48px_-22px_color-mix(in_srgb,var(--primary)_70%,transparent)] transition-[opacity,transform,visibility] duration-200 ease-out motion-reduce:transition-none sm:end-8 lg:hidden", isOpen ? "visible translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-2 opacity-0")}>
         <p className="px-3 pb-2 pt-1 text-[0.625rem] font-bold tracking-[0.16em] text-accent">استكشف طريقك التعليمي</p>
         <nav aria-label="التنقل على الجوال">
-          {navigation.map((item, index) => (
+          {visibleNavigation.map((item, index) => (
             <Link ref={index === 0 ? firstNavigationLinkRef : undefined} id={index === 0 ? "mobile-navigation-first-link" : undefined} key={item.href} href={item.href} onClick={() => closeMenu()} className={cn("group flex min-h-12 items-center justify-between gap-3 rounded-lg px-3 py-3 text-base font-bold text-primary-foreground transition-colors duration-200 hover:bg-primary-foreground/10 focus-visible:bg-primary-foreground/15 active:bg-primary-foreground/15 motion-reduce:transition-none", pathname === item.href || pathname.startsWith(`${item.href}/`) ? "bg-primary-foreground/10" : "")}>
               <span>{item.label}</span>
               <ChevronLeft className="size-4 shrink-0 text-accent transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
