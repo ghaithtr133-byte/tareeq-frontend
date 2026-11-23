@@ -10,8 +10,11 @@ export class ApiError extends Error {
   }
 }
 
+// منستخدمها لنضيف الـAPI Prefix الثابت، مثل /api/v1، على رابط السيرفر الأساسي، مو على كل Endpoint لحاله.
+// API Prefix (البادئة المشتركة لمسارات الـAPI) هي الجزء الثابت الموجود ببداية مسارات الـEndpoints
 export function withApiNamespace(baseUrl?: string) {
-  return baseUrl ? `${baseUrl.replace(/\/$/, "")}/api/v1` : undefined;
+  return baseUrl ? `${baseUrl.replace(/\/$/, "")}/api/v1` //يعني عملياً عم نضيف /api/v1 للرابط بعد تنظيفه من السلاش باخر الرابط
+   : undefined; //ما في قيمة محددة
 }
 
 /** Keeps cancellation distinct while normalizing HTTP and network failures. */
@@ -21,11 +24,16 @@ export function normalizeApiError(error: unknown) {
   }
 
   if (axios.isAxiosError(error) && error.response) {
-    return new ApiError(error.response.status, `API request failed with status ${error.response.status}.`, {
-      cause: error,
-    });
+    return new ApiError(
+      error.response.status,
+      `API request failed with status ${error.response.status}.`,
+      {
+        cause: error,
+      },
+    );
   }
 
-  const detail = error instanceof Error && error.message ? ` ${error.message}` : "";
+  const detail =
+    error instanceof Error && error.message ? ` ${error.message}` : "";
   return new ApiError(0, `Network request failed.${detail}`, { cause: error });
 }
