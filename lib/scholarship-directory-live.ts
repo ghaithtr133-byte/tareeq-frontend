@@ -54,7 +54,7 @@ function publishedList<T>(value: unknown, map: (row: Record<string, unknown>) =>
     return map(row);
   }) };
 }
-export function parseScholarshipDirectory(value: unknown, page: number): PublicList<DirectoryLiveScholarship> {
+export function parseScholarshipDirectory(value: unknown, page: number, expectedLimit = 12): PublicList<DirectoryLiveScholarship> {
   const parsed = publishedList<DirectoryLiveScholarship>(value, (row) => ({ ...row,
     titleAr: text(row.titleAr) || scholarshipUnavailable("اسم المنحة"), titleEn: text(row.titleEn) || null,
     countryId: text(row.countryId) || null, universityId: text(row.universityId) || null,
@@ -62,7 +62,7 @@ export function parseScholarshipDirectory(value: unknown, page: number): PublicL
     imageUrl: homeImageUrl(row.imageUrl) ?? null, imageAltAr: text(row.imageAltAr) || null,
     verifiedDeadline: directoryDeadline(row.verifiedDeadline), featured: row.featured === true,
   }) as DirectoryLiveScholarship);
-  if (parsed.pagination.page !== page || parsed.pagination.limit !== 12) throw Error("Invalid requested page");
+  if (parsed.pagination.page !== page || parsed.pagination.limit !== expectedLimit) throw Error("Invalid requested page");
   return parsed;
 }
 

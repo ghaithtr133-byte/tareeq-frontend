@@ -15,12 +15,12 @@ function mediaUrl(value: unknown): string | null {
   } catch { return null; }
 }
 
-export function parseDestinationDirectory(value: unknown): PublicList<DestinationCountry> {
+export function parseDestinationDirectory(value: unknown, expectedLimit = 6): PublicList<DestinationCountry> {
   const data = value as { items?: unknown[]; pagination?: Pagination } | null;
   const pagination = data?.pagination;
   if (!Array.isArray(data?.items) || !pagination ||
     ![pagination.page, pagination.limit, pagination.total, pagination.totalPages].every(Number.isInteger) ||
-    pagination.page < 1 || pagination.limit !== 6 || pagination.total < 0 ||
+    pagination.page < 1 || pagination.limit !== expectedLimit || pagination.total < 0 ||
     pagination.totalPages !== Math.ceil(pagination.total / pagination.limit) ||
     data.items.length > pagination.limit || data.items.length > pagination.total ||
     (pagination.page <= pagination.totalPages && data.items.length === 0)) {

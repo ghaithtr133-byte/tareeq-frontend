@@ -6,6 +6,7 @@ import { RotateCcw, Search, X } from "lucide-react";
 import { articleDirectoryHref, type ArticleFilterValues } from "@/lib/article-directory";
 import { SkeletonResults } from "@/components/public/content-skeletons";
 import { ErrorState } from "@/components/ui/content-state";
+import { FeaturedOnlySwitch } from "@/components/public/featured-only-switch";
 
 type CountryOption = { value: string; label: string };
 const blank: ArticleFilterValues = { search: "", country: "", featured: "" };
@@ -46,15 +47,15 @@ export function ArticleDirectoryFilters({ values, countries, optionError, option
   return <>
     <form aria-label="البحث وتصفية المقالات" onSubmit={(event) => { event.preventDefault(); navigate(draft); }} className="grid grid-cols-2 items-center gap-2 rounded-xl border border-[#E2E8EF] bg-white/80 p-2 shadow-[0_6px_20px_-18px_rgba(8,43,80,0.3)] md:flex md:flex-wrap md:gap-3">
       <label className="relative col-span-2 block min-w-0 md:w-80 md:shrink-0">
-        <span className="sr-only">ابحث في المقالات</span><Search className="pointer-events-none absolute right-3 top-3 size-5 text-[#5B7390]" aria-hidden="true" />
-        <input name="search" type="search" value={draft.search} onChange={(event) => change("search", event.target.value, true)} maxLength={200} placeholder="ابحث في المقالات..." className={`${control} pr-10`} />
+        <span className="sr-only">ابحث في المقالات</span><Search className="pointer-events-none absolute end-3 top-1/2 size-5 -translate-y-1/2 text-[#5B7390]" aria-hidden="true" />
+        <input name="search" type="search" value={draft.search} onChange={(event) => change("search", event.target.value, true)} maxLength={200} placeholder="ابحث في المقالات..." className={`${control} pe-12`} />
       </label>
       <label className="min-w-0 md:w-48 md:shrink-0"><span className="sr-only">الدولة</span><select name="country" value={draft.country} onChange={(event) => change("country", event.target.value)} className={control}>
         <option value="">جميع الدول</option>
         {draft.country && !countries.some((item) => item.value === draft.country) ? <option value={draft.country}>{draft.country}</option> : null}
         {countries.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
       </select></label>
-      <label className="flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#E2E8EF] bg-white px-2 text-xs font-bold leading-5 text-primary md:px-3 md:text-sm"><input name="featured" type="checkbox" checked={draft.featured === "true"} onChange={(event) => change("featured", event.target.checked ? "true" : "")} className="size-4 shrink-0 accent-primary" />المقالات المميزة</label>
+      <FeaturedOnlySwitch id="articles-featured" label="المقالات المميزة فقط" checked={draft.featured === "true"} onCheckedChange={(featured) => change("featured", featured ? "true" : "")} />
       {optionLimited ? <p className="col-span-2 w-full text-xs leading-6 text-muted-foreground">قائمة الدول محدودة بأول 50 دولة منشورة؛ قد لا تظهر بعض الخيارات.</p> : null}
       {optionError ? <ErrorState className="col-span-2 w-full" title="تعذّر تحميل خيارات الدول" description="يمكنك متابعة البحث أو إعادة محاولة تحميل الخيارات؛ المقالات المتاحة محفوظة." onRetry={() => startTransition(() => router.refresh())} retrying={pending} /> : null}
     </form>

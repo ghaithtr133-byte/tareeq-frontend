@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { SkeletonResults } from "@/components/public/content-skeletons";
+import { FeaturedOnlySwitch } from "@/components/public/featured-only-switch";
 
 type Values = { search: string; featured: boolean; sort: "manual" | "newest" };
 
@@ -70,18 +71,18 @@ export function StudyAbroadFilters({
   return (
     <>
       <form
-        className="rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-[0_14px_34px_-30px_rgba(8,43,80,0.5)] sm:p-3"
+        className="rounded-xl border border-[#E2E8F0] bg-white p-2 shadow-[0_14px_34px_-30px_rgba(8,43,80,0.5)]"
         aria-label="البحث وتصفية الوجهات الدراسية"
         onSubmit={(event) => {
           event.preventDefault();
           navigate(draft);
         }}
       >
-        <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:items-center lg:justify-start">
-          <label className="relative col-span-2 block min-w-0 lg:w-80 lg:shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="relative block min-w-0 basis-full sm:basis-[18rem] sm:max-w-[20rem] lg:basis-80 lg:max-w-none lg:shrink-0">
             <span className="sr-only">ابحث عن دولة</span>
             <Search
-              className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-[#607185]"
+              className="pointer-events-none absolute end-3 top-1/2 size-5 -translate-y-1/2 text-[#607185]"
               aria-hidden="true"
             />
             <input
@@ -92,36 +93,15 @@ export function StudyAbroadFilters({
                 change({ ...draft, search: event.target.value }, true)
               }
               placeholder="ابحث عن دولة..."
-              className={`${controlClass} pr-12 lg:w-80`}
+              className={`${controlClass} pe-12`}
             />
           </label>
-          <label className="flex min-h-11 min-w-0 cursor-pointer items-center justify-between gap-2 rounded-lg border border-[#DCE4EC] bg-[#FCFDFE] px-2 text-sm font-bold leading-5 text-[#082B50] transition-colors hover:border-[#BAC8D5] focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-[#C8A253] sm:px-4 lg:w-auto lg:shrink-0">
-            <span>الوجهات المميزة فقط</span>
-            <input
-              type="checkbox"
-              checked={draft.featured}
-              onChange={(event) =>
-                change({ ...draft, featured: event.target.checked })
-              }
-              className="size-4 shrink-0 accent-[#A47B2D]"
-            />
-          </label>
-          <label className="grid gap-1 text-xs font-bold text-[#52647A] lg:w-52 lg:shrink-0">
-            <span className="sr-only">الترتيب</span>
-            <select
-              value={draft.sort}
-              onChange={(event) =>
-                change({
-                  ...draft,
-                  sort: event.target.value === "newest" ? "newest" : "manual",
-                })
-              }
-              className={`${controlClass} lg:w-52`}
-            >
-              <option value="manual">الترتيب المعتمد</option>
-              <option value="newest">الأحدث</option>
-            </select>
-          </label>
+          <FeaturedOnlySwitch
+            id="study-abroad-featured"
+            label="الوجهات المميزة فقط"
+            checked={draft.featured}
+            onCheckedChange={(featured) => change({ ...draft, featured })}
+          />
         </div>
       </form>
       <div aria-busy={changing}>

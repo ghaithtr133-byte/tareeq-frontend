@@ -30,6 +30,7 @@ import {
 import { createPageMetadata } from "@/lib/seo";
 import type { DemoDirectoryFilters } from "@/lib/university-directory-demo";
 import { createWhatsappUrl } from "@/lib/whatsapp";
+import { getFeaturedFirstPage } from "@/lib/featured-first-pagination";
 
 export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata(
@@ -80,13 +81,14 @@ export default async function UniversitiesPage({
     (!demo && Object.values(liveUniversityFilters(raw)).some(Boolean)) ||
     Object.values(demoFilters).some(Boolean),
   );
-  const demoResult = demo
+  const demoRelatedResult = demo
     ? demoApi!.getDemoDirectory(params, demoFilters, hasMeaningfulCriteria)
     : null;
   const [universityResponse, countryResponse, facetResponse] = await Promise.allSettled([
-    demoResult
-      ? Promise.resolve(demoResult.universities)
-      : getUniversities(params).then(parseDirectoryUniversities),
+    getFeaturedFirstPage(params, (request) => demo
+      ? Promise.resolve(demoApi!.getDemoDirectory(request, demoFilters).universities)
+      : getUniversities(request).then(parseDirectoryUniversities),
+    ),
     getCountries({ limit: 50, sort: "manual" }).then(parseDirectoryCountries),
     demo ? Promise.resolve([] as DirectoryFilterGroup[]) : getUniversityFilterOptions(params),
   ]);
@@ -126,8 +128,8 @@ export default async function UniversitiesPage({
     demo &&
     hasMeaningfulCriteria &&
     universities?.pagination.total &&
-    demoResult
-      ? demoResult
+    demoRelatedResult
+      ? demoRelatedResult
       : null;
   const retryQuery = new URLSearchParams(
     Object.entries({ ...values, ...(params.page ? { page: String(params.page) } : {}) }).filter(([, value]) => value),

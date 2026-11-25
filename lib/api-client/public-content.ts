@@ -173,12 +173,13 @@ export type Article = {
 type PaginationParams = { page?: number; limit?: number };
 type SearchParams = { search?: string };
 type FeaturedParams = { featured?: FeaturedFilter };
+type ExcludeIdsParams = { excludeIds?: string };
 
-export type CountryListParams = PaginationParams & SearchParams & FeaturedParams & { sort?: "manual" | "newest" };
+export type CountryListParams = PaginationParams & SearchParams & FeaturedParams & ExcludeIdsParams & { sort?: "manual" | "newest" };
 export type UniversityStudyLevel = "FOUNDATION" | "DIPLOMA" | "BACHELORS" | "MASTERS" | "PHD";
 export type UniversityTeachingLanguage = "ARABIC" | "ENGLISH" | "FRENCH" | "GERMAN" | "TURKISH" | "ROMANIAN" | "RUSSIAN" | "SPANISH" | "ITALIAN";
 export type UniversityType = "PUBLIC" | "PRIVATE";
-export type UniversityListParams = PaginationParams & SearchParams & FeaturedParams & {
+export type UniversityListParams = PaginationParams & SearchParams & FeaturedParams & ExcludeIdsParams & {
   country?: string;
   major?: string;
   studyLevel?: UniversityStudyLevel;
@@ -187,7 +188,7 @@ export type UniversityListParams = PaginationParams & SearchParams & FeaturedPar
   universityType?: UniversityType;
   sort?: "newest" | "name";
 };
-export type ScholarshipListParams = PaginationParams & SearchParams & FeaturedParams & {
+export type ScholarshipListParams = PaginationParams & SearchParams & FeaturedParams & ExcludeIdsParams & {
   country?: string;
   university?: string;
   studyLevel?: string;
@@ -197,8 +198,8 @@ export type ScholarshipListParams = PaginationParams & SearchParams & FeaturedPa
 };
 export type ScholarshipFilterOption = { value: string; labelAr: string | null; count: number };
 export type ScholarshipFilterOptions = { studyLevels: ScholarshipFilterOption[]; fundingTypes: ScholarshipFilterOption[] };
-export type ServiceListParams = PaginationParams & FeaturedParams & { sort?: "manual" | "newest" };
-export type ArticleListParams = PaginationParams & SearchParams & FeaturedParams & { country?: string; sort?: "newest" };
+export type ServiceListParams = PaginationParams & FeaturedParams & ExcludeIdsParams & { sort?: "manual" | "newest" };
+export type ArticleListParams = PaginationParams & SearchParams & FeaturedParams & ExcludeIdsParams & { country?: string; sort?: "newest" };
 
 async function getPublic<T>(path: string, params?: Record<string, string | number | undefined>) {
   const response = await serverApiClient.get<PublicEnvelope<T>>(path, { params });

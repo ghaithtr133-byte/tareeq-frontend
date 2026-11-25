@@ -109,7 +109,7 @@ test("Journey keeps all four ordered steps and its artwork, with no competing CT
   assert.equal(journey.includes("غير متوفر حالياً"), false);
   assert.ok(journey.includes("/images/journey/journey-background.png"));
   assert.equal(journey.includes("ابدأ رحلتك"), false);
-  assert.equal(journey.includes("<a "), false);
+  for (const href of ["/study-abroad", "/universities", "/scholarships"]) assert.ok(journey.includes(`href="${href}"`));
   assert.ok(journey.includes("lg:grid-cols-4"));
 });
 
@@ -174,11 +174,11 @@ test("Homepage spacing stays compact without replacing approved artwork or remov
   assert.ok(hero.includes("/images/hero/study-abroad-student-landmarks.png"));
   assert.equal((hero.match(/<strong/g) ?? []).length, 3);
   assert.equal(hero.includes("خدمات تعليمية"), false);
-  assert.ok(hero.includes("flex-wrap justify-center"));
+  assert.ok(hero.includes("grid-cols-1 justify-center"));
   assert.ok(hero.includes("leading-[1.4]"));
   assert.ok(hero.includes('href="/scholarships"'));
-  assert.ok(hero.includes("grow-0 shrink-0 basis-[calc((100%_-_0.75rem)/2)]"));
-  assert.ok(hero.includes("md:basis-[calc((100%_-_2.25rem)/4)]"));
+  assert.ok(hero.includes("min-[24rem]:grid-cols-2 sm:grid-cols-3"));
+  assert.ok(hero.includes("min-[24rem]:last:col-span-2"));
   for (const icon of ["lucide-map-pinned", "lucide-graduation-cap", "lucide-circle-dollar-sign"]) assert.ok(hero.includes(icon));
   assert.ok(section(html, "journey-title").includes("/images/journey/journey-background.png"));
 });
@@ -226,9 +226,9 @@ test("Shared Footer has two coherent groups, unique routes and one official What
   assert.equal(html.includes('href="/faq"'), false);
   assert.equal(html.includes(">الرئيسية<"), false);
   assert.equal((html.match(/href="https:\/\/wa.me\//g) ?? []).length, 1);
-  assert.equal((html.match(/aria-expanded="false"/g) ?? []).length, 2);
+  assert.equal((html.match(/aria-expanded=/g) ?? []).length, 0);
   assert.ok(html.includes("©"));
-  assert.ok(html.includes("min-h-11"));
+  assert.ok(html.includes("min-h-9"));
   const withoutServices = renderToStaticMarkup(React.createElement(local("components/layout/site-footer.tsx").SiteFooter, { showServices: false }));
   assert.equal(withoutServices.includes('href="/services"'), false);
 });

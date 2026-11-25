@@ -431,19 +431,19 @@ export default async function Home() {
               {journey.description}
             </p>
           </div>
-          <ol className="relative mt-6 grid gap-4 border-s border-[#C8A253]/65 ps-6 md:grid-cols-2 md:gap-x-0 md:gap-y-7 md:border-s-0 md:ps-0 lg:grid-cols-4 lg:gap-y-0">
-            {journey.steps.map(({ number, title, description }) => (
+          <ol className="relative mt-8 grid gap-5 border-s border-[#C8A253]/65 ps-6 md:grid-cols-2 md:gap-x-0 md:gap-y-8 md:border-s-0 md:ps-0 lg:grid-cols-4 lg:gap-y-0">
+            {journey.steps.map(({ number, title, description }, index) => (
               <li
                 key={number}
-                className="group relative min-w-0 ps-10 md:border-t md:border-[#C8A253]/75 md:px-3 md:pt-6 md:text-center"
+                className="relative min-w-0 md:border-t md:border-[#C8A253]/75 md:px-3 md:pt-10 md:text-center"
               >
-                <span className="absolute -start-[1.125rem] top-0 grid size-9 place-items-center rounded-full border-2 border-[#082B50] bg-[#C8A253] text-sm font-extrabold text-[#082B50] transition-transform duration-300 group-hover:scale-105 md:start-1/2 md:-top-[1.125rem] md:translate-x-1/2 motion-reduce:transition-none">
-                  {number}
-                </span>
-                <h3 className="text-lg font-bold leading-8 text-white">
-                  {title}
-                </h3>
-                <p className="mt-1 text-sm leading-6 text-[#D8E3F0]">{description}</p>
+                <Link href={["/study-abroad", "/universities", "/scholarships", "/scholarships"][index]} className="group relative flex min-h-11 flex-col items-start rounded-lg transition-colors hover:bg-white/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F5D98E] md:items-center md:text-center">
+                  <span className="relative z-10 -ms-5 mb-3 grid size-9 place-items-center rounded-full border-2 border-[#082B50] bg-[#C8A253] text-sm font-extrabold text-[#082B50] transition-transform duration-300 group-hover:scale-105 md:absolute md:start-1/2 md:-top-[3.625rem] md:ms-0 md:mb-0 md:-translate-x-1/2 motion-reduce:transition-none">
+                    {number}
+                  </span>
+                  <h3 className="text-lg font-bold leading-8 text-white">{title}</h3>
+                  <p className="mt-1 text-sm leading-6 text-[#D8E3F0]">{description}</p>
+                </Link>
               </li>
             ))}
           </ol>

@@ -19,7 +19,7 @@ export function articleDirectoryDate(value: unknown) {
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? value : null;
 }
-export function parseArticleDirectory(value: unknown, page: number, approved: Article[] = []): PublicList<Article> {
+export function parseArticleDirectory(value: unknown, page: number, approved: Article[] = [], expectedLimit = 12): PublicList<Article> {
   const data = publishedList<Article>(value, (row) => {
     const original = approved.find((item) => item.slug === row.slug && item.titleAr === text(row.titleAr));
     return { ...row, titleAr: homeCardText(text(row.titleAr), "عنوان المقال"), summaryAr: homeCardText(text(row.summaryAr), "ملخص المقال", original?.summaryAr),
@@ -27,7 +27,7 @@ export function parseArticleDirectory(value: unknown, page: number, approved: Ar
       coverImageUrl: articleImageSource(text(row.coverImageUrl) || null), coverImageAltAr: text(row.coverImageAltAr) || null,
     } as Article;
   });
-  if (data.pagination.page !== page || data.pagination.limit !== 12) throw Error("Invalid article page");
+  if (data.pagination.page !== page || data.pagination.limit !== expectedLimit) throw Error("Invalid article page");
   return data;
 }
 export function parseArticleCountries(value: unknown): PublicList<Country> {

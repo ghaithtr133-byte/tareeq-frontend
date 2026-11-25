@@ -16,6 +16,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { innerPageHero } from "@/lib/inner-page-hero";
 import { parseDestinationDirectory } from "@/lib/study-abroad-directory-data";
 import { EmptyState, ErrorState } from "@/components/ui/content-state";
+import { getFeaturedFirstPage } from "@/lib/featured-first-pagination";
 
 export const dynamic = "force-dynamic";
 const pageContainerClass = "2xl:max-w-[112rem]";
@@ -45,7 +46,9 @@ export default async function StudyAbroadPage({
     featured: params.featured === "true",
     sort: params.sort,
   } as const;
-  const countries = await getCountries(params).then(parseDestinationDirectory).catch(() => undefined);
+  const countries = await getFeaturedFirstPage(params, (request) =>
+    getCountries(request).then((data) => parseDestinationDirectory(data, request.limit ?? 6)),
+  ).catch(() => undefined);
   const paginationParams: RouteSearchParams = {
     ...(params.search ? { search: params.search } : {}),
     ...(params.featured ? { featured: params.featured } : {}),

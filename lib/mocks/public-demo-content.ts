@@ -999,6 +999,10 @@ function listDemo<T extends DemoResource>(
     items = items.filter(
       (item) => item.featured === (params.featured === "true"),
     );
+  if (params.excludeIds) {
+    const excluded = new Set(params.excludeIds.split(",").map((id) => id.trim()).filter(Boolean));
+    items = items.filter((item) => !excluded.has(item.id));
+  }
   if ("country" in params && params.country)
     items = items.filter(
       (item) => "country" in item && item.country?.slug === params.country,

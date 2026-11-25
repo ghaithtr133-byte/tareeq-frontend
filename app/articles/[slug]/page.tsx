@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/content-state";
 import { buildArticleToc } from "@/lib/article-toc";
 import { latestOtherArticles } from "@/lib/article-details";
 import { parseLatestArticles } from "@/lib/article-detail-live";
+import { recommendArticleScholarships } from "@/lib/article-scholarship-recommendations";
 import { articlePublicationDate } from "@/lib/article-directory";
 import { isPublicDemoMode } from "@/lib/public-content-mode";
 import { createPageMetadata } from "@/lib/seo";
@@ -55,7 +56,10 @@ export default async function ArticleDetailPage({ params }: Props) {
   ]);
   const detail = detailResult.status === "fulfilled" ? detailResult.value : { article: source.article, scholarships: [] };
   const article = !demo && relations.status === "fulfilled" && relations.value ? { ...detail.article, country: relations.value.country, university: relations.value.university } : detail.article;
-  const scholarships = detail.scholarships;
+  const recommendation = detailResult.status === "fulfilled"
+    ? await recommendArticleScholarships(detail.scholarships, article.country?.slug)
+    : { scholarships: [], failed: true };
+  const scholarships = recommendation.scholarships;
   const latest = latestResult.status === "fulfilled" ? latestResult.value : [];
   const media = demo ? (await import("@/lib/mocks/scholarship-directory-fixtures")).demoScholarshipMedia : undefined;
   const toc = buildArticleToc(article.bodyAr);
@@ -75,7 +79,7 @@ export default async function ArticleDetailPage({ params }: Props) {
             {article.country || article.university || (!demo && (article.countryId || article.universityId)) ? <nav aria-label="محتوى مرتبط" className="mt-7 flex flex-wrap gap-4 border-t border-[#E1E7EE] pt-4 text-sm font-bold"><span className="sr-only">استكشف المحتوى المرتبط</span>{!demo && article.countryId && !article.country ? <span>الدولة (غير متوفر حالياً)</span> : null}{!demo && article.universityId && !article.university ? <span>الجامعة (غير متوفر حالياً)</span> : null}{article.country ? <Link href={`/study-abroad/${article.country.slug}`} className="inline-flex min-h-11 items-center rounded-sm hover:underline">وجهة: {article.country.nameAr}</Link> : null}{article.university ? <Link href={`/universities/${article.university.slug}`} className="inline-flex min-h-11 items-center rounded-sm hover:underline">جامعة: {article.university.nameAr}</Link> : null}</nav> : null}
 {!demo && (relations.status === "rejected" || relations.value?.failed) ? <div className="mt-4"><HomeSectionError title="تعذّر تحميل الروابط المرتبطة" description="المقال متاح. يمكنك إعادة محاولة تحميل روابط الدولة والجامعة." /></div> : null}<div className="mt-6 xl:hidden"><ArticleConsultation titleId="article-mobile-consultation-title" /></div>
           </article>
-          <aside data-article-right className="grid min-w-0 gap-5 md:grid-cols-2 lg:col-start-2 lg:row-start-1 lg:grid-cols-1 xl:col-start-3" dir="rtl"><div className="order-2 min-w-0 lg:order-1"><ArticleRecommendationList articles={latest} live={!demo} failed={latestResult.status === "rejected"} /></div>{!demo || scholarships.length ? <div className="order-1 min-w-0 lg:order-2"><ScholarshipRecommendationList scholarships={scholarships} media={media} live={!demo} failed={detailResult.status === "rejected"} /></div> : null}</aside>
+          <aside data-article-right className="grid min-w-0 gap-5 md:grid-cols-2 lg:col-start-2 lg:row-start-1 lg:grid-cols-1 xl:col-start-3" dir="rtl"><div className="order-2 min-w-0 lg:order-1"><ArticleRecommendationList articles={latest} live={!demo} failed={latestResult.status === "rejected"} /></div>{!demo || scholarships.length ? <div className="order-1 min-w-0 lg:order-2"><ScholarshipRecommendationList scholarships={scholarships} media={media} live={!demo} failed={detailResult.status === "rejected" || recommendation.failed} /></div> : null}</aside>
         </div>
       </ArticleReadingLayout>
     </Container>

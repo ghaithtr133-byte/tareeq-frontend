@@ -441,7 +441,7 @@ test("missing card fields use approved same-record text or descriptive labels, n
     assert.equal(populated.includes(text), false);
 });
 
-test("Live Journey restores approved editorial copy, marks only missing steps and preserves real-value priority", async () => {
+test("Live Journey restores approved editorial copy without unavailable markers and preserves real-value priority", async () => {
   const calls = [];
   const html = await home(liveLoader({}, calls));
   const journey = html.match(
@@ -460,7 +460,7 @@ test("Live Journey restores approved editorial copy, marks only missing steps an
     "md:border-t",
   ])
     assert.ok(journey.includes(token));
-  assert.equal((journey.match(/\(غير متوفر حالياً\)/g) ?? []).length, 8);
+  assert.equal((journey.match(/غير متوفر حالياً/g) ?? []).length, 0);
   for (const text of [
     "رحلتك الدراسية",
     "خطوات الرحلة",
@@ -484,9 +484,9 @@ test("Live Journey restores approved editorial copy, marks only missing steps an
   assert.equal(partial.steps[0].title, "خطوة حقيقية");
   assert.equal(
     partial.steps[0].description,
-    "حدّد ما يناسب خطتك الدراسية. (غير متوفر حالياً)",
+    "حدّد ما يناسب خطتك الدراسية.",
   );
-  assert.equal(partial.steps[3].title, "بدء الرحلة (غير متوفر حالياً)");
+  assert.equal(partial.steps[3].title, "بدء الرحلة");
   const approved = base("lib/homepage-content.ts").approvedHomeJourney;
   const populated = getHomeJourney(false, approved);
   assert.equal(JSON.stringify(populated).includes("غير متوفر حالياً"), false);
@@ -495,7 +495,7 @@ test("Live Journey restores approved editorial copy, marks only missing steps an
   const whitespace = getHomeJourney(false, {
     steps: [{ title: "  ", description: "وصف حقيقي" }],
   });
-  assert.equal(whitespace.steps[0].title, "اختيار الوجهة (غير متوفر حالياً)");
+  assert.equal(whitespace.steps[0].title, "اختيار الوجهة");
   assert.equal(whitespace.steps[0].description, "وصف حقيقي");
 });
 

@@ -79,30 +79,29 @@ export function HomeHero({ heroCards = loadingCards, pending = false }: {
                       <Link href="/study-abroad">استكشف الوجهات</Link>
                     </Button>
                   </div>
-                  <p className="mt-3 text-[0.9375rem] font-normal leading-7 text-[#52647A]">
+                  <p className="mt-5 text-[0.9375rem] font-normal leading-7 text-[#52647A] md:hidden lg:block">
                     {homeEditorial.heroNote}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="row-start-2 flex min-w-0 flex-wrap justify-center gap-3 pb-7 lg:col-span-2 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:gap-5 2xl:pb-7">
+            <p className="row-start-2  hidden text-right text-[0.9375rem] font-normal leading-7 text-[#52647A] md:block lg:hidden">
+              {homeEditorial.heroNote}
+            </p>
+            <div className="row-start-2 grid w-full min-w-0 grid-cols-1 justify-center gap-3 pb-7 min-[24rem]:grid-cols-2 sm:grid-cols-3 sm:gap-4 md:row-start-3 md:mt-5 lg:col-span-2 lg:row-start-2 lg:mt-0 lg:py-6 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:max-w-[54rem] xl:self-end xl:gap-4 xl:pb-5 xl:pt-0 2xl:pb-7">
               {heroCards.map(({ label, Icon, count }) => (
                 <div
                   key={label}
-                  className="flex min-h-[5.25rem] min-w-0 grow-0 shrink-0 basis-[calc((100%_-_0.75rem)/2)] items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-[#082B50] shadow-[0_12px_30px_-15px_rgba(8,43,80,0.45)] sm:gap-3 sm:px-4 md:basis-[calc((100%_-_2.25rem)/4)] xl:basis-[calc((100%_-_3rem)/4)] 2xl:min-h-[6rem] 2xl:basis-[calc((100%_-_3.75rem)/4)] 2xl:px-5"
+                  className="flex min-h-[4.5rem] min-w-0 w-full items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-2 py-2 text-[#082B50] shadow-[0_12px_30px_-15px_rgba(8,43,80,0.45)] min-[24rem]:last:col-span-2 min-[24rem]:last:w-[calc((100%_-_0.75rem)/2)] min-[24rem]:last:justify-self-center sm:gap-2.5 sm:px-3 sm:last:col-auto sm:last:w-full md:px-3.5 2xl:min-h-[5rem] 2xl:px-4"
                 >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#FAF4E7] 2xl:size-11">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#FAF4E7] 2xl:size-10">
                     <Icon
-                      className="size-5 text-[#A47B2D] 2xl:size-7"
+                      className="size-4 text-[#A47B2D] 2xl:size-6"
                       aria-hidden="true"
                     />
                   </span>
-                  <span className="min-w-0 leading-6">
-                    {pending ? <span aria-hidden="true" className="mb-1 block h-6 w-8 rounded-md bg-[#E5EBF2] motion-safe:animate-pulse motion-reduce:animate-none" /> : <strong className="block text-right text-xl font-extrabold tabular-nums 2xl:text-2xl">{count !== undefined ? count : <span className="text-sm font-normal leading-6">{homeCardText(undefined, "العدد")}</span>}</strong>}
-                    <span className="block text-sm font-bold leading-6 2xl:text-[0.9375rem]">
-                      {label}
-                    </span>
-                  </span>
+                  {pending ? <span aria-hidden="true" className="h-6 w-8 shrink-0 rounded-md bg-[#E5EBF2] motion-safe:animate-pulse motion-reduce:animate-none" /> : <strong className="shrink-0 text-lg font-extrabold tabular-nums 2xl:text-xl">{count !== undefined ? count : <span className="text-sm font-normal leading-6">{homeCardText(undefined, "العدد")}</span>}</strong>}
+                  <span className="min-w-0 text-sm font-bold leading-6 2xl:text-[0.9375rem]">{label}</span>
                 </div>
               ))}
             </div>

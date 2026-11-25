@@ -9,10 +9,10 @@ export function servicesDirectoryPage(value: unknown) {
 }
 
 /** Validate the public projection without requiring Admin-only status/timestamps. Keep Backend order. */
-export function parseServicesDirectory(value: unknown, page: number): PublicList<Service> {
+export function parseServicesDirectory(value: unknown, page: number, expectedLimit = 5): PublicList<Service> {
   const data = value as PublicList<Service>;
   const p = data?.pagination;
-  if (!Array.isArray(data?.items) || !p || ![p.page, p.limit, p.total, p.totalPages].every(Number.isSafeInteger) || p.page !== page || p.page < 1 || p.limit !== 5 || p.total < 0 || p.totalPages !== Math.ceil(p.total / p.limit) || data.items.length > Math.min(p.limit, p.total) || (p.page <= p.totalPages && !data.items.length)) throw Error("Invalid services collection");
+  if (!Array.isArray(data?.items) || !p || ![p.page, p.limit, p.total, p.totalPages].every(Number.isSafeInteger) || p.page !== page || p.page < 1 || p.limit !== expectedLimit || p.total < 0 || p.totalPages !== Math.ceil(p.total / p.limit) || data.items.length > Math.min(p.limit, p.total) || (p.page <= p.totalPages && !data.items.length)) throw Error("Invalid services collection");
   const seen = new Set<string>(), slugs = new Set<string>();
   for (const row of data.items) {
     if (!row || !text(row.id) || seen.has(row.id) || typeof row.slug !== "string" || row.slug.length < 2 || row.slug.length > 120 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(row.slug) || slugs.has(row.slug) || (row.status !== undefined && row.status !== "PUBLISHED")) throw Error("Invalid public service");

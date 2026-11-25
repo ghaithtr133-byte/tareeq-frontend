@@ -28,6 +28,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { parseScholarshipDirectory, parseScholarshipFilterOptions, scholarshipLookup, joinScholarshipDirectory } from "@/lib/scholarship-directory-live";
 import { EmptyState } from "@/components/ui/content-state";
 import { HomeSectionError } from "@/components/home/home-section-error";
+import { getFeaturedFirstPage } from "@/lib/featured-first-pagination";
 
 export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata(
@@ -45,7 +46,9 @@ export default async function ScholarshipsPage({
   const values = scholarshipFilterValues(params);
   const demo = isPublicDemoMode();
   const [scholarships, countries, universities, scholarshipFacets] = await Promise.allSettled([
-    getScholarships(params).then((data) => demo ? data : parseScholarshipDirectory(data, params.page ?? 1)),
+    getFeaturedFirstPage(params, (request) => getScholarships(request).then((data) =>
+      demo ? data : parseScholarshipDirectory(data, request.page ?? 1, request.limit ?? 12),
+    )),
     getCountries({ limit: 50, sort: "manual" }).then((data) => demo ? data : scholarshipLookup<Country>(data)),
     getUniversities({ limit: 50, sort: "name" }).then((data) => demo ? data : scholarshipLookup<University>(data)),
     demo ? Promise.resolve(null) : getScholarshipFilterOptions().then(parseScholarshipFilterOptions),

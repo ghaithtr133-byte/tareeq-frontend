@@ -10,6 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { SkeletonResults } from "@/components/public/content-skeletons";
 import { ErrorState } from "@/components/ui/content-state";
+import { FeaturedOnlySwitch } from "@/components/public/featured-only-switch";
 import {
   ChevronDown,
   RotateCcw,
@@ -152,7 +153,7 @@ export function ScholarshipDirectoryFilters({
           <label className="relative col-span-2 block min-w-0 lg:w-80 lg:shrink-0">
             <span className="sr-only">ابحث عن منحة دراسية</span>
             <Search
-              className="pointer-events-none absolute right-3 top-3 size-5 text-[#607185]"
+              className="pointer-events-none absolute end-3 top-1/2 size-5 -translate-y-1/2 text-[#607185]"
               aria-hidden="true"
             />
             <input
@@ -161,7 +162,7 @@ export function ScholarshipDirectoryFilters({
               onChange={(event) => change("search", event.target.value, true)}
               maxLength={200}
               placeholder="ابحث عن منحة دراسية..."
-              className={`${controlClass} pr-10`}
+              className={`${controlClass} pe-12`}
             />
           </label>
           <label className="min-w-0 lg:w-56 lg:shrink-0">
@@ -218,18 +219,15 @@ export function ScholarshipDirectoryFilters({
             >
               حالة التقديم{select("applicationStatus", "جميع الحالات")}
             </label>
-            <label
-              htmlFor="scholarships-featured"
-              className="grid min-w-0 gap-2 text-xs font-bold text-muted-foreground"
-            >
-              الظهور{select("featured", "جميع المنح")}
-            </label>
-            <label
-              htmlFor="scholarships-sort"
-              className="grid min-w-0 gap-2 text-xs font-bold text-muted-foreground"
-            >
-              الترتيب حسب{select("sort", "الأحدث أولاً")}
-            </label>
+            <FeaturedOnlySwitch
+              id="scholarships-featured"
+              label="المنح المميزة فقط"
+              checked={draft.featured === "true"}
+              onCheckedChange={(checked) =>
+                change("featured", checked ? "true" : "")
+              }
+              className="justify-self-start self-end"
+            />
             <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-3 xl:col-span-6">
               {/* <button
                 type="submit"

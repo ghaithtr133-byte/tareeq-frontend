@@ -13,9 +13,8 @@ export type JourneyContent = {
 export function getHomeJourney(demoMode: boolean, realContent?: JourneyContent | null) {
   const content = demoMode ? approvedHomeJourney : realContent;
   const text = (value: string | null | undefined, approved: string) => value?.trim() || approved;
-  // Only approved editorial text is eligible; never use this for factual values.
-  const stepText = (value: string | null | undefined, approved: string) =>
-    value?.trim() || `${approved} (غير متوفر حالياً)`;
+  // The Journey is approved static editorial content until a public contract exists.
+  const stepText = (value: string | null | undefined, approved: string) => value?.trim() || approved;
   return {
     eyebrow: text(content?.eyebrow, approvedHomeJourney.eyebrow),
     title: text(content?.title, approvedHomeJourney.title),

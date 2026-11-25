@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/ui/content-state";
 import { HomeSectionError } from "@/components/home/home-section-error";
 // Approved same-record editorial text only, visibly marked by the Live parser; never collection/error fallback.
 import { publicDemoContent } from "@/lib/mocks/public-demo-content";
+import { getFeaturedFirstPage } from "@/lib/featured-first-pagination";
 
 export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata(
@@ -39,7 +40,9 @@ export default async function ArticlesPage({
   const values = articleFilterValues(params);
   const demo = isPublicDemoMode();
   const [articles, countries] = await Promise.allSettled([
-    getArticles(params).then((data) => demo ? data : parseArticleDirectory(data, params.page ?? 1, publicDemoContent.articles)),
+    getFeaturedFirstPage(params, (request) => getArticles(request).then((data) =>
+      demo ? data : parseArticleDirectory(data, request.page ?? 1, publicDemoContent.articles, request.limit ?? 12),
+    )),
     getCountries({ limit: 50, sort: "manual" }).then((data) => demo ? data : parseArticleCountries(data)),
   ]);
   const result = articles.status === "fulfilled" ? articles.value : null;

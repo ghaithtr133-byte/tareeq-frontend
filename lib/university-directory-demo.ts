@@ -41,6 +41,10 @@ export function getDemoDirectory(
     }
     return true;
   });
+  if (params.excludeIds) {
+    const excluded = new Set(params.excludeIds.split(",").map((id) => id.trim()).filter(Boolean));
+    matching = matching.filter((item) => !excluded.has(item.id));
+  }
   matching = [...matching].sort(params.sort === "name" ? (a, b) => a.nameAr.localeCompare(b.nameAr, "ar") : (a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
   const page = params.page ?? 1;
   const limit = params.limit ?? 6;

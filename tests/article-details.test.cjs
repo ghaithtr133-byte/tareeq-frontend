@@ -54,7 +54,8 @@ test("Live related scholarships follow the documented projection, Admin order, m
   assert.equal(result[0].effectiveApplicationStatus, "CLOSED");
   assert.equal(result[0].imageUrl, rows[0].imageUrl);
   assert.deepEqual(parseArticleScholarships([]), []);
-  for (const value of [null, undefined, {}, [{ ...rows[0], status: "DRAFT" }], [{ ...rows[0], slug: "../unsafe" }], [rows[0], rows[0]]]) assert.throws(() => parseArticleScholarships(value));
+  for (const value of [null, undefined, {}, [{ ...rows[0], status: "DRAFT" }], [{ ...rows[0], slug: "../unsafe" }]]) assert.throws(() => parseArticleScholarships(value));
+  assert.deepEqual(parseArticleScholarships([rows[0], rows[0]]).map((item) => item.id), [rows[0].id]);
   assert.equal(parseArticleScholarships([{ ...rows[0], effectiveApplicationStatus: null }])[0].effectiveApplicationStatus, null);
 });
 
@@ -158,6 +159,7 @@ test("Live route uses documented relatedScholarships without per-scholarship cal
     "@/lib/api-client/public-content": {
       getArticle: async (slug) => { if (failure) throw failure; assert.equal(slug, original.slug); return record; },
       getArticles: async (params) => { calls.push(["latest", params]); if (latestFailure) throw Error("offline"); return { items: demo.publicDemoContent.articles.slice(0, 4).map((row) => ({ ...row, status: undefined })), pagination: { page: 1, limit: 4, total: 4, totalPages: 1 } }; },
+      getScholarships: async (params) => { calls.push(["scholarships", params]); return { items: [], pagination: { page: 1, limit: params.limit, total: 0, totalPages: 0 } }; },
       getScholarship: async () => { throw Error("N+1 must not be called"); },
       getCountries: async (params) => { calls.push(["countries", params]); if (relationFailure) throw Error("offline"); return { items: [original.country], pagination: { page: 1, limit: 50, total: 1, totalPages: 1 } }; },
       getUniversities: async (params) => { calls.push(["universities", params]); return { items: [original.university], pagination: { page: 1, limit: 50, total: 1, totalPages: 1 } }; },
@@ -173,7 +175,7 @@ test("Live route uses documented relatedScholarships without per-scholarship cal
   assert.ok(html.includes('aspect-[2/1]'));
   assert.ok(html.includes('xl:aspect-[16/5]'));
   assert.ok(html.includes('dir="rtl"'));
-  assert.deepEqual(calls, [["latest", { limit: 4, sort: "newest" }], ["countries", { limit: 50, sort: "manual" }], ["universities", { limit: 50, sort: "name" }]]);
+  assert.deepEqual(calls, [["latest", { limit: 4, sort: "newest" }], ["countries", { limit: 50, sort: "manual" }], ["universities", { limit: 50, sort: "name" }], ["scholarships", { country: original.country.slug, featured: "true", limit: 2, excludeIds: record.relatedScholarships[0].id }], ["scholarships", { country: original.country.slug, featured: "false", limit: 2, excludeIds: record.relatedScholarships[0].id }], ["scholarships", { featured: "true", limit: 2, excludeIds: record.relatedScholarships[0].id }]]);
   assert.ok(html.includes(original.titleAr));
   assert.ok(html.includes('data-related-scholarship="' + record.relatedScholarships[0].id + '"'));
   assert.ok(html.includes("https://example.com/real-cover.jpg"));
@@ -272,6 +274,7 @@ test("Demo route retains approved body fixtures, related cards, media and disclo
     "@/lib/api-client/public-content": {
       getArticle: async () => original,
       getArticles: async () => ({ items: demo.publicDemoContent.articles.slice(0, 4) }),
+      getScholarships: async () => ({ items: [], pagination: { page: 1, limit: 3, total: 0, totalPages: 0 } }),
       getCountries: async () => { throw Error("Demo must not request Live relations"); },
       getUniversities: async () => { throw Error("Demo must not request Live relations"); },
     },

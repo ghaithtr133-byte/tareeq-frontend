@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { UniversityFilterScrollArea } from "@/components/public/university-filter-scroll-area";
 import { ErrorState } from "@/components/ui/content-state";
+import { FeaturedOnlySwitch } from "@/components/public/featured-only-switch";
 import { directoryFilterLabel } from "@/lib/university-directory-data";
 
 type Option = readonly [string, string, number?];
@@ -89,15 +90,15 @@ export function UniversityDirectoryFilters({
             className={inputClass}
           />
         </div>
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-[#DCE4EC] bg-[#FCFDFE] px-3 text-sm font-bold text-[#082B50]">
-          <input
-            type="checkbox"
-            checked={draft.featured === "true"}
-            onChange={(event) => change("featured", event.target.checked ? "true" : "")}
-            className="size-4 rounded border-[#BAC8D5] text-[#17669C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8A253]"
-          />
-          الجامعات المميزة فقط
-        </label>
+        <FeaturedOnlySwitch
+          id={`${prefix}-featured`}
+          label="الجامعات المميزة فقط"
+          checked={draft.featured === "true"}
+          onCheckedChange={(featured) =>
+            change("featured", featured ? "true" : "")
+          }
+          className="w-full justify-between"
+        />
         {groups.map((group) => (
           <div key={group.key}>
             <label

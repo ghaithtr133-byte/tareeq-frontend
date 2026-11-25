@@ -26,15 +26,18 @@ export function parsePublishedArticle(value: unknown, slug?: string): Article {
 export function parseArticleScholarships(value: unknown): ArticleScholarship[] {
   if (!Array.isArray(value)) throw Error("Invalid article scholarships");
   const seen = new Set<string>();
-  return value.map((row) => {
-    if (!row || !text(row.id) || seen.has(row.id) || !validArticleSlug(row.slug) || (row.status !== undefined && row.status !== "PUBLISHED")) throw Error("Invalid related scholarship");
+  return value.flatMap((row) => {
+    if (!row || !text(row.id) || !validArticleSlug(row.slug) || (row.status !== undefined && row.status !== "PUBLISHED")) throw Error("Invalid related scholarship");
+    // The Admin-selected order wins; a repeated relation is ignored rather than
+    // displacing a later recommendation or failing the whole article page.
+    if (seen.has(row.id)) return [];
     seen.add(row.id);
     const country = row.country;
     if (country != null && (!text(country.id) || !validArticleSlug(country.slug) || !text(country.nameAr))) throw Error("Invalid related country");
     const applicationStatus = row.applicationStatus === "OPEN" || row.applicationStatus === "CLOSED" ? row.applicationStatus : undefined;
-    return { id: row.id, slug: row.slug, titleAr: homeCardText(text(row.titleAr), "اسم المنحة"), status: "PUBLISHED", country: country ?? null,
+    return [{ id: row.id, slug: row.slug, titleAr: homeCardText(text(row.titleAr), "اسم المنحة"), status: "PUBLISHED", country: country ?? null,
       imageUrl: articleImageSource(text(row.imageUrl) || null), applicationStatus,
-      effectiveApplicationStatus: row.effectiveApplicationStatus === "OPEN" || row.effectiveApplicationStatus === "CLOSED" ? row.effectiveApplicationStatus : null } as ArticleScholarship;
+      effectiveApplicationStatus: row.effectiveApplicationStatus === "OPEN" || row.effectiveApplicationStatus === "CLOSED" ? row.effectiveApplicationStatus : null } as ArticleScholarship];
   });
 }
 export function parseLatestArticles(value: unknown, currentId: string, currentSlug: string): Article[] {

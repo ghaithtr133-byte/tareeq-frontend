@@ -19,6 +19,7 @@ import { HomeSectionError } from "@/components/home/home-section-error";
 import { PaginationLinks } from "@/components/public/public-content";
 import { redirect } from "next/navigation";
 import type { RouteSearchParams } from "@/lib/public-search-params";
+import { getFeaturedFirstPage } from "@/lib/featured-first-pagination";
 
 export const metadata = createPageMetadata("خدماتنا", "خدمات متكاملة لدعم رحلتك الدراسية: القبول الجامعي، اختيار التخصص، المنح الدراسية، تجهيز الملف ومتابعة القبول.", { index: true, pathname: "/services" });
 const processIcons = [Headset, Target, FileText, Plane];
@@ -31,7 +32,11 @@ export default async function ServicesPage({
 }) {
   const demo = isPublicDemoMode();
   const page = demo ? 1 : servicesDirectoryPage((await searchParams)?.page);
-  const result = await getServices({ limit: 5, sort: "manual", ...(demo ? {} : { page }) }).then((data) => demo ? data : parseServicesDirectory(data, page)).catch(() => null);
+  const params = { limit: 5, sort: "manual" as const, ...(demo ? {} : { page }) };
+  const result = await (demo
+    ? getServices(params)
+    : getFeaturedFirstPage(params, (request) => getServices(request).then((data) => parseServicesDirectory(data, request.page ?? 1, request.limit ?? 5)))
+  ).catch(() => null);
   const published = result?.items ?? [];
   if (!demo && result && page > Math.max(1, result.pagination.totalPages)) redirect(result.pagination.totalPages > 1 ? `/services?page=${result.pagination.totalPages}` : "/services");
   return <main className="bg-[#F8FAFD] pb-8 text-primary">
