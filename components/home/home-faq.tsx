@@ -22,8 +22,8 @@ export function HomeFaq({ questions, state, showServicesLink = true }: { questio
           </h2>
         </div>
 
-        <div className="mt-7 flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
-          <aside className="order-2 flex min-w-0 flex-col items-center justify-center rounded-[20px] border border-[#F0E5D4] bg-white p-6 text-center shadow-[0_18px_40px_-32px_rgba(8,43,80,0.28)] sm:p-8 lg:order-1 lg:basis-[40%]">
+        <div className="mt-7 flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+          <aside className="order-2 flex min-w-0 flex-col items-center justify-center self-start rounded-[20px] border border-[#F0E5D4] bg-white p-6 text-center shadow-[0_18px_40px_-32px_rgba(8,43,80,0.28)] sm:p-8 lg:order-1 lg:basis-[40%]">
             <Image
               src="/images/faq/faq-help.png"
               draggable={false}

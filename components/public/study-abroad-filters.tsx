@@ -15,7 +15,7 @@ import { FeaturedOnlySwitch } from "@/components/public/featured-only-switch";
 type Values = { search: string; featured: boolean; sort: "manual" | "newest" };
 
 const controlClass =
-  "min-h-11 w-full min-w-0 rounded-lg border border-[#DCE4EC] bg-white px-2 text-sm text-[#082B50] transition-colors placeholder:text-[#8393A5] hover:border-[#BAC8D5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C8A253] sm:px-4";
+  "min-h-11 w-full min-w-0 rounded-lg border border-[#DCE4EC] bg-white pl-3 pr-10 text-sm text-[#082B50] transition-colors placeholder:text-[#8393A5] hover:border-[#BAC8D5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C8A253]";
 
 export function StudyAbroadFilters({
   values,
@@ -79,10 +79,10 @@ export function StudyAbroadFilters({
         }}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <label className="relative block min-w-0 basis-full sm:basis-[18rem] sm:max-w-[20rem] lg:basis-80 lg:max-w-none lg:shrink-0">
+          <label className="relative block min-w-[14rem] flex-1 basis-60 sm:max-w-80">
             <span className="sr-only">ابحث عن دولة</span>
             <Search
-              className="pointer-events-none absolute end-3 top-1/2 size-5 -translate-y-1/2 text-[#607185]"
+              className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-[#607185]"
               aria-hidden="true"
             />
             <input
@@ -93,7 +93,7 @@ export function StudyAbroadFilters({
                 change({ ...draft, search: event.target.value }, true)
               }
               placeholder="ابحث عن دولة..."
-              className={`${controlClass} pe-12`}
+              className={controlClass}
             />
           </label>
           <FeaturedOnlySwitch

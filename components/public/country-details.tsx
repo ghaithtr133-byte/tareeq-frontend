@@ -33,7 +33,7 @@ export function CountryDetails({ country, demoDetails, overviewImage, informatio
   return <main className="bg-[#F8FAFC] text-[#082B50]">
     <section aria-labelledby="country-title" className="relative isolate overflow-hidden border-b border-[#E7ECF2] bg-[#F3F7FA]">
       <div className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-full bg-[#EAF0F6] opacity-20 md:w-[54%] md:opacity-100">
-        <StudyAbroadImage key={country.imageUrl} src={country.imageUrl} alt={country.imageAltAr || `مشهد من ${country.nameAr}`} unavailableLabel="صورة الدولة (غير متوفر حالياً)" />
+        <StudyAbroadImage key={country.imageUrl} src={country.imageUrl} alt={country.imageAltAr || `مشهد من ${country.nameAr}`} unavailableLabel="صورة الدولة (غير متوفر حالياً)" optimized preload sizes="(min-width: 768px) 54vw, 100vw" />
         <div className="absolute inset-0 bg-gradient-to-l from-[#F3F7FA] via-[#F3F7FA]/70 to-[#F3F7FA]/30 md:via-[#F3F7FA]/20 md:to-transparent" />
       </div>
       <Container className={innerPageHero.content}>

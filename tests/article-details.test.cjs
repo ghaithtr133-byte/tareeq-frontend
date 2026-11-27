@@ -111,30 +111,32 @@ test("mobile TOC is collapsed by default, uses actual heading hrefs, and omits h
   assert.equal(renderToStaticMarkup(React.createElement(ArticleTableOfContents, { items: [], variant: "desktop" })), "");
 });
 
-test("recommendation cards omit unpublished scholarships and preserve closed status without fabricated funding", () => {
+test("recommendation cards only render published scholarships with an effective open status", () => {
   const { ScholarshipRecommendationList, ArticleRecommendationList } = viewLoad("components/public/article-recommendations.tsx");
   const closed = { ...demo.publicDemoContent.scholarships[0], effectiveApplicationStatus: "CLOSED" };
-  const html = renderToStaticMarkup(React.createElement(ScholarshipRecommendationList, { scholarships: [closed, { ...closed, id: "draft", status: "DRAFT" }] }));
+  const open = { ...closed, id: "open", slug: "open", effectiveApplicationStatus: "OPEN" };
+  const html = renderToStaticMarkup(React.createElement(ScholarshipRecommendationList, { scholarships: [closed, open, { ...closed, id: "draft", status: "DRAFT" }] }));
   assert.equal((html.match(/data-related-scholarship=/g) ?? []).length, 1);
-  assert.ok(html.includes("التقديم مغلق"));
+  assert.ok(html.includes("التقديم مفتوح"));
+  assert.equal(html.includes("التقديم مغلق"), false);
   assert.equal(html.includes("تمويل كامل"), false);
   assert.ok(html.includes("رسم أكاديمي بديل"));
   assert.equal(html.includes("عرض جميع المنح"), false);
+  assert.equal(renderToStaticMarkup(React.createElement(ScholarshipRecommendationList, { scholarships: [closed] })), "");
   const latest = renderToStaticMarkup(React.createElement(ArticleRecommendationList, { articles: [{ ...original, publishedAt: null, coverImageUrl: null }] }));
   assert.equal(latest.includes("<time"), false);
   assert.ok(latest.includes("رسم أكاديمي بديل"));
 });
 
-test("article recommendations render every published related scholarship and retain applicationStatus when no effective status is supplied", () => {
+test("article recommendations render at most three published scholarships with an effective open status", () => {
   const { ScholarshipRecommendationList } = viewLoad("components/public/article-recommendations.tsx");
   const { parseArticleScholarships } = load("lib/article-detail-live.ts");
-  const rows = Array.from({ length: 4 }, (_, index) => ({ ...demo.publicDemoContent.scholarships[index], id: `related-${index}`, slug: `related-${index}`, status: undefined, effectiveApplicationStatus: null, applicationStatus: index % 2 ? "CLOSED" : "OPEN" }));
+  const rows = Array.from({ length: 5 }, (_, index) => ({ ...demo.publicDemoContent.scholarships[index], id: `related-${index}`, slug: `related-${index}`, status: undefined, effectiveApplicationStatus: index === 1 ? "CLOSED" : "OPEN" }));
   const parsed = parseArticleScholarships(rows);
-  assert.deepEqual(parsed.map((item) => item.applicationStatus), ["OPEN", "CLOSED", "OPEN", "CLOSED"]);
   const html = renderToStaticMarkup(React.createElement(ScholarshipRecommendationList, { scholarships: parsed, live: true }));
-  assert.equal((html.match(/data-related-scholarship=/g) ?? []).length, 4);
+  assert.equal((html.match(/data-related-scholarship=/g) ?? []).length, 3);
   assert.ok(html.includes("التقديم مفتوح"));
-  assert.ok(html.includes("التقديم مغلق"));
+  assert.equal(html.includes("التقديم مغلق"), false);
 });
 
 test("all consultation links use the configured WhatsApp destination and have no application form", () => {
@@ -175,11 +177,11 @@ test("Live route uses documented relatedScholarships without per-scholarship cal
   assert.ok(html.includes('aspect-[2/1]'));
   assert.ok(html.includes('xl:aspect-[16/5]'));
   assert.ok(html.includes('dir="rtl"'));
-  assert.deepEqual(calls, [["latest", { limit: 4, sort: "newest" }], ["countries", { limit: 50, sort: "manual" }], ["universities", { limit: 50, sort: "name" }], ["scholarships", { country: original.country.slug, featured: "true", limit: 2, excludeIds: record.relatedScholarships[0].id }], ["scholarships", { country: original.country.slug, featured: "false", limit: 2, excludeIds: record.relatedScholarships[0].id }], ["scholarships", { featured: "true", limit: 2, excludeIds: record.relatedScholarships[0].id }]]);
+  assert.deepEqual(calls, [["latest", { limit: 4, sort: "newest" }], ["countries", { limit: 50, sort: "manual" }], ["universities", { limit: 50, sort: "name" }], ["scholarships", { country: original.country.slug, applicationStatus: "OPEN", limit: 3, excludeIds: undefined }], ["scholarships", { featured: "true", applicationStatus: "OPEN", limit: 3, excludeIds: undefined }]]);
   assert.ok(html.includes(original.titleAr));
-  assert.ok(html.includes('data-related-scholarship="' + record.relatedScholarships[0].id + '"'));
-  assert.ok(html.includes("https://example.com/real-cover.jpg"));
-  assert.ok(html.includes("التقديم مغلق"));
+  assert.equal(html.includes('data-related-scholarship="' + record.relatedScholarships[0].id + '"'), false);
+  assert.equal(html.includes("https://example.com/real-cover.jpg"), false);
+  assert.equal(html.includes("التقديم مغلق"), false);
   assert.ok(html.includes(`/study-abroad/${original.country.slug}`));
   assert.ok(html.includes(`/universities/${original.university.slug}`));
   assert.equal(html.includes("قدّم الآن"), false);
@@ -195,13 +197,13 @@ test("Live route uses documented relatedScholarships without per-scholarship cal
   record = { ...record, bodyAr: [], countryId: null, universityId: null, relatedScholarships: [], publishedAt: null, coverImageUrl: null };
   const partial = renderToStaticMarkup(await route.default(props));
   assert.ok(partial.includes("محتوى المقال غير متوفر حالياً"));
-  assert.ok(partial.includes("لا توجد منح مرتبطة حالياً"));
+  assert.equal(partial.includes("لا توجد منح مرتبطة حالياً"), false);
   assert.ok(partial.includes("تاريخ النشر (غير متوفر حالياً)"));
   assert.ok(partial.includes("الصورة (غير متوفر حالياً)"));
   record = { ...record, bodyAr: "<p>not blocks</p>", relatedScholarships: undefined };
   const invalid = renderToStaticMarkup(await route.default(props));
   assert.ok(invalid.includes("تعذّر تحميل محتوى المقال"));
-  assert.ok(invalid.includes("تعذّر تحميل المنح المرتبطة"));
+  assert.equal(invalid.includes("تعذّر تحميل المنح المرتبطة"), false);
   record = { ...record, status: "DRAFT" };
   await assert.rejects(route.default(props), /NOT_FOUND/);
   failure = new ApiError(404);
@@ -283,7 +285,7 @@ test("Demo route retains approved body fixtures, related cards, media and disclo
   });
   const html = renderToStaticMarkup(await local("app/articles/[slug]/page.tsx").default({ params: Promise.resolve({ slug: original.slug }) }));
   assert.ok(html.includes("محتوى تجريبي توضيحي"));
-  assert.equal((html.match(/data-related-scholarship=/g) ?? []).length, 3);
+  assert.equal((html.match(/data-related-scholarship=/g) ?? []).length, 2);
   assert.ok(html.includes("خطتك قبل التواصل"));
   assert.equal(html.includes("تعذّر تحميل"), false);
 });

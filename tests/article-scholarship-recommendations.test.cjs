@@ -18,9 +18,9 @@ function load(overrides) {
   return instance.exports;
 }
 
-const item = (id) => ({ id, slug: `scholarship-${id}`, titleAr: id, status: "PUBLISHED", country: null });
+const item = (id, effectiveApplicationStatus = "OPEN") => ({ id, slug: `scholarship-${id}`, titleAr: id, status: "PUBLISHED", effectiveApplicationStatus, country: null });
 
-test("article scholarship recommendations preserve manual order, deduplicate, and use bounded country fallbacks", async () => {
+test("article scholarship recommendations preserve open manual order, deduplicate, and use bounded open fallbacks", async () => {
   const calls = [];
   const { recommendArticleScholarships } = load({
     "server-only": {},
@@ -28,15 +28,14 @@ test("article scholarship recommendations preserve manual order, deduplicate, an
     "@/lib/api-client/public-content": {
       getScholarships: async (params) => {
         calls.push(params);
-        if (params.featured === "true" && params.country) return { items: [item("country-featured")], pagination: {} };
-        if (params.featured === "false" && params.country) return { items: [item("country-regular")], pagination: {} };
-        return { items: [item("global-featured")], pagination: {} };
+        if (params.country) return { items: [item("closed-country", "CLOSED"), item("country")], pagination: {} };
+        return { items: [item("country"), item("global-featured")], pagination: {} };
       },
     },
   });
-  const result = await recommendArticleScholarships([item("manual"), item("manual")], "romania");
-  assert.deepEqual(result.scholarships.map((row) => row.id), ["manual", "country-featured", "country-regular"]);
+  const result = await recommendArticleScholarships([item("closed-manual", "CLOSED"), item("manual"), item("manual")], "romania");
+  assert.deepEqual(result.scholarships.map((row) => row.id), ["manual", "country", "global-featured"]);
   assert.equal(calls.length, 2);
-  assert.deepEqual(calls[0], { country: "romania", featured: "true", limit: 2, excludeIds: "manual" });
-  assert.deepEqual(calls[1], { country: "romania", featured: "false", limit: 1, excludeIds: "manual,country-featured" });
+  assert.deepEqual(calls[0], { country: "romania", applicationStatus: "OPEN", limit: 2, excludeIds: "manual" });
+  assert.deepEqual(calls[1], { featured: "true", applicationStatus: "OPEN", limit: 1, excludeIds: "manual,country" });
 });

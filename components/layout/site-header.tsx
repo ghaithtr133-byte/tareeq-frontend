@@ -81,12 +81,13 @@ export function SiteHeader({ showServices = true }: { showServices?: boolean }) 
       <Container className="flex min-h-[4.25rem] items-center justify-between gap-4 2xl:min-h-[4.75rem]">
         <Link href="/" className="inline-flex shrink-0 rounded-sm py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent" onClick={() => closeMenu()}>
           <Image
-            src="/images/brand/tareeq-academy-logo.png"
+            src="/tareeq-logo.jpg"
             alt="أكاديمية طريق"
-            width={177}
-            height={118}
-            priority
-            className="h-10 w-auto object-contain sm:h-11"
+            width={1254}
+            height={1254}
+            preload
+            sizes="(min-width: 640px) 2.75rem, 2.5rem"
+            className="size-10 object-contain sm:size-11"
           />
         </Link>
 

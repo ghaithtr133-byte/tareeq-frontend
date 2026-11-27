@@ -56,12 +56,13 @@ export function SiteFooter({
               className="inline-flex rounded-sm bg-[#FAF9F6] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Image
-                src="/images/brand/tareeq-academy-logo.png"
+                src="/tareeq-logo.jpg"
                 draggable={false}
                 alt="أكاديمية طريق"
-                width={177}
-                height={118}
-                className="h-12 w-auto object-contain"
+                width={1254}
+                height={1254}
+                sizes="3rem"
+                className="size-12 object-contain"
               />
             </Link>
             <p className="mt-3 max-w-[21rem] text-sm leading-7 text-primary-foreground/80">

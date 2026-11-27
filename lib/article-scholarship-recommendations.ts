@@ -7,6 +7,7 @@ const appendUnique = (target: ArticleScholarship[], candidates: ArticleScholarsh
   const seen = new Set(target.map((item) => item.id));
   for (const candidate of candidates) {
     if (target.length === 3) break;
+    if (candidate.status !== "PUBLISHED" || candidate.effectiveApplicationStatus !== "OPEN") continue;
     if (!seen.has(candidate.id)) {
       seen.add(candidate.id);
       target.push(candidate);
@@ -22,11 +23,12 @@ export async function recommendArticleScholarships(
   const scholarships: ArticleScholarship[] = [];
   appendUnique(scholarships, parseArticleScholarships(manuallyLinked));
   let failed = false;
-  const fill = async (params: { country?: string; featured: "true" | "false" }) => {
+  const fill = async (params: { country?: string; featured?: "true" }) => {
     if (scholarships.length === 3) return;
     try {
       const data = await getScholarships({
         ...params,
+        applicationStatus: "OPEN",
         limit: 3 - scholarships.length,
         excludeIds: scholarships.map((item) => item.id).join(",") || undefined,
       });
@@ -36,10 +38,7 @@ export async function recommendArticleScholarships(
     }
   };
 
-  if (countrySlug) {
-    await fill({ country: countrySlug, featured: "true" });
-    await fill({ country: countrySlug, featured: "false" });
-  }
+  if (countrySlug) await fill({ country: countrySlug });
   await fill({ featured: "true" });
   return { scholarships, failed };
 }

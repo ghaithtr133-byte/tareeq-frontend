@@ -10,7 +10,9 @@ import { FeaturedOnlySwitch } from "@/components/public/featured-only-switch";
 
 type CountryOption = { value: string; label: string };
 const blank: ArticleFilterValues = { search: "", country: "", featured: "" };
-const control = "h-11 w-full min-w-0 rounded-lg border border-[#DEE6EF] bg-white px-3 text-sm text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+const control = "h-11 w-full min-w-0 rounded-lg border border-[#DEE6EF] bg-white text-sm text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+const selectControl = `${control} px-3`;
+const searchControl = `${control} pl-3 pr-10`;
 
 export function ArticleDirectoryFilters({ values, countries, optionError, optionLimited = false, children }: {
   values: ArticleFilterValues;
@@ -47,10 +49,10 @@ export function ArticleDirectoryFilters({ values, countries, optionError, option
   return <>
     <form aria-label="البحث وتصفية المقالات" onSubmit={(event) => { event.preventDefault(); navigate(draft); }} className="grid grid-cols-2 items-center gap-2 rounded-xl border border-[#E2E8EF] bg-white/80 p-2 shadow-[0_6px_20px_-18px_rgba(8,43,80,0.3)] md:flex md:flex-wrap md:gap-3">
       <label className="relative col-span-2 block min-w-0 md:w-80 md:shrink-0">
-        <span className="sr-only">ابحث في المقالات</span><Search className="pointer-events-none absolute end-3 top-1/2 size-5 -translate-y-1/2 text-[#5B7390]" aria-hidden="true" />
-        <input name="search" type="search" value={draft.search} onChange={(event) => change("search", event.target.value, true)} maxLength={200} placeholder="ابحث في المقالات..." className={`${control} pe-12`} />
+        <span className="sr-only">ابحث في المقالات</span><Search className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-[#5B7390]" aria-hidden="true" />
+        <input name="search" type="search" value={draft.search} onChange={(event) => change("search", event.target.value, true)} maxLength={200} placeholder="ابحث في المقالات..." className={searchControl} />
       </label>
-      <label className="min-w-0 md:w-48 md:shrink-0"><span className="sr-only">الدولة</span><select name="country" value={draft.country} onChange={(event) => change("country", event.target.value)} className={control}>
+      <label className="min-w-0 md:w-48 md:shrink-0"><span className="sr-only">الدولة</span><select name="country" value={draft.country} onChange={(event) => change("country", event.target.value)} className={selectControl}>
         <option value="">جميع الدول</option>
         {draft.country && !countries.some((item) => item.value === draft.country) ? <option value={draft.country}>{draft.country}</option> : null}
         {countries.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}

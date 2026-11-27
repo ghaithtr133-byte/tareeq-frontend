@@ -27,7 +27,10 @@ import {
 
 type Option = { value: string; label: string; count?: number };
 const controlClass =
-  "h-11 w-full min-w-0 rounded-lg border border-[#DCE4EC] bg-white px-3 text-sm text-primary placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent";
+  "h-11 w-full min-w-0 rounded-lg border border-[#DCE4EC] bg-white text-sm text-primary placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent";
+const standardControlClass = `${controlClass} px-3`;
+const searchControlClass = `${controlClass} pl-3 pr-10`;
+const advancedLabelClass = "grid min-w-0 gap-2 text-xs font-bold text-muted-foreground lg:max-w-64";
 const labels: Record<ScholarshipFilterKey, string> = {
   search: "البحث",
   country: "الدولة",
@@ -121,7 +124,7 @@ export function ScholarshipDirectoryFilters({
         id={`scholarships-${key}`}
         value={draft[key]}
         onChange={(event) => change(key, event.target.value)}
-        className={controlClass}
+        className={standardControlClass}
       >
         {key !== "sort" ? <option value="">{placeholder}</option> : null}
         {draft[key] && !items.some((item) => item.value === draft[key]) ? (
@@ -149,11 +152,11 @@ export function ScholarshipDirectoryFilters({
         aria-label="البحث وتصفية المنح الدراسية"
         className="rounded-xl border border-[#E2E8F0] bg-white p-3 shadow-[0_8px_24px_-20px_rgba(8,43,80,0.4)] sm:p-4"
       >
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:flex lg:flex-wrap lg:items-center">
-          <label className="relative col-span-2 block min-w-0 lg:w-80 lg:shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <label className="relative block min-w-[14rem] flex-1 basis-64 md:max-w-80">
             <span className="sr-only">ابحث عن منحة دراسية</span>
             <Search
-              className="pointer-events-none absolute end-3 top-1/2 size-5 -translate-y-1/2 text-[#607185]"
+              className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-[#607185]"
               aria-hidden="true"
             />
             <input
@@ -162,10 +165,10 @@ export function ScholarshipDirectoryFilters({
               onChange={(event) => change("search", event.target.value, true)}
               maxLength={200}
               placeholder="ابحث عن منحة دراسية..."
-              className={`${controlClass} pe-12`}
+              className={searchControlClass}
             />
           </label>
-          <label className="min-w-0 lg:w-56 lg:shrink-0">
+          <label className="min-w-[12rem] flex-[0_1_14rem]">
             <span className="sr-only">الدولة</span>
             {select("country", "جميع الدول")}
           </label>
@@ -185,10 +188,10 @@ export function ScholarshipDirectoryFilters({
           </button>
         </div>
         <div id="scholarship-advanced" hidden={!advanced}>
-          <div className="mt-3 grid w-full min-w-0 gap-3 border-t border-[#E7ECF2] pt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="mt-3 grid w-full min-w-0 gap-3 border-t border-[#E7ECF2] pt-4 sm:grid-cols-2 lg:grid-cols-3 lg:justify-items-start xl:grid-cols-6">
             <label
               htmlFor="scholarships-university"
-              className="grid min-w-0 gap-2 text-xs font-bold text-muted-foreground"
+              className={advancedLabelClass}
             >
               الجامعة{select("university", "جميع الجامعات")}
             </label>
@@ -196,7 +199,7 @@ export function ScholarshipDirectoryFilters({
               <label
                 key={key}
                 htmlFor={`scholarships-${key}`}
-                className="grid min-w-0 gap-2 text-xs font-bold text-muted-foreground"
+                className={advancedLabelClass}
               >
                 {labels[key]}
                 {facets ? (
@@ -207,7 +210,7 @@ export function ScholarshipDirectoryFilters({
                     value={draft[key]}
                     onChange={(event) => change(key, event.target.value, true)}
                     maxLength={120}
-                    className={controlClass}
+                    className={standardControlClass}
                     placeholder="القيمة الأصلية في المصدر"
                   />
                 )}
@@ -215,7 +218,7 @@ export function ScholarshipDirectoryFilters({
             ))}
             <label
               htmlFor="scholarships-applicationStatus"
-              className="grid min-w-0 gap-2 text-xs font-bold text-muted-foreground"
+              className={advancedLabelClass}
             >
               حالة التقديم{select("applicationStatus", "جميع الحالات")}
             </label>

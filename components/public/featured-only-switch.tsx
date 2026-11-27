@@ -22,12 +22,18 @@ export function FeaturedOnlySwitch({
         className,
       )}
     >
-      <Star
-        className="size-3.5 shrink-0 text-[#A47B2D]"
-        fill="currentColor"
+    <div className="flex items-center gap-1.5">
+ <Star
+        className={cn(
+          "size-3.5 shrink-0 transition-colors duration-200 motion-reduce:transition-none",
+          checked ? "text-[#A47B2D]" : "text-[#94A3B8]",
+        )}
+        fill={checked ? "currentColor" : "none"}
         aria-hidden="true"
       />
       <span className="min-w-0">{label}</span>
+    </div>
+
       <input
         id={id}
         type="checkbox"
